@@ -1,0 +1,117 @@
+{
+  "common": {
+    "appName": "Pino Production System",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "search": "Search",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Actions",
+    "comingSoon": "Coming Soon",
+    "returnToDashboard": "Return to Dashboard",
+    "copy": "Copy",
+    "saved": "Saved"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "identifierLabel": "Username or email",
+    "passwordLabel": "Password",
+    "loginButton": "Sign in",
+    "invalidCredentials": "Invalid username, email, or password.",
+    "accountInactive": "This account is inactive.",
+    "changePasswordTitle": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changePasswordButton": "Update password",
+    "wrongCurrentPassword": "The current password is incorrect.",
+    "logout": "Log out"
+  },
+  "users": {
+    "title": "Users",
+    "addUser": "Add User",
+    "displayName": "Display Name",
+    "username": "Username",
+    "email": "Email",
+    "role": "Role",
+    "lastLogin": "Last Login",
+    "save": "Save User",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "resetPassword": "Reset Password",
+    "temporaryPassword": "Temporary password",
+    "oneTimePassword": "This password is shown once.",
+    "usernameTaken": "Username is already taken.",
+    "emailTaken": "Email is already taken.",
+    "lastAdminProtection": "At least one active Administrator must remain.",
+    "notFound": "User not found."
+  },
+  "roles": {
+    "administrator": "Administrator",
+    "supervisor": "Supervisor",
+    "production_staff": "Production Staff",
+    "warehouse_staff": "Warehouse Staff"
+  },
+  "permissions": {},
+  "scopes": {
+    "title": "Scope restrictions",
+    "departments": "Departments",
+    "recipeCategories": "Recipe Categories",
+    "productionLines": "Production Lines",
+    "inventoryAreas": "Inventory Areas",
+    "empty": "No active values available.",
+    "assign": "Assign scopes"
+  },
+  "audit": {
+    "title": "Audit Trail",
+    "actor": "Actor",
+    "target": "Target",
+    "action": "Action",
+    "dateTime": "Date/Time",
+    "fromDate": "From Date",
+    "toDate": "To Date",
+    "usernameSearch": "Username search",
+    "empty": "No audit events found.",
+    "actions": {
+      "USER_CREATED": "User created",
+      "USER_UPDATED": "User updated",
+      "USER_ACTIVATED": "User activated",
+      "USER_DEACTIVATED": "User deactivated",
+      "ROLE_ASSIGNED": "Role assigned",
+      "ROLE_REMOVED": "Role removed",
+      "SCOPE_ASSIGNED": "Scope assigned",
+      "SCOPE_REMOVED": "Scope removed",
+      "PERMISSION_CHANGED": "Permission changed",
+      "PASSWORD_RESET": "Password reset",
+      "PASSWORD_CHANGED": "Password changed",
+      "LOGIN_SUCCESS": "Login success",
+      "LOGIN_FAILED": "Login failed",
+      "LOGOUT": "Logout"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "production": "Production",
+    "inventory": "Inventory",
+    "reports": "Reports",
+    "admin": "Admin",
+    "users": "Users",
+    "roles": "Roles",
+    "audit": "Audit Log",
+    "system": "System"
+  },
+  "errors": {
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedMessage": "Your role does not allow access to this section.",
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedMessage": "The request could not be completed.",
+    "notFoundTitle": "Page not found"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "passwordStrength": "Use at least 8 characters, one uppercase letter, and one number.",
+    "passwordMismatch": "Passwords do not match."
+  }
+}

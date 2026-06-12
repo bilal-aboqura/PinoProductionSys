@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 32 36% 95%;
+  --foreground: 28 10% 12%;
+  --surface: 0 0% 100%;
+  --primary: 16 64% 38%;
+  --secondary: 46 31% 31%;
+  --accent: 27 37% 81%;
+  --success: 124 21% 39%;
+  --warning: 37 64% 57%;
+  --error: 0 50% 57%;
+  --border: 28 19% 82%;
+  --input: 28 19% 82%;
+  --ring: 16 64% 38%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  background: #f7f3ee;
+  color: #221f1c;
+}
+
+input,
+select,
+textarea {
+  color: #221f1c;
+}
+
+.logical-container {
+  width: min(100% - 2rem, 1180px);
+  margin-inline: auto;
+}

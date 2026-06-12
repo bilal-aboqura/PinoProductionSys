@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model User {
+  id                 String                @id @default(cuid())
+  username           String                @unique
+  email              String?               @unique
+  displayName        String
+  passwordHash       String
+  mustChangePassword Boolean               @default(false)
+  isActive           Boolean               @default(true)
+  languagePreference String                @default("ar")
+  lastLoginAt        DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  accounts           Account[]
+  sessions           Session[]
+  userRoles          UserRole[]
+  departments        UserDepartment[]
+  recipeCategories   UserRecipeCategory[]
+  productionLines    UserProductionLine[]
+  inventoryAreas     UserInventoryArea[]
+  auditLogsAsActor   AuditLog[]            @relation("AuditActor")
+  auditLogsAsTarget  AuditLog[]            @relation("AuditTarget")
+
+  @@map("users")
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  displayName     String
+  description     String?
+  isSystem        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  displayName     String
+  resource        String
+  action          String
+  description     String?
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Department {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  userDepartments UserDepartment[]
+
+  @@map("departments")
+}
+
+model UserDepartment {
+  userId       String
+  departmentId String
+  assignedAt   DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, departmentId])
+  @@map("user_departments")
+}
+
+model RecipeCategory {
+  id                   String               @id @default(cuid())
+  name                 String               @unique
+  isActive             Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  userRecipeCategories UserRecipeCategory[]
+
+  @@map("recipe_categories")
+}
+
+model UserRecipeCategory {
+  userId           String
+  recipeCategoryId String
+  assignedAt       DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeCategory   RecipeCategory @relation(fields: [recipeCategoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeCategoryId])
+  @@map("user_recipe_categories")
+}
+
+model ProductionLine {
+  id                  String               @id @default(cuid())
+  name                String               @unique
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  userProductionLines UserProductionLine[]
+
+  @@map("production_lines")
+}
+
+model UserProductionLine {
+  userId           String
+  productionLineId String
+  assignedAt       DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productionLine   ProductionLine @relation(fields: [productionLineId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productionLineId])
+  @@map("user_production_lines")
+}
+
+model InventoryArea {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  userInventoryAreas UserInventoryArea[]
+
+  @@map("inventory_areas")
+}
+
+model UserInventoryArea {
+  userId          String
+  inventoryAreaId String
+  assignedAt      DateTime      @default(now())
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventoryArea   InventoryArea @relation(fields: [inventoryAreaId], references: [id], onDelete: Cascade)
+
+  @@id([userId, inventoryAreaId])
+  @@map("user_inventory_areas")
+}
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  actorId       String
+  actorName     String
+  targetId      String?
+  targetName    String?
+  action        AuditAction
+  previousValue Json?
+  newValue      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime    @default(now())
+  actor         User        @relation("AuditActor", fields: [actorId], references: [id])
+  target        User?       @relation("AuditTarget", fields: [targetId], references: [id])
+
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  USER_CREATED
+  USER_UPDATED
+  USER_ACTIVATED
+  USER_DEACTIVATED
+  ROLE_ASSIGNED
+  ROLE_REMOVED
+  SCOPE_ASSIGNED
+  SCOPE_REMOVED
+  PERMISSION_CHANGED
+  PASSWORD_RESET
+  PASSWORD_CHANGED
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+}

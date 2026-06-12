@@ -1,0 +1,117 @@
+{
+  "common": {
+    "appName": "نظام إنتاج بينو",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "edit": "تعديل",
+    "search": "بحث",
+    "status": "الحالة",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "actions": "الإجراءات",
+    "comingSoon": "قريباً",
+    "returnToDashboard": "العودة إلى لوحة التحكم",
+    "copy": "نسخ",
+    "saved": "تم الحفظ"
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "identifierLabel": "اسم المستخدم أو البريد الإلكتروني",
+    "passwordLabel": "كلمة المرور",
+    "loginButton": "دخول",
+    "invalidCredentials": "اسم المستخدم أو البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "accountInactive": "هذا الحساب غير نشط.",
+    "changePasswordTitle": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "changePasswordButton": "تحديث كلمة المرور",
+    "wrongCurrentPassword": "كلمة المرور الحالية غير صحيحة.",
+    "logout": "تسجيل الخروج"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "addUser": "إضافة مستخدم",
+    "displayName": "الاسم المعروض",
+    "username": "اسم المستخدم",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "lastLogin": "آخر دخول",
+    "save": "حفظ المستخدم",
+    "deactivate": "تعطيل",
+    "activate": "تفعيل",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "temporaryPassword": "كلمة المرور المؤقتة",
+    "oneTimePassword": "تظهر كلمة المرور مرة واحدة فقط.",
+    "usernameTaken": "اسم المستخدم مستخدم بالفعل.",
+    "emailTaken": "البريد الإلكتروني مستخدم بالفعل.",
+    "lastAdminProtection": "يجب أن يبقى مسؤول نشط واحد على الأقل.",
+    "notFound": "المستخدم غير موجود."
+  },
+  "roles": {
+    "administrator": "مسؤول",
+    "supervisor": "مشرف",
+    "production_staff": "طاقم الإنتاج",
+    "warehouse_staff": "طاقم المخزن"
+  },
+  "permissions": {},
+  "scopes": {
+    "title": "نطاقات الوصول",
+    "departments": "الأقسام",
+    "recipeCategories": "تصنيفات الوصفات",
+    "productionLines": "خطوط الإنتاج",
+    "inventoryAreas": "مناطق المخزون",
+    "empty": "لا توجد قيم نشطة.",
+    "assign": "تعيين النطاقات"
+  },
+  "audit": {
+    "title": "سجل التدقيق",
+    "actor": "المنفذ",
+    "target": "المستخدم المستهدف",
+    "action": "الإجراء",
+    "dateTime": "التاريخ والوقت",
+    "fromDate": "من تاريخ",
+    "toDate": "إلى تاريخ",
+    "usernameSearch": "بحث باسم المستخدم",
+    "empty": "لا توجد أحداث تدقيق.",
+    "actions": {
+      "USER_CREATED": "إنشاء مستخدم",
+      "USER_UPDATED": "تحديث مستخدم",
+      "USER_ACTIVATED": "تفعيل مستخدم",
+      "USER_DEACTIVATED": "تعطيل مستخدم",
+      "ROLE_ASSIGNED": "تعيين دور",
+      "ROLE_REMOVED": "إزالة دور",
+      "SCOPE_ASSIGNED": "تعيين نطاق",
+      "SCOPE_REMOVED": "إزالة نطاق",
+      "PERMISSION_CHANGED": "تغيير صلاحية",
+      "PASSWORD_RESET": "إعادة تعيين كلمة المرور",
+      "PASSWORD_CHANGED": "تغيير كلمة المرور",
+      "LOGIN_SUCCESS": "نجاح الدخول",
+      "LOGIN_FAILED": "فشل الدخول",
+      "LOGOUT": "تسجيل الخروج"
+    }
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "production": "الإنتاج",
+    "inventory": "المخزون",
+    "reports": "التقارير",
+    "admin": "الإدارة",
+    "users": "المستخدمون",
+    "roles": "الأدوار",
+    "audit": "سجل التدقيق",
+    "system": "النظام"
+  },
+  "errors": {
+    "accessDeniedTitle": "تم رفض الوصول",
+    "accessDeniedMessage": "دورك لا يسمح بالوصول إلى هذا القسم.",
+    "unexpectedTitle": "حدث خطأ",
+    "unexpectedMessage": "تعذر إكمال الطلب.",
+    "notFoundTitle": "الصفحة غير موجودة"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب.",
+    "passwordStrength": "استخدم 8 أحرف على الأقل وحرفاً كبيراً ورقماً.",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين."
+  }
+}

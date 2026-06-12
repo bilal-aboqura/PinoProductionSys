@@ -1,0 +1,126 @@
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
+
+const prisma = new PrismaClient();
+
+const permissions = [
+  ["users:view", "View Users", "users", "view"],
+  ["users:create", "Create Users", "users", "create"],
+  ["users:edit", "Edit Users", "users", "edit"],
+  ["users:delete", "Delete Users", "users", "delete"],
+  ["users:toggle_status", "Activate / Deactivate Users", "users", "toggle_status"],
+  ["roles:manage", "Manage Roles & Permissions", "roles", "manage"],
+  ["audit:view", "View Audit Trail", "audit", "view"],
+  ["production:view", "View Production Orders", "production", "view"],
+  ["production:execute", "Execute Production Steps", "production", "execute"],
+  ["production:approve", "Approve Production Actions", "production", "approve"],
+  ["production:reject", "Reject Production Actions", "production", "reject"],
+  ["inventory:view", "View Inventory", "inventory", "view"],
+  ["inventory:manage", "Manage Inventory Transactions", "inventory", "manage"],
+  ["inventory:approve", "Approve Inventory Actions", "inventory", "approve"],
+  ["reports:view", "View Reports", "reports", "view"],
+  ["system:configure", "System Configuration", "system", "configure"]
+] as const;
+
+const rolePermissions: Record<string, string[]> = {
+  administrator: permissions.map(([code]) => code),
+  supervisor: [
+    "production:view",
+    "production:approve",
+    "production:reject",
+    "inventory:view",
+    "inventory:approve",
+    "reports:view"
+  ],
+  production_staff: ["production:view", "production:execute"],
+  warehouse_staff: ["inventory:view", "inventory:manage"]
+};
+
+const roleLabels: Record<string, string> = {
+  administrator: "Administrator",
+  supervisor: "Supervisor",
+  production_staff: "Production Staff",
+  warehouse_staff: "Warehouse Staff"
+};
+
+function tempPassword() {
+  return randomBytes(9).toString("base64url").slice(0, 12);
+}
+
+async function main() {
+  for (const [code, displayName, resource, action] of permissions) {
+    await prisma.permission.upsert({
+      where: { code },
+      update: { displayName, resource, action },
+      create: { code, displayName, resource, action }
+    });
+  }
+
+  for (const [name, displayName] of Object.entries(roleLabels)) {
+    const role = await prisma.role.upsert({
+      where: { name },
+      update: { displayName, isSystem: true },
+      create: { name, displayName, isSystem: true }
+    });
+
+    for (const code of rolePermissions[name] ?? []) {
+      const permission = await prisma.permission.findUniqueOrThrow({ where: { code } });
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: role.id, permissionId: permission.id } },
+        update: {},
+        create: { roleId: role.id, permissionId: permission.id }
+      });
+    }
+  }
+
+  for (const name of ["Bakery", "Pizza", "Kitchen"]) {
+    await prisma.department.upsert({ where: { name }, update: {}, create: { name } });
+  }
+  for (const name of ["Dough", "Sauces", "Desserts"]) {
+    await prisma.recipeCategory.upsert({ where: { name }, update: {}, create: { name } });
+  }
+  for (const name of ["Main Kitchen", "Pizza Station"]) {
+    await prisma.productionLine.upsert({ where: { name }, update: {}, create: { name } });
+  }
+  for (const name of ["Main Warehouse", "Branch Warehouse"]) {
+    await prisma.inventoryArea.upsert({ where: { name }, update: {}, create: { name } });
+  }
+
+  const password = tempPassword();
+  const admin = await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {},
+    create: {
+      username: "admin",
+      email: "admin@pino.local",
+      displayName: "Pino Administrator",
+      passwordHash: await bcrypt.hash(password, 12),
+      mustChangePassword: true
+    }
+  });
+
+  const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: "administrator" } });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: admin.id, roleId: adminRole.id } },
+    update: {},
+    create: { userId: admin.id, roleId: adminRole.id, assignedBy: admin.id }
+  });
+
+  console.log("Roles seeded: administrator, supervisor, production_staff, warehouse_staff");
+  console.log(`Permissions seeded: ${permissions.length} permissions`);
+  console.log("Scope data seeded");
+  console.log("Admin user created:");
+  console.log("  Username: admin");
+  console.log("  Email:    admin@pino.local");
+  console.log(`  Password: ${password}`);
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
