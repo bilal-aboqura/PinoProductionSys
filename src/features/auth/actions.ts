@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -18,11 +19,21 @@ const passwordSchema = z
 
 export async function login(credentials: LoginInput): Promise<LoginResult> {
   const identifier = credentials.identifier.trim().toLowerCase();
-  const user = await db.user.findFirst({
-    where: {
-      OR: [{ username: { equals: identifier, mode: "insensitive" } }, { email: { equals: identifier, mode: "insensitive" } }]
+  let user;
+
+  try {
+    user = await db.user.findFirst({
+      where: {
+        OR: [{ username: { equals: identifier, mode: "insensitive" } }, { email: { equals: identifier, mode: "insensitive" } }]
+      }
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      return { success: false, error: "DATABASE_UNAVAILABLE" };
     }
-  });
+
+    throw error;
+  }
 
   if (!user) {
     return { success: false, error: "INVALID_CREDENTIALS" };

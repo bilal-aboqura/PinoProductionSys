@@ -19,6 +19,14 @@ const permissions = [
   ["inventory:view", "View Inventory", "inventory", "view"],
   ["inventory:manage", "Manage Inventory Transactions", "inventory", "manage"],
   ["inventory:approve", "Approve Inventory Actions", "inventory", "approve"],
+  ["recipes:create", "Create Recipes", "recipes", "create"],
+  ["recipes:edit", "Edit Recipes", "recipes", "edit"],
+  ["recipes:publish", "Publish Recipes", "recipes", "publish"],
+  ["recipes:archive", "Archive Recipes", "recipes", "archive"],
+  ["recipes:view", "View Recipes", "recipes", "view"],
+  ["recipes:view_versions", "View Recipe Version History", "recipes", "view_versions"],
+  ["recipes:manage_categories", "Manage Recipe Categories", "recipes", "manage_categories"],
+  ["recipes:manage_scope", "Manage Recipe Scope", "recipes", "manage_scope"],
   ["reports:view", "View Reports", "reports", "view"],
   ["system:configure", "System Configuration", "system", "configure"]
 ] as const;
@@ -31,10 +39,15 @@ const rolePermissions: Record<string, string[]> = {
     "production:reject",
     "inventory:view",
     "inventory:approve",
+    "recipes:create",
+    "recipes:edit",
+    "recipes:publish",
+    "recipes:view",
+    "recipes:view_versions",
     "reports:view"
   ],
-  production_staff: ["production:view", "production:execute"],
-  warehouse_staff: ["inventory:view", "inventory:manage"]
+  production_staff: ["production:view", "production:execute", "recipes:view"],
+  warehouse_staff: ["inventory:view", "inventory:manage", "recipes:view"]
 };
 
 const roleLabels: Record<string, string> = {
@@ -78,7 +91,11 @@ async function main() {
     await prisma.department.upsert({ where: { name }, update: {}, create: { name } });
   }
   for (const name of ["Dough", "Sauces", "Desserts"]) {
-    await prisma.recipeCategory.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.recipeCategory.upsert({
+      where: { name },
+      update: { nameAr: name, nameEn: name },
+      create: { name, nameAr: name, nameEn: name }
+    });
   }
   for (const name of ["Main Kitchen", "Pizza Station"]) {
     await prisma.productionLine.upsert({ where: { name }, update: {}, create: { name } });
@@ -90,7 +107,13 @@ async function main() {
   const password = tempPassword();
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
-    update: {},
+    update: {
+      email: "admin@pino.local",
+      displayName: "Pino Administrator",
+      passwordHash: await bcrypt.hash(password, 12),
+      mustChangePassword: true,
+      isActive: true
+    },
     create: {
       username: "admin",
       email: "admin@pino.local",

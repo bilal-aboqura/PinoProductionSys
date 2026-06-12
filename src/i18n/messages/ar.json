@@ -21,6 +21,7 @@
     "loginButton": "دخول",
     "invalidCredentials": "اسم المستخدم أو البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "accountInactive": "هذا الحساب غير نشط.",
+    "databaseUnavailable": "قاعدة البيانات غير متاحة. تحقق من DATABASE_URL و DIRECT_URL.",
     "changePasswordTitle": "تغيير كلمة المرور",
     "currentPassword": "كلمة المرور الحالية",
     "newPassword": "كلمة المرور الجديدة",

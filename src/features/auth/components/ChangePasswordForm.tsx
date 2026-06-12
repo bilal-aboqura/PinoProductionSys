@@ -3,23 +3,10 @@
 import { useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { changePassword } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const schema = z
-  .object({
-    currentPassword: z.string().min(1),
-    newPassword: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/),
-    confirmPassword: z.string().min(1)
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, { path: ["confirmPassword"] });
-
-type FormValues = z.infer<typeof schema>;
 
 export function ChangePasswordForm() {
   const t = useTranslations("auth");
@@ -28,15 +15,22 @@ export function ChangePasswordForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" }
-  });
 
-  function onSubmit(values: FormValues) {
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    const newPassword = String(formData.get("newPassword") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    if (newPassword !== confirmPassword) {
+      setError(validation("passwordMismatch"));
+      return;
+    }
+
     setError(null);
     startTransition(async () => {
-      const result = await changePassword(values);
+      const result = await changePassword({ currentPassword, newPassword, confirmPassword });
       if (result.success) {
         router.push(`/${locale}/dashboard`);
         router.refresh();
@@ -48,18 +42,18 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+    <form className="space-y-4" onSubmit={onSubmit}>
       <div className="space-y-2">
         <Label htmlFor="currentPassword">{t("currentPassword")}</Label>
-        <Input id="currentPassword" type="password" autoComplete="current-password" {...form.register("currentPassword")} />
+        <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="newPassword">{t("newPassword")}</Label>
-        <Input id="newPassword" type="password" autoComplete="new-password" {...form.register("newPassword")} />
+        <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
-        <Input id="confirmPassword" type="password" autoComplete="new-password" {...form.register("confirmPassword")} />
+        <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required />
       </div>
       {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
       <Button type="submit" disabled={pending}>

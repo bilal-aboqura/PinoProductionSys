@@ -13,6 +13,14 @@ export type PermissionCode =
   | "inventory:view"
   | "inventory:manage"
   | "inventory:approve"
+  | "recipes:create"
+  | "recipes:edit"
+  | "recipes:publish"
+  | "recipes:archive"
+  | "recipes:view"
+  | "recipes:view_versions"
+  | "recipes:manage_categories"
+  | "recipes:manage_scope"
   | "reports:view"
   | "system:configure";
 

@@ -57,5 +57,21 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   PASSWORD_CHANGED: "Password changed",
   LOGIN_SUCCESS: "Login success",
   LOGIN_FAILED: "Login failed",
-  LOGOUT: "Logout"
+  LOGOUT: "Logout",
+  RECIPE_CREATED: "Recipe created",
+  DRAFT_SAVED: "Recipe draft saved",
+  PUBLISHED: "Recipe published",
+  ARCHIVED: "Recipe archived",
+  RESTORED: "Recipe restored",
+  INGREDIENT_ADDED: "Recipe ingredient added",
+  INGREDIENT_UPDATED: "Recipe ingredient updated",
+  INGREDIENT_REMOVED: "Recipe ingredient removed",
+  STEP_ADDED: "Recipe step added",
+  STEP_UPDATED: "Recipe step updated",
+  STEP_REMOVED: "Recipe step removed",
+  CATEGORY_CREATED: "Recipe category created",
+  CATEGORY_CHANGED: "Recipe category changed",
+  CATEGORY_ARCHIVED: "Recipe category archived",
+  RECIPE_SCOPE_ASSIGNED: "Recipe scope assigned",
+  RECIPE_SCOPE_REMOVED: "Recipe scope removed"
 };

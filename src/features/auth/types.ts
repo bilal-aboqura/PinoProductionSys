@@ -5,7 +5,7 @@ export type LoginInput = {
 
 export type LoginResult =
   | { success: true; redirectTo: "/change-password" | "/dashboard" }
-  | { success: false; error: "INVALID_CREDENTIALS" | "ACCOUNT_INACTIVE" };
+  | { success: false; error: "INVALID_CREDENTIALS" | "ACCOUNT_INACTIVE" | "DATABASE_UNAVAILABLE" };
 
 export type ChangePasswordInput = {
   currentPassword: string;

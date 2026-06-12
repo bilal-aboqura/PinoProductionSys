@@ -35,6 +35,11 @@ export async function AppNav({ locale }: { locale: string }) {
                 {t("inventory")}
               </Link>
             </PermissionGate>
+            <PermissionGate permission="recipes:view">
+              <Link className={linkClass} href={`/${locale}/recipes`}>
+                Recipes
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="reports:view">
               <Link className={linkClass} href={`/${locale}/reports`}>
                 {t("reports")}

@@ -47,17 +47,17 @@ model VerificationToken {
 }
 
 model User {
-  id                 String                @id @default(cuid())
-  username           String                @unique
-  email              String?               @unique
+  id                 String               @id @default(cuid())
+  username           String               @unique
+  email              String?              @unique
   displayName        String
   passwordHash       String
-  mustChangePassword Boolean               @default(false)
-  isActive           Boolean               @default(true)
-  languagePreference String                @default("ar")
+  mustChangePassword Boolean              @default(false)
+  isActive           Boolean              @default(true)
+  languagePreference String               @default("ar")
   lastLoginAt        DateTime?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   accounts           Account[]
   sessions           Session[]
   userRoles          UserRole[]
@@ -65,8 +65,8 @@ model User {
   recipeCategories   UserRecipeCategory[]
   productionLines    UserProductionLine[]
   inventoryAreas     UserInventoryArea[]
-  auditLogsAsActor   AuditLog[]            @relation("AuditActor")
-  auditLogsAsTarget  AuditLog[]            @relation("AuditTarget")
+  auditLogsAsActor   AuditLog[]           @relation("AuditActor")
+  auditLogsAsTarget  AuditLog[]           @relation("AuditTarget")
 
   @@map("users")
 }
@@ -142,9 +142,15 @@ model UserDepartment {
 model RecipeCategory {
   id                   String               @id @default(cuid())
   name                 String               @unique
+  nameAr               String               @default("")
+  nameEn               String               @default("")
+  description          String?
   isActive             Boolean              @default(true)
+  sortOrder            Int                  @default(0)
   createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @default(now()) @updatedAt
   userRecipeCategories UserRecipeCategory[]
+  recipes              Recipe[]
 
   @@map("recipe_categories")
 }
@@ -158,6 +164,118 @@ model UserRecipeCategory {
 
   @@id([userId, recipeCategoryId])
   @@map("user_recipe_categories")
+}
+
+model Recipe {
+  id               String             @id @default(cuid())
+  nameAr           String
+  nameEn           String             @default("")
+  code             String             @unique
+  categoryId       String?
+  category         RecipeCategory?    @relation(fields: [categoryId], references: [id])
+  description      String?
+  status           RecipeStatus       @default(DRAFT)
+  yieldQuantity    Decimal            @default(0) @db.Decimal(10, 3)
+  yieldUnit        YieldUnit          @default(KG)
+  shelfLifeValue   Int                @default(0)
+  shelfLifeUnit    ShelfLifeUnit      @default(DAYS)
+  storageMethod    StorageMethod      @default(ROOM_TEMPERATURE)
+  storageNotes     String?
+  productionNotes  String?
+  version          Int                @default(0)
+  publishedVersion Int                @default(0)
+  publishedAt      DateTime?
+  publishedById    String?
+  createdById      String
+  updatedById      String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  ingredients      RecipeIngredient[]
+  steps            RecipeStep[]
+  versions         RecipeVersion[]
+  assignments      RecipeAssignment[]
+  auditLogs        RecipeAuditLog[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([code])
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id              String   @id @default(cuid())
+  recipeId        String
+  recipe          Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  quantity        Decimal  @db.Decimal(10, 3)
+  unit            String
+  purpose         String?
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([recipeId, sortOrder])
+  @@map("recipe_ingredients")
+}
+
+model RecipeStep {
+  id               String   @id @default(cuid())
+  recipeId         String
+  recipe           Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stepNumber       Int
+  title            String
+  instructions     String
+  estimatedMinutes Int?
+  requiresPhoto    Boolean  @default(false)
+  requiresNotes    Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([recipeId, stepNumber])
+  @@index([recipeId, stepNumber])
+  @@map("recipe_steps")
+}
+
+model RecipeVersion {
+  id            String   @id @default(cuid())
+  recipeId      String
+  recipe        Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  versionNumber Int
+  snapshot      Json
+  publishedById String
+  publishedAt   DateTime @default(now())
+
+  @@unique([recipeId, versionNumber])
+  @@index([recipeId, versionNumber])
+  @@map("recipe_versions")
+}
+
+model RecipeAssignment {
+  id           String    @id @default(cuid())
+  recipeId     String
+  recipe       Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  scopeType    ScopeType
+  scopeId      String
+  assignedById String
+  assignedAt   DateTime  @default(now())
+
+  @@unique([recipeId, scopeType, scopeId])
+  @@index([scopeType, scopeId])
+  @@map("recipe_assignments")
+}
+
+model RecipeAuditLog {
+  id        String      @id @default(cuid())
+  recipeId  String
+  recipe    Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  action    AuditAction
+  actorId   String
+  timestamp DateTime    @default(now())
+  prevValue Json?
+  newValue  Json?
+
+  @@index([recipeId, timestamp])
+  @@map("recipe_audit_logs")
 }
 
 model ProductionLine {
@@ -235,4 +353,54 @@ enum AuditAction {
   LOGIN_SUCCESS
   LOGIN_FAILED
   LOGOUT
+  RECIPE_CREATED
+  DRAFT_SAVED
+  PUBLISHED
+  ARCHIVED
+  RESTORED
+  INGREDIENT_ADDED
+  INGREDIENT_UPDATED
+  INGREDIENT_REMOVED
+  STEP_ADDED
+  STEP_UPDATED
+  STEP_REMOVED
+  CATEGORY_CREATED
+  CATEGORY_CHANGED
+  CATEGORY_ARCHIVED
+  RECIPE_SCOPE_ASSIGNED
+  RECIPE_SCOPE_REMOVED
+}
+
+enum RecipeStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum StorageMethod {
+  REFRIGERATOR
+  FREEZER
+  ROOM_TEMPERATURE
+  CUSTOM
+}
+
+enum YieldUnit {
+  KG
+  GRAM
+  LITER
+  MILLILITER
+  PIECE
+}
+
+enum ShelfLifeUnit {
+  HOURS
+  DAYS
+  WEEKS
+  MONTHS
+}
+
+enum ScopeType {
+  DEPARTMENT
+  PRODUCTION_LINE
+  USER
 }

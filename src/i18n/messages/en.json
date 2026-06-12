@@ -21,6 +21,7 @@
     "loginButton": "Sign in",
     "invalidCredentials": "Invalid username, email, or password.",
     "accountInactive": "This account is inactive.",
+    "databaseUnavailable": "The database is not reachable. Check DATABASE_URL and DIRECT_URL.",
     "changePasswordTitle": "Change password",
     "currentPassword": "Current password",
     "newPassword": "New password",
