@@ -31,7 +31,18 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify compliance with the PinoProductionSys Constitution before proceeding:
+
+- [ ] **I. Simplicity**: No unnecessary abstractions introduced. Complexity justified?
+- [ ] **II. Business First**: Feature has a clear operational benefit for production/warehouse staff?
+- [ ] **III. Traceability**: All production actions capture who/when/what? Audit log planned?
+- [ ] **IV. Consistent UX**: Design follows the established component standards (tables, forms, cards, nav)?
+- [ ] **V. Responsive**: Layout tested on desktop, tablet, and large mobile?
+- [ ] **VI. Performance**: Page load ≤ 3s, interactions ≤ 300ms, pagination for large tables?
+- [ ] **VII. Security**: RBAC applied? Routes protected? Least-privilege enforced?
+- [ ] **VIII. Testing**: Unit, integration, validation, and permission tests planned?
+
+Any violations MUST be documented in the Complexity Tracking table with justification.
 
 ## Project Structure
 
