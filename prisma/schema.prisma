@@ -193,6 +193,7 @@ model Recipe {
   ingredients      RecipeIngredient[]
   steps            RecipeStep[]
   versions         RecipeVersion[]
+  productionOrders ProductionOrder[]
   assignments      RecipeAssignment[]
   auditLogs        RecipeAuditLog[]
 
@@ -237,17 +238,133 @@ model RecipeStep {
 }
 
 model RecipeVersion {
-  id            String   @id @default(cuid())
-  recipeId      String
-  recipe        Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  versionNumber Int
-  snapshot      Json
-  publishedById String
-  publishedAt   DateTime @default(now())
+  id               String            @id @default(cuid())
+  recipeId         String
+  recipe           Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  versionNumber    Int
+  snapshot         Json
+  publishedById    String
+  publishedAt      DateTime          @default(now())
+  productionOrders ProductionOrder[]
 
   @@unique([recipeId, versionNumber])
   @@index([recipeId, versionNumber])
   @@map("recipe_versions")
+}
+
+model ProductionOrder {
+  id                 String                            @id @default(cuid())
+  orderNumber        String                            @unique
+  status             ProductionOrderStatus             @default(PENDING_UNASSIGNED)
+  version            Int                               @default(0)
+  recipeId           String
+  recipe             Recipe                            @relation(fields: [recipeId], references: [id])
+  recipeVersionId    String
+  recipeVersion      RecipeVersion                     @relation(fields: [recipeVersionId], references: [id])
+  recipeNameSnapshot String
+  yieldUnit          String
+  targetQuantity     Decimal?                          @db.Decimal(10, 3)
+  producedQuantity   Decimal?                          @db.Decimal(10, 3)
+  creationNotes      String?
+  createdById        String
+  assignedToId       String?
+  claimedById        String?
+  completedById      String?
+  cancelledById      String?
+  cancellationReason String?
+  cancelledAt        DateTime?
+  createdAt          DateTime                          @default(now())
+  startedAt          DateTime?
+  completedAt        DateTime?
+  durationSeconds    Int?
+  downstreamActions  ProductionOrderDownstreamAction[]
+  steps              ProductionOrderStep[]
+  statusHistory      ProductionOrderStatusHistory[]
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([recipeVersionId])
+  @@index([createdAt])
+  @@map("production_orders")
+}
+
+model ProductionOrderStep {
+  id                String                     @id @default(cuid())
+  orderId           String
+  order             ProductionOrder            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stepNumber        Int
+  title             String
+  instructions      String
+  estimatedMinutes  Int?
+  requiresPhoto     Boolean                    @default(false)
+  requiresNotes     Boolean                    @default(false)
+  requiresQuantity  Boolean                    @default(false)
+  isCompleted       Boolean                    @default(false)
+  completedById     String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  confirmedQuantity Decimal?                   @db.Decimal(10, 3)
+  confirmedUnit     String?
+  photos            ProductionOrderStepPhoto[]
+  notes             ProductionOrderStepNote[]
+
+  @@unique([orderId, stepNumber])
+  @@index([orderId, stepNumber])
+  @@map("production_order_steps")
+}
+
+model ProductionOrderStepPhoto {
+  id           String              @id @default(cuid())
+  stepId       String
+  step         ProductionOrderStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  storagePath  String
+  mimeType     String              @default("image/jpeg")
+  uploadedById String
+  uploadedAt   DateTime            @default(now())
+
+  @@index([stepId])
+  @@map("production_order_step_photos")
+}
+
+model ProductionOrderStepNote {
+  id        String              @id @default(cuid())
+  stepId    String
+  step      ProductionOrderStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  content   String
+  addedById String
+  addedAt   DateTime            @default(now())
+
+  @@index([stepId])
+  @@map("production_order_step_notes")
+}
+
+model ProductionOrderStatusHistory {
+  id          String                 @id @default(cuid())
+  orderId     String
+  order       ProductionOrder        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  ProductionOrderStatus?
+  toStatus    ProductionOrderStatus
+  changedById String
+  reason      String?
+  changedAt   DateTime               @default(now())
+
+  @@index([orderId, changedAt])
+  @@map("production_order_status_history")
+}
+
+model ProductionOrderDownstreamAction {
+  id            String                              @id @default(cuid())
+  orderId       String
+  order         ProductionOrder                     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actionType    ProductionOrderDownstreamActionType
+  referenceId   String?
+  payload       Json?
+  triggeredById String
+  triggeredAt   DateTime                            @default(now())
+
+  @@unique([orderId, actionType])
+  @@index([orderId, triggeredAt])
+  @@map("production_order_downstream_actions")
 }
 
 model RecipeAssignment {
@@ -369,6 +486,30 @@ enum AuditAction {
   CATEGORY_ARCHIVED
   RECIPE_SCOPE_ASSIGNED
   RECIPE_SCOPE_REMOVED
+  PRODUCTION_ORDER_CREATED
+  PRODUCTION_ORDER_ASSIGNED
+  PRODUCTION_ORDER_CLAIMED
+  PRODUCTION_ORDER_STARTED
+  PRODUCTION_ORDER_STEP_COMPLETED
+  PRODUCTION_ORDER_PHOTO_UPLOADED
+  PRODUCTION_ORDER_NOTE_ADDED
+  PRODUCTION_ORDER_QUANTITY_CONFIRMED
+  PRODUCTION_ORDER_COMPLETED
+  PRODUCTION_ORDER_CANCELLED
+}
+
+enum ProductionOrderStatus {
+  PENDING_UNASSIGNED
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ProductionOrderDownstreamActionType {
+  INVENTORY_CONSUMPTION
+  BATCH_RECORD
+  LABEL_PRINT
 }
 
 enum RecipeStatus {

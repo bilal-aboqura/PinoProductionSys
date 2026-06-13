@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { signIn, signOut } from "@/features/auth/lib/auth.config";
 import { logAuditEvent } from "@/features/audit/lib/logger";
+import { clearFastNavUser, setFastNavUser } from "@/lib/fast-nav";
 import { getServerSession } from "@/lib/auth";
 import { db } from "@/server/db";
 import type { ChangePasswordInput, ChangePasswordResult, LoginInput, LoginResult } from "./types";
@@ -50,6 +51,11 @@ export async function login(credentials: LoginInput): Promise<LoginResult> {
       redirect: false
     });
 
+    const navUser = await setFastNavUser(user.id);
+    if (!navUser) {
+      return { success: false, error: "INVALID_CREDENTIALS" };
+    }
+
     await logAuditEvent({
       actorId: user.id,
       actorName: user.displayName,
@@ -58,7 +64,7 @@ export async function login(credentials: LoginInput): Promise<LoginResult> {
       action: "LOGIN_SUCCESS"
     });
 
-    return { success: true, redirectTo: user.mustChangePassword ? "/change-password" : "/dashboard" };
+    return { success: true, redirectTo: user.mustChangePassword ? "/change-password" : "/dashboard", user: navUser };
   } catch (error) {
     if (error instanceof AuthError) {
       await logAuditEvent({
@@ -86,6 +92,7 @@ export async function logout(locale = "ar") {
   });
 
   await signOut({ redirect: false });
+  await clearFastNavUser();
   redirect(`/${locale}/login`);
 }
 

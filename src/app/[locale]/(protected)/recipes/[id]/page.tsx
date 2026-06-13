@@ -10,7 +10,7 @@ import { PublishButton } from "@/components/recipes/PublishButton";
 import { ArchiveDialog } from "@/components/recipes/ArchiveDialog";
 import { ScopeAssignmentPanel } from "@/components/recipes/ScopeAssignmentPanel";
 import { getRecipe, listRecipeCategories } from "@/features/recipes/actions";
-import { getServerSession } from "@/lib/auth";
+import { getFastNavUser } from "@/lib/fast-nav";
 import { ARCHIVE_RECIPES, MANAGE_RECIPE_SCOPE, PUBLISH_RECIPES, VIEW_VERSION_HISTORY } from "@/lib/permissions";
 
 export default async function RecipeDetailPage({
@@ -19,7 +19,8 @@ export default async function RecipeDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const session = await getServerSession();
+  const user = await getFastNavUser();
+  const permissions = new Set(user?.permissions ?? []);
   const [recipeResult, categoriesResult] = await Promise.all([getRecipe(id), listRecipeCategories()]);
   if (!recipeResult.success) {
     if (recipeResult.code === "UNAUTHORIZED") return <AccessDenied locale={locale} />;
@@ -42,7 +43,7 @@ export default async function RecipeDetailPage({
           <p className="font-inter text-secondary">{recipe.nameEn || recipe.code}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {session.user.permissions.includes(VIEW_VERSION_HISTORY) ? (
+          {permissions.has(VIEW_VERSION_HISTORY) ? (
             <>
               <Link href={`/${locale}/recipes/${recipe.id}/versions`}>
                 <Button variant="secondary">Versions</Button>
@@ -52,7 +53,7 @@ export default async function RecipeDetailPage({
               </Link>
             </>
           ) : null}
-          {session.user.permissions.includes(ARCHIVE_RECIPES) ? <ArchiveDialog recipeId={recipe.id} status={recipe.status} /> : null}
+          {permissions.has(ARCHIVE_RECIPES) ? <ArchiveDialog recipeId={recipe.id} status={recipe.status} /> : null}
         </div>
       </div>
 
@@ -61,11 +62,10 @@ export default async function RecipeDetailPage({
       </div>
       <IngredientEditor recipeId={recipe.id} version={recipe.version} ingredients={recipe.ingredients} />
       <StepEditor recipeId={recipe.id} version={recipe.version} steps={recipe.steps} />
-      {session.user.permissions.includes(PUBLISH_RECIPES) ? <PublishButton recipeId={recipe.id} version={recipe.version} /> : null}
-      {session.user.permissions.includes(MANAGE_RECIPE_SCOPE) ? (
+      {permissions.has(PUBLISH_RECIPES) ? <PublishButton recipeId={recipe.id} version={recipe.version} /> : null}
+      {permissions.has(MANAGE_RECIPE_SCOPE) ? (
         <ScopeAssignmentPanel recipeId={recipe.id} assignments={recipe.assignments} />
       ) : null}
     </section>
   );
 }
-

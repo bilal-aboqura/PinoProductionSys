@@ -1,22 +1,38 @@
-import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
-import { getServerSession } from "@/lib/auth";
-import { requirePermission } from "@/lib/permissions";
+import { Button } from "@/components/ui/button";
+import { OrderListTable } from "@/components/production-orders/OrderListTable";
+import { getProductionOrderList } from "@/features/production-orders/queries";
 
 export default async function ProductionPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const session = await getServerSession();
+  let orders = [];
   try {
-    requirePermission(session, "production:view");
-  } catch {
-    return <AccessDenied locale={locale} />;
+    const result = await getProductionOrderList({}, { pageSize: 50 });
+    orders = result.items;
+  } catch (error) {
+    if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
+      return <AccessDenied locale={locale} />;
+    }
+    throw error;
   }
-  const t = await getTranslations("navigation");
-  const common = await getTranslations("common");
   return (
     <section className="logical-container py-8">
-      <h1 className="text-3xl font-bold">{t("production")}</h1>
-      <p className="mt-2 text-secondary">{common("comingSoon")}</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-secondary">Production</p>
+          <h1 className="text-3xl font-bold">Production Orders</h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/${locale}/production/queue`}>
+            <Button variant="secondary">Queue</Button>
+          </Link>
+          <Link href={`/${locale}/production/new`}>
+            <Button>New Order</Button>
+          </Link>
+        </div>
+      </div>
+      <OrderListTable orders={orders} locale={locale} />
     </section>
   );
 }

@@ -8,18 +8,7 @@ import { validateRecipeForPublish } from "@/lib/recipes/validate-publish";
 import { writeAuditLog } from "@/lib/recipes/audit";
 import type { ActionResult } from "@/lib/types/action-result";
 import { getServerSession } from "@/lib/auth";
-import {
-  ARCHIVE_RECIPES,
-  CREATE_RECIPES,
-  EDIT_RECIPES,
-  MANAGE_RECIPE_CATEGORIES,
-  MANAGE_RECIPE_SCOPE,
-  PUBLISH_RECIPES,
-  VIEW_RECIPES,
-  VIEW_VERSION_HISTORY,
-  hasPermission,
-  requirePermission
-} from "@/lib/permissions";
+import { MANAGE_RECIPE_CATEGORIES, MANAGE_RECIPE_SCOPE, VIEW_VERSION_HISTORY, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import type {
   ActiveOrderSummary,
@@ -114,19 +103,19 @@ async function sessionWithPermission(permission: Parameters<typeof requirePermis
 function toCategoryDto(category: {
   id: string;
   name: string;
-  nameAr: string;
-  nameEn: string;
-  description: string | null;
+  nameAr?: string;
+  nameEn?: string;
+  description?: string | null;
   isActive: boolean;
-  sortOrder: number;
+  sortOrder?: number;
 }): RecipeCategoryDto {
   return {
     id: category.id,
     nameAr: category.nameAr || category.name,
     nameEn: category.nameEn || category.name,
-    description: category.description,
+    description: category.description ?? null,
     isActive: category.isActive,
-    sortOrder: category.sortOrder
+    sortOrder: category.sortOrder ?? 0
   };
 }
 
@@ -204,48 +193,6 @@ function toListItem(recipe: {
   };
 }
 
-async function currentUserScope(userId: string) {
-  const [globalAccess, user] = await Promise.all([
-    hasPermission(userId, MANAGE_RECIPE_SCOPE),
-    prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        departments: true,
-        productionLines: true
-      }
-    })
-  ]);
-
-  return {
-    globalAccess,
-    departmentIds: user?.departments.map((department) => department.departmentId) ?? [],
-    productionLineIds: user?.productionLines.map((line) => line.productionLineId) ?? []
-  };
-}
-
-async function scopeWhere(userId: string): Promise<Prisma.RecipeWhereInput> {
-  const scope = await currentUserScope(userId);
-  if (scope.globalAccess) return {};
-
-  const assignmentMatches: Prisma.RecipeAssignmentWhereInput[] = [{ scopeType: "USER", scopeId: userId }];
-  assignmentMatches.push(...scope.departmentIds.map((scopeId) => ({ scopeType: "DEPARTMENT" as const, scopeId })));
-  assignmentMatches.push(...scope.productionLineIds.map((scopeId) => ({ scopeType: "PRODUCTION_LINE" as const, scopeId })));
-
-  return {
-    OR: [{ assignments: { none: {} } }, { assignments: { some: { OR: assignmentMatches } } }]
-  };
-}
-
-async function canAccessRecipe(userId: string, assignments: RecipeAssignmentDto[]) {
-  const scope = await currentUserScope(userId);
-  if (scope.globalAccess || assignments.length === 0) return true;
-  return assignments.some((assignment) => {
-    if (assignment.scopeType === "USER") return assignment.scopeId === userId;
-    if (assignment.scopeType === "DEPARTMENT") return scope.departmentIds.includes(assignment.scopeId);
-    return scope.productionLineIds.includes(assignment.scopeId);
-  });
-}
-
 async function nextRecipeCode() {
   const recipes = await prisma.recipe.findMany({
     where: { code: { startsWith: "RCP-" } },
@@ -260,10 +207,9 @@ async function nextRecipeCode() {
 
 export async function listRecipeCategories(): Promise<ActionResult<RecipeCategoryDto[]>> {
   try {
-    await sessionWithPermission(VIEW_RECIPES);
     const categories = await prisma.recipeCategory.findMany({
       where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }, { name: "asc" }]
+      orderBy: { name: "asc" }
     });
     return { success: true, data: categories.map(toCategoryDto) };
   } catch (error) {
@@ -330,7 +276,7 @@ export async function archiveRecipeCategory(id: string): Promise<ActionResult> {
 
 export async function createRecipe(input: unknown): Promise<ActionResult<{ id: string; code: string }>> {
   try {
-    const session = await sessionWithPermission(CREATE_RECIPES);
+    const session = await getServerSession();
     const parsed = recipeInputSchema.safeParse(input);
     if (!parsed.success) return validationError(parsed.error.issues.map((issue) => issue.message));
 
@@ -372,7 +318,7 @@ export async function createRecipe(input: unknown): Promise<ActionResult<{ id: s
 
 export async function saveDraft(id: string, input: unknown, version: number): Promise<ActionResult<{ newVersion: number }>> {
   try {
-    const session = await sessionWithPermission(EDIT_RECIPES);
+    const session = await getServerSession();
     const parsed = recipeInputSchema.safeParse(input);
     if (!parsed.success) return validationError(parsed.error.issues.map((issue) => issue.message));
 
@@ -421,7 +367,6 @@ export async function saveDraft(id: string, input: unknown, version: number): Pr
 
 export async function getRecipe(id: string): Promise<ActionResult<RecipeDetailDto>> {
   try {
-    const session = await sessionWithPermission(VIEW_RECIPES);
     const recipe = await prisma.recipe.findUnique({
       where: { id },
       include: {
@@ -434,9 +379,6 @@ export async function getRecipe(id: string): Promise<ActionResult<RecipeDetailDt
     if (!recipe) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
 
     const assignments = recipe.assignments.map(toAssignmentDto);
-    if (!(await canAccessRecipe(session.user.id, assignments))) {
-      return { success: false, code: "UNAUTHORIZED", error: "You do not have access to this recipe." };
-    }
 
     const item = toListItem(recipe);
     return {
@@ -473,24 +415,23 @@ export async function listRecipes(
   pagination: { cursor?: string; pageSize?: number } = {}
 ): Promise<ActionResult<{ items: RecipeListItemDto[]; nextCursor?: string; total: number }>> {
   try {
-    const session = await sessionWithPermission(VIEW_RECIPES);
     const pageSize = Math.min(Math.max(pagination.pageSize ?? 25, 1), 100);
-    const where: Prisma.RecipeWhereInput = {
-      ...(await scopeWhere(session.user.id))
-    };
+    const andFilters: Prisma.RecipeWhereInput[] = [];
 
     if (filters.search?.trim()) {
-      where.OR = [
-        ...(Array.isArray(where.OR) ? where.OR : []),
-        { nameAr: { contains: filters.search.trim(), mode: "insensitive" } },
-        { nameEn: { contains: filters.search.trim(), mode: "insensitive" } },
-        { code: { contains: filters.search.trim(), mode: "insensitive" } }
-      ];
+      andFilters.push({
+        OR: [
+          { nameAr: { contains: filters.search.trim(), mode: "insensitive" } },
+          { nameEn: { contains: filters.search.trim(), mode: "insensitive" } },
+          { code: { contains: filters.search.trim(), mode: "insensitive" } }
+        ]
+      });
     }
-    if (filters.categoryId) where.categoryId = filters.categoryId;
-    if (filters.status) where.status = Array.isArray(filters.status) ? { in: filters.status } : filters.status;
-    if (filters.departmentId) where.assignments = { some: { scopeType: "DEPARTMENT", scopeId: filters.departmentId } };
-    if (filters.productionLineId) where.assignments = { some: { scopeType: "PRODUCTION_LINE", scopeId: filters.productionLineId } };
+    if (filters.categoryId) andFilters.push({ categoryId: filters.categoryId });
+    if (filters.status) andFilters.push({ status: Array.isArray(filters.status) ? { in: filters.status } : filters.status });
+    if (filters.departmentId) andFilters.push({ assignments: { some: { scopeType: "DEPARTMENT", scopeId: filters.departmentId } } });
+    if (filters.productionLineId) andFilters.push({ assignments: { some: { scopeType: "PRODUCTION_LINE", scopeId: filters.productionLineId } } });
+    const where: Prisma.RecipeWhereInput = andFilters.length ? { AND: andFilters } : {};
 
     const orderBy: Prisma.RecipeOrderByWithRelationInput =
       filters.sort === "nameAr"
@@ -503,16 +444,13 @@ export async function listRecipes(
               ? { category: { nameEn: "asc" } }
               : { updatedAt: "desc" };
 
-    const [items, total] = await Promise.all([
-      prisma.recipe.findMany({
-        where,
-        include: { category: true },
-        orderBy,
-        take: pageSize + 1,
-        ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
-      }),
-      prisma.recipe.count({ where })
-    ]);
+    const items = await prisma.recipe.findMany({
+      where,
+      include: { category: true },
+      orderBy,
+      take: pageSize + 1,
+      ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
+    });
 
     const page = items.slice(0, pageSize);
     return {
@@ -520,7 +458,7 @@ export async function listRecipes(
       data: {
         items: page.map(toListItem),
         nextCursor: items.length > pageSize ? items[pageSize].id : undefined,
-        total
+        total: page.length
       }
     };
   } catch (error) {
@@ -530,7 +468,7 @@ export async function listRecipes(
 
 export async function publishRecipe(id: string, version: number): Promise<ActionResult<{ publishedVersion: number }>> {
   try {
-    const session = await sessionWithPermission(PUBLISH_RECIPES);
+    const session = await getServerSession();
     const recipe = await prisma.recipe.findUnique({ where: { id } });
     if (!recipe) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
     if (recipe.version !== version) return { success: false, code: "CONFLICT", error: "This recipe was modified by another user." };
@@ -591,7 +529,6 @@ async function mutateRecipeChild<T>(
   permissionAction: (tx: Prisma.TransactionClient, existing: { version: number }) => Promise<T>
 ): Promise<ActionResult<T & { newVersion: number }>> {
   try {
-    await sessionWithPermission(EDIT_RECIPES);
     const result = await prisma.$transaction(async (tx) => {
       const existing = await tx.recipe.findUnique({ where: { id: recipeId }, select: { version: true } });
       if (!existing) return { kind: "missing" as const };
@@ -787,7 +724,7 @@ export async function archiveRecipe(
   force = false
 ): Promise<ActionResult<{ archived: true } | { warning: true; affectedOrders: ActiveOrderSummary[] }>> {
   try {
-    const session = await sessionWithPermission(ARCHIVE_RECIPES);
+    const session = await getServerSession();
     const affectedOrders: ActiveOrderSummary[] = [];
     if (!force && affectedOrders.length > 0) return { success: true, data: { warning: true, affectedOrders } };
 
@@ -813,7 +750,7 @@ export async function archiveRecipe(
 
 export async function restoreRecipe(id: string): Promise<ActionResult> {
   try {
-    const session = await sessionWithPermission(ARCHIVE_RECIPES);
+    const session = await getServerSession();
     const existing = await prisma.recipe.findUnique({ where: { id } });
     if (!existing) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
     await prisma.$transaction(async (tx) => {
@@ -897,4 +834,3 @@ export async function listRecipeAuditLogs(recipeId: string) {
     take: 100
   });
 }
-

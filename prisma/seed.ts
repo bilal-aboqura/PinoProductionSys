@@ -16,6 +16,14 @@ const permissions = [
   ["production:execute", "Execute Production Steps", "production", "execute"],
   ["production:approve", "Approve Production Actions", "production", "approve"],
   ["production:reject", "Reject Production Actions", "production", "reject"],
+  ["production-orders:view", "View Production Orders", "production-orders", "view"],
+  ["production-orders:create", "Create Production Orders", "production-orders", "create"],
+  ["production-orders:assign", "Assign Production Orders", "production-orders", "assign"],
+  ["production-orders:claim", "Claim Production Orders", "production-orders", "claim"],
+  ["production-orders:execute", "Execute Production Orders", "production-orders", "execute"],
+  ["production-orders:complete", "Complete Production Orders", "production-orders", "complete"],
+  ["production-orders:cancel", "Cancel Production Orders", "production-orders", "cancel"],
+  ["production-orders:view_all", "View All Production Orders", "production-orders", "view_all"],
   ["inventory:view", "View Inventory", "inventory", "view"],
   ["inventory:manage", "Manage Inventory Transactions", "inventory", "manage"],
   ["inventory:approve", "Approve Inventory Actions", "inventory", "approve"],
@@ -37,6 +45,12 @@ const rolePermissions: Record<string, string[]> = {
     "production:view",
     "production:approve",
     "production:reject",
+    "production-orders:view",
+    "production-orders:view_all",
+    "production-orders:create",
+    "production-orders:assign",
+    "production-orders:complete",
+    "production-orders:cancel",
     "inventory:view",
     "inventory:approve",
     "recipes:create",
@@ -46,7 +60,14 @@ const rolePermissions: Record<string, string[]> = {
     "recipes:view_versions",
     "reports:view"
   ],
-  production_staff: ["production:view", "production:execute", "recipes:view"],
+  production_staff: [
+    "production:view",
+    "production:execute",
+    "production-orders:view",
+    "production-orders:claim",
+    "production-orders:execute",
+    "recipes:view"
+  ],
   warehouse_staff: ["inventory:view", "inventory:manage", "recipes:view"]
 };
 

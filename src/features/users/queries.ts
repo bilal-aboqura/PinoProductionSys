@@ -59,22 +59,53 @@ export async function getUserList(filters?: {
     ...(filters?.roleId ? { userRoles: { some: { roleId: filters.roleId } } } : {})
   };
 
-  const [users, total] = await Promise.all([
-    db.user.findMany({
-      where,
-      include: userSummaryInclude,
-      orderBy: { [filters?.sort ?? "createdAt"]: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize
-    }),
-    db.user.count({ where })
-  ]);
+  const users = await db.user.findMany({
+    where,
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      displayName: true,
+      isActive: true,
+      mustChangePassword: true,
+      languagePreference: true,
+      createdAt: true,
+      lastLoginAt: true,
+      userRoles: {
+        include: { role: true },
+        take: 1
+      }
+    },
+    orderBy: { [filters?.sort ?? "createdAt"]: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize
+  });
 
   return {
-    users: users.map(toUserSummary),
-    total,
+    users: users.map((user) => {
+      const role = user.userRoles[0]?.role ?? null;
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        isActive: user.isActive,
+        mustChangePassword: user.mustChangePassword,
+        languagePreference: user.languagePreference,
+        role: role ? { id: role.id, name: role.name, displayName: role.displayName } : null,
+        scopes: {
+          departments: [],
+          recipeCategories: [],
+          productionLines: [],
+          inventoryAreas: []
+        },
+        createdAt: user.createdAt.toISOString(),
+        lastLoginAt: user.lastLoginAt?.toISOString() ?? null
+      };
+    }),
+    total: users.length,
     page,
-    totalPages: Math.max(1, Math.ceil(total / pageSize))
+    totalPages: 1
   };
 }
 

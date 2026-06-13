@@ -24,8 +24,8 @@ export function LoginForm() {
     startTransition(async () => {
       const result = await login({ identifier, password });
       if (result.success) {
+        window.localStorage.setItem("pino_nav", JSON.stringify(result.user));
         router.push(`/${locale}${result.redirectTo}`);
-        router.refresh();
         return;
       }
 

@@ -3,7 +3,59 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "@/server/db";
-import { resolvePermissions } from "@/features/permissions/lib/resolver";
+import type { PermissionCode } from "@/features/permissions/types";
+
+async function loadSessionClaims(userId: string) {
+  const dbUser = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      email: true,
+      mustChangePassword: true,
+      isActive: true,
+      languagePreference: true,
+      userRoles: {
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                include: {
+                  permission: true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!dbUser) return null;
+
+  const primaryRole = dbUser.userRoles[0]?.role ?? null;
+  const permissions = Array.from(
+    new Set(
+      dbUser.userRoles.flatMap((userRole) =>
+        userRole.role.rolePermissions.map((rolePermission) => rolePermission.permission.code as PermissionCode)
+      )
+    )
+  );
+
+  return {
+    id: dbUser.id,
+    email: dbUser.email,
+    username: dbUser.username,
+    displayName: dbUser.displayName,
+    role: primaryRole?.name ?? null,
+    roleDisplayName: primaryRole?.displayName ?? null,
+    permissions,
+    mustChangePassword: dbUser.mustChangePassword,
+    isActive: dbUser.isActive,
+    languagePreference: dbUser.languagePreference
+  };
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -32,7 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await db.user.findFirst({
           where: {
             OR: [{ username: { equals: identifier, mode: "insensitive" } }, { email: { equals: identifier, mode: "insensitive" } }]
-          }
+          },
+          select: { id: true, passwordHash: true, isActive: true }
         });
 
         if (!user || !user.isActive) {
@@ -49,15 +102,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           data: { lastLoginAt: new Date() }
         });
 
+        const claims = await loadSessionClaims(user.id);
+        if (!claims) return null;
+
         return {
-          id: user.id,
-          email: user.email,
-          name: user.displayName,
-          username: user.username,
-          displayName: user.displayName,
-          mustChangePassword: user.mustChangePassword,
-          isActive: user.isActive,
-          languagePreference: user.languagePreference
+          id: claims.id,
+          email: claims.email,
+          name: claims.displayName,
+          username: claims.username,
+          displayName: claims.displayName,
+          role: claims.role,
+          roleDisplayName: claims.roleDisplayName,
+          permissions: claims.permissions,
+          mustChangePassword: claims.mustChangePassword,
+          isActive: claims.isActive,
+          languagePreference: claims.languagePreference
         };
       }
     })
@@ -66,35 +125,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = user.id;
+        token.username = user.username;
+        token.displayName = user.displayName;
+        token.role = user.role;
+        token.roleDisplayName = user.roleDisplayName;
+        token.permissions = user.permissions ?? [];
+        token.mustChangePassword = user.mustChangePassword;
+        token.isActive = user.isActive;
+        token.languagePreference = user.languagePreference;
+      } else if (token.sub && !token.permissions) {
+        const claims = await loadSessionClaims(token.sub);
+        if (claims) {
+          token.username = claims.username;
+          token.displayName = claims.displayName;
+          token.role = claims.role;
+          token.roleDisplayName = claims.roleDisplayName;
+          token.permissions = claims.permissions;
+          token.mustChangePassword = claims.mustChangePassword;
+          token.isActive = claims.isActive;
+          token.languagePreference = claims.languagePreference;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token.sub) {
-        const dbUser = await db.user.findUnique({
-          where: { id: token.sub },
-          include: {
-            userRoles: {
-              include: {
-                role: true
-              },
-              take: 1
-            }
-          }
-        });
-
-        if (dbUser) {
-          const role = dbUser.userRoles[0]?.role ?? null;
-          session.user.id = dbUser.id;
-          session.user.username = dbUser.username;
-          session.user.displayName = dbUser.displayName;
-          session.user.role = role?.name ?? null;
-          session.user.roleDisplayName = role?.displayName ?? null;
-          session.user.permissions = await resolvePermissions(dbUser.id);
-          session.user.mustChangePassword = dbUser.mustChangePassword;
-          session.user.isActive = dbUser.isActive;
-          session.user.languagePreference = dbUser.languagePreference;
-        }
+        const permissions = Array.isArray(token.permissions) ? (token.permissions as PermissionCode[]) : [];
+        session.user.id = token.sub;
+        session.user.username = typeof token.username === "string" ? token.username : "";
+        session.user.displayName =
+          typeof token.displayName === "string" ? token.displayName : typeof session.user.name === "string" ? session.user.name : "";
+        session.user.role = typeof token.role === "string" ? token.role : null;
+        session.user.roleDisplayName = typeof token.roleDisplayName === "string" ? token.roleDisplayName : null;
+        session.user.permissions = permissions;
+        session.user.mustChangePassword = Boolean(token.mustChangePassword);
+        session.user.isActive = token.isActive !== false;
+        session.user.languagePreference = typeof token.languagePreference === "string" ? token.languagePreference : "ar";
       }
 
       return session;
