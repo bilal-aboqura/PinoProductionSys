@@ -17,26 +17,26 @@
 
 **Purpose**: Database schema migration and shared inventory feature scaffolding — no user story work can begin until this phase is complete.
 
-- [ ] T001 Rename Prisma model `InventoryArea` → `Warehouse` (@@map: `warehouses`) and `UserInventoryArea` → `UserWarehouse` (@@map: `user_warehouses`) in `prisma/schema.prisma`
-- [ ] T002 Add new Prisma enum `ItemType` (RAW_MATERIAL, FINISHED_PRODUCT) and extend existing `Unit` enum if absent in `prisma/schema.prisma`
-- [ ] T003 [P] Add Prisma model `InventoryCategory` with fields: id, name, description, timestamps in `prisma/schema.prisma`
-- [ ] T004 [P] Add Prisma model `InventoryItem` with fields: id, code, nameAr, nameEn, itemType, categoryId, unit, minStockLevel, isActive, timestamps, and relations in `prisma/schema.prisma`
-- [ ] T005 [P] Add Prisma model `InventoryBalance` with fields: id, warehouseId, inventoryItemId, currentQuantity, reservedQuantity, availableQuantity, timestamps, and unique constraint in `prisma/schema.prisma`
-- [ ] T006 [P] Add Prisma model `StockMovement` with fields: id, timestamp, userId, warehouseId, inventoryItemId, quantityDelta, movementType (enum MovementType), sourceRefId in `prisma/schema.prisma`
-- [ ] T007 [P] Add Prisma model `InventoryTransfer` with fields: id, userId, itemId, sourceWhId, destWhId, quantity, timestamp, notes in `prisma/schema.prisma`
-- [ ] T008 [P] Add Prisma model `InventoryAdjustment` with fields: id, userId, warehouseId, inventoryItemId, quantityDelta, reason (enum AdjustmentReason), notes, timestamp in `prisma/schema.prisma`
-- [ ] T009 [P] Add Prisma model `InventoryWasteRecord` with fields: id, userId, warehouseId, inventoryItemId, quantity, reason (enum WasteReason), notes, timestamp in `prisma/schema.prisma`
-- [ ] T010 [P] Add Prisma model `InventoryConsumptionLog` with fields: id, productionOrderId, warehouseId, inventoryItemId, quantityConsumed, timestamp in `prisma/schema.prisma`
-- [ ] T011 [P] Add Prisma model `InventoryOutputLog` with fields: id, productionOrderId, warehouseId, inventoryItemId, quantityProduced, timestamp in `prisma/schema.prisma`
-- [ ] T012 [P] Add Prisma model `InventoryAuditLog` with fields: id, timestamp, actorId, action, targetId, previousValue (Json?), newValue (Json?) in `prisma/schema.prisma`
-- [ ] T013 Generate and apply Prisma migration: `npx prisma migrate dev --name inventory-management-initial`
-- [ ] T014 Regenerate Prisma client: `npx prisma generate`
-- [ ] T015 [P] Seed default `InventoryCategory` entries (Dry Goods, Liquids, Dairy, Vegetables, Packaging, Prepped Foods) in `prisma/seed.ts`
-- [ ] T016 [P] Add inventory permissions to seed data: `inventory:view`, `inventory:manage`, `inventory:adjust`, `inventory:transfer` in `prisma/seed.ts`
-- [ ] T017 Create feature directory scaffold: `src/features/inventory/` with empty files `actions.ts`, `queries.ts`, `types.ts`, `validation.ts`
-- [ ] T018 [P] Create shared `ActionResult<T>` type and error code constants in `src/features/inventory/types.ts`
-- [ ] T019 [P] Implement unit conversion utility `convertUnit(value, from, to)` with weight/volume/piece conversions in `src/features/inventory/lib/unit-converter.ts`
-- [ ] T020 [P] Implement warehouse-scope guard helper `assertUserWarehouseAccess(userId, warehouseId)` in `src/features/inventory/lib/warehouse-access.ts`
+- [X] T001 Rename Prisma model `InventoryArea` → `Warehouse` (@@map: `warehouses`) and `UserInventoryArea` → `UserWarehouse` (@@map: `user_warehouses`) in `prisma/schema.prisma`
+- [X] T002 Add new Prisma enum `ItemType` (RAW_MATERIAL, FINISHED_PRODUCT) and extend existing `Unit` enum if absent in `prisma/schema.prisma`
+- [X] T003 [P] Add Prisma model `InventoryCategory` with fields: id, name, description, timestamps in `prisma/schema.prisma`
+- [X] T004 [P] Add Prisma model `InventoryItem` with fields: id, code, nameAr, nameEn, itemType, categoryId, unit, minStockLevel, isActive, timestamps, and relations in `prisma/schema.prisma`
+- [X] T005 [P] Add Prisma model `InventoryBalance` with fields: id, warehouseId, inventoryItemId, currentQuantity, reservedQuantity, availableQuantity, timestamps, and unique constraint in `prisma/schema.prisma`
+- [X] T006 [P] Add Prisma model `StockMovement` with fields: id, timestamp, userId, warehouseId, inventoryItemId, quantityDelta, movementType (enum MovementType), sourceRefId in `prisma/schema.prisma`
+- [X] T007 [P] Add Prisma model `InventoryTransfer` with fields: id, userId, itemId, sourceWhId, destWhId, quantity, timestamp, notes in `prisma/schema.prisma`
+- [X] T008 [P] Add Prisma model `InventoryAdjustment` with fields: id, userId, warehouseId, inventoryItemId, quantityDelta, reason (enum AdjustmentReason), notes, timestamp in `prisma/schema.prisma`
+- [X] T009 [P] Add Prisma model `InventoryWasteRecord` with fields: id, userId, warehouseId, inventoryItemId, quantity, reason (enum WasteReason), notes, timestamp in `prisma/schema.prisma`
+- [X] T010 [P] Add Prisma model `InventoryConsumptionLog` with fields: id, productionOrderId, warehouseId, inventoryItemId, quantityConsumed, timestamp in `prisma/schema.prisma`
+- [X] T011 [P] Add Prisma model `InventoryOutputLog` with fields: id, productionOrderId, warehouseId, inventoryItemId, quantityProduced, timestamp in `prisma/schema.prisma`
+- [X] T012 [P] Add Prisma model `InventoryAuditLog` with fields: id, timestamp, actorId, action, targetId, previousValue (Json?), newValue (Json?) in `prisma/schema.prisma`
+- [X] T013 Generate and apply Prisma migration: `npx prisma migrate dev --name inventory-management-initial`
+- [X] T014 Regenerate Prisma client: `npx prisma generate`
+- [X] T015 [P] Seed default `InventoryCategory` entries (Dry Goods, Liquids, Dairy, Vegetables, Packaging, Prepped Foods) in `prisma/seed.ts`
+- [X] T016 [P] Add inventory permissions to seed data: `inventory:view`, `inventory:manage`, `inventory:adjust`, `inventory:transfer` in `prisma/seed.ts`
+- [X] T017 Create feature directory scaffold: `src/features/inventory/` with empty files `actions.ts`, `queries.ts`, `types.ts`, `validation.ts`
+- [X] T018 [P] Create shared `ActionResult<T>` type and error code constants in `src/features/inventory/types.ts`
+- [X] T019 [P] Implement unit conversion utility `convertUnit(value, from, to)` with weight/volume/piece conversions in `src/features/inventory/lib/unit-converter.ts`
+- [X] T020 [P] Implement warehouse-scope guard helper `assertUserWarehouseAccess(userId, warehouseId)` in `src/features/inventory/lib/warehouse-access.ts`
 
 **Checkpoint**: Schema migrated, Prisma client updated, feature directory and shared utilities created — user story work can begin.
 
@@ -48,12 +48,12 @@
 
 **⚠️ CRITICAL**: No user story UI work can begin until this phase is complete.
 
-- [ ] T021 Implement `getWarehouses()` query (all active warehouses) in `src/features/inventory/queries.ts`
-- [ ] T022 [P] Implement `getInventoryItems()` query (filterable by type, category, isActive) in `src/features/inventory/queries.ts`
-- [ ] T023 [P] Implement `getInventoryBalance(warehouseId, itemId)` query returning current/reserved/available quantities in `src/features/inventory/queries.ts`
-- [ ] T024 [P] Implement `getInventoryBalances(filters)` paginated query (filterable by warehouse, search, type, low-stock) in `src/features/inventory/queries.ts`
-- [ ] T025 [P] Implement `getStockMovementHistory(filters)` paginated query (filterable by item, warehouse, date range, type) in `src/features/inventory/queries.ts`
-- [ ] T026 [P] Define Zod schemas for all Server Action inputs (CreateItemInput, TransferInput, AdjustmentInput, WasteInput) in `src/features/inventory/validation.ts`
+- [X] T021 Implement `getWarehouses()` query (all active warehouses) in `src/features/inventory/queries.ts`
+- [X] T022 [P] Implement `getInventoryItems()` query (filterable by type, category, isActive) in `src/features/inventory/queries.ts`
+- [X] T023 [P] Implement `getInventoryBalance(warehouseId, itemId)` query returning current/reserved/available quantities in `src/features/inventory/queries.ts`
+- [X] T024 [P] Implement `getInventoryBalances(filters)` paginated query (filterable by warehouse, search, type, low-stock) in `src/features/inventory/queries.ts`
+- [X] T025 [P] Implement `getStockMovementHistory(filters)` paginated query (filterable by item, warehouse, date range, type) in `src/features/inventory/queries.ts`
+- [X] T026 [P] Define Zod schemas for all Server Action inputs (CreateItemInput, TransferInput, AdjustmentInput, WasteInput) in `src/features/inventory/validation.ts`
 
 **Checkpoint**: Queries and validation ready — UI and Server Action implementation can begin for all user stories.
 
@@ -67,18 +67,18 @@
 
 ### Implementation
 
-- [ ] T027 [P] [US1] Implement `createInventoryItem(input)` Server Action with RBAC (Admin/InventoryManager) and Zod validation in `src/features/inventory/actions.ts`
-- [ ] T028 [P] [US1] Implement `updateInventoryItem(id, input)` Server Action with RBAC in `src/features/inventory/actions.ts`
-- [ ] T029 [P] [US1] Implement `deactivateInventoryItem(id)` Server Action with soft-delete check (blocks hard-delete if movements exist) in `src/features/inventory/actions.ts`
-- [ ] T030 [P] [US1] Implement `createWarehouse(input)` Server Action with unique code/name validation in `src/features/inventory/actions.ts`
-- [ ] T031 [P] [US1] Implement `deactivateWarehouse(id)` Server Action with soft-delete protection in `src/features/inventory/actions.ts`
-- [ ] T032 [P] [US1] Implement `createInventoryCategory(input)` and `getInventoryCategories()` in `src/features/inventory/actions.ts`
-- [ ] T033 [US1] Create inventory catalog list page with filterable shadcn/ui DataTable (columns: code, nameEn, nameAr, type, category, unit, minStock, status) in `src/app/[locale]/(protected)/inventory/items/page.tsx`
-- [ ] T034 [US1] Create inventory item create/edit drawer or dialog form (fields: code, nameAr, nameEn, itemType, category, unit, minStockLevel) in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx`
-- [ ] T035 [US1] Create warehouse management list page with shadcn/ui DataTable (columns: code, name, description, status) in `src/app/[locale]/(protected)/inventory/warehouses/page.tsx`
-- [ ] T036 [US1] Create warehouse create/edit form dialog (fields: code, name, description) in `src/app/[locale]/(protected)/inventory/warehouses/_components/WarehouseForm.tsx`
-- [ ] T037 [US1] Add `inventory:manage` permission gate to item and warehouse mutation forms in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx` and `WarehouseForm.tsx`
-- [ ] T038 [US1] Write audit log entries for item and warehouse create/update/deactivate in `src/features/inventory/actions.ts`
+- [X] T027 [P] [US1] Implement `createInventoryItem(input)` Server Action with RBAC (Admin/InventoryManager) and Zod validation in `src/features/inventory/actions.ts`
+- [X] T028 [P] [US1] Implement `updateInventoryItem(id, input)` Server Action with RBAC in `src/features/inventory/actions.ts`
+- [X] T029 [P] [US1] Implement `deactivateInventoryItem(id)` Server Action with soft-delete check (blocks hard-delete if movements exist) in `src/features/inventory/actions.ts`
+- [X] T030 [P] [US1] Implement `createWarehouse(input)` Server Action with unique code/name validation in `src/features/inventory/actions.ts`
+- [X] T031 [P] [US1] Implement `deactivateWarehouse(id)` Server Action with soft-delete protection in `src/features/inventory/actions.ts`
+- [X] T032 [P] [US1] Implement `createInventoryCategory(input)` and `getInventoryCategories()` in `src/features/inventory/actions.ts`
+- [X] T033 [US1] Create inventory catalog list page with filterable shadcn/ui DataTable (columns: code, nameEn, nameAr, type, category, unit, minStock, status) in `src/app/[locale]/(protected)/inventory/items/page.tsx`
+- [X] T034 [US1] Create inventory item create/edit drawer or dialog form (fields: code, nameAr, nameEn, itemType, category, unit, minStockLevel) in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx`
+- [X] T035 [US1] Create warehouse management list page with shadcn/ui DataTable (columns: code, name, description, status) in `src/app/[locale]/(protected)/inventory/warehouses/page.tsx`
+- [X] T036 [US1] Create warehouse create/edit form dialog (fields: code, name, description) in `src/app/[locale]/(protected)/inventory/warehouses/_components/WarehouseForm.tsx`
+- [X] T037 [US1] Add `inventory:manage` permission gate to item and warehouse mutation forms in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx` and `WarehouseForm.tsx`
+- [X] T038 [US1] Write audit log entries for item and warehouse create/update/deactivate in `src/features/inventory/actions.ts`
 
 **Checkpoint**: Catalog management and warehouse setup are fully functional. Items and warehouses can be created, edited, and deactivated with RBAC enforced.
 
@@ -92,15 +92,15 @@
 
 ### Implementation
 
-- [ ] T039 [US2] Create main inventory stock levels dashboard page with header, summary cards (total items, low-stock count, warehouses), and tabbed layout in `src/app/[locale]/(protected)/inventory/page.tsx`
-- [ ] T040 [US2] Create stock levels DataTable component with columns: item code, nameEn, nameAr, category, warehouse, currentQty, unit, low-stock badge in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
-- [ ] T041 [US2] Add search input (by item code/name) with debounced filtering hooked to `getInventoryBalances()` in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
-- [ ] T042 [US2] Add warehouse filter dropdown (all warehouses, including those user is not assigned to) for global visibility in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
-- [ ] T043 [P] [US2] Add item type filter (Raw Material / Finished Product) and low-stock-only toggle in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
-- [ ] T044 [US2] Add low-stock visual indicator: highlight rows where `currentQuantity < minStockLevel` with warning badge and color token in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
-- [ ] T045 [US2] Add negative-stock visual indicator: highlight rows where `currentQuantity < 0` with error badge on the dashboard in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
-- [ ] T046 [P] [US2] Add server-side pagination to `getInventoryBalances()` query with page size 50 in `src/features/inventory/queries.ts`
-- [ ] T047 [US2] Add inventory navigation links to the app sidebar (Inventory, Catalog, Warehouses, History) in `src/components/layout/AppNav.tsx`
+- [X] T039 [US2] Create main inventory stock levels dashboard page with header, summary cards (total items, low-stock count, warehouses), and tabbed layout in `src/app/[locale]/(protected)/inventory/page.tsx`
+- [X] T040 [US2] Create stock levels DataTable component with columns: item code, nameEn, nameAr, category, warehouse, currentQty, unit, low-stock badge in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
+- [X] T041 [US2] Add search input (by item code/name) with debounced filtering hooked to `getInventoryBalances()` in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
+- [X] T042 [US2] Add warehouse filter dropdown (all warehouses, including those user is not assigned to) for global visibility in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
+- [X] T043 [P] [US2] Add item type filter (Raw Material / Finished Product) and low-stock-only toggle in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
+- [X] T044 [US2] Add low-stock visual indicator: highlight rows where `currentQuantity < minStockLevel` with warning badge and color token in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
+- [X] T045 [US2] Add negative-stock visual indicator: highlight rows where `currentQuantity < 0` with error badge on the dashboard in `src/app/[locale]/(protected)/inventory/_components/StockLevelsTable.tsx`
+- [X] T046 [P] [US2] Add server-side pagination to `getInventoryBalances()` query with page size 50 in `src/features/inventory/queries.ts`
+- [X] T047 [US2] Add inventory navigation links to the app sidebar (Inventory, Catalog, Warehouses, History) in `src/components/layout/AppNav.tsx`
 
 **Checkpoint**: The stock dashboard is functional, globally visible, searchable, filterable, and correctly highlights low-stock and negative-stock items.
 
@@ -114,13 +114,13 @@
 
 ### Implementation
 
-- [ ] T048 [US3] Implement `consumeInventoryForProduction(productionOrderId, tx)` internal service that: (1) loads recipe version snapshot, (2) calculates consumed qty per ingredient using production ratio, (3) converts units via `convertUnit()`, (4) deducts from source warehouse balance using row-level locking, (5) posts `PRODUCTION_CONSUMPTION` StockMovement entries in `src/features/inventory/lib/production-consumption.ts`
-- [ ] T049 [US3] Implement negative stock handling inside `consumeInventoryForProduction`: allow deduction to proceed even if balance < 0, log a negative stock event in `InventoryAuditLog`, and mark the `InventoryBalance` row with a `needsReconciliation` flag in `src/features/inventory/lib/production-consumption.ts`
-- [ ] T050 [US3] Implement `addProductionOutput(productionOrderId, warehouseId, itemId, qty, tx)` internal service that increases finished goods balance and posts a `PRODUCTION_OUTPUT` StockMovement entry in `src/features/inventory/lib/production-output.ts`
-- [ ] T051 [US3] Update `InventoryBalance` model in schema to add `needsReconciliation Boolean @default(false)` flag in `prisma/schema.prisma` and regenerate migration
-- [ ] T052 [US3] Expose `completeProductionOrderInventory(productionOrderId, outputWarehouseId, finishedItemId, producedQty)` Server Action (to be called from production-orders feature on completion) in `src/features/inventory/actions.ts`
-- [ ] T053 [US3] Add pre-completion warning dialog to production order UI: if any ingredient would go negative, display a list of affected items with a "Confirm with Warning" button (this task coordinates with the production-orders feature) in `src/features/inventory/lib/production-consumption.ts` (return warning payload) and document the expected integration contract
-- [ ] T054 [US3] Write `InventoryConsumptionLog` and `InventoryOutputLog` entries inside the production completion transaction in `src/features/inventory/lib/production-consumption.ts` and `production-output.ts`
+- [X] T048 [US3] Implement `consumeInventoryForProduction(productionOrderId, tx)` internal service that: (1) loads recipe version snapshot, (2) calculates consumed qty per ingredient using production ratio, (3) converts units via `convertUnit()`, (4) deducts from source warehouse balance using row-level locking, (5) posts `PRODUCTION_CONSUMPTION` StockMovement entries in `src/features/inventory/lib/production-consumption.ts`
+- [X] T049 [US3] Implement negative stock handling inside `consumeInventoryForProduction`: allow deduction to proceed even if balance < 0, log a negative stock event in `InventoryAuditLog`, and mark the `InventoryBalance` row with a `needsReconciliation` flag in `src/features/inventory/lib/production-consumption.ts`
+- [X] T050 [US3] Implement `addProductionOutput(productionOrderId, warehouseId, itemId, qty, tx)` internal service that increases finished goods balance and posts a `PRODUCTION_OUTPUT` StockMovement entry in `src/features/inventory/lib/production-output.ts`
+- [X] T051 [US3] Update `InventoryBalance` model in schema to add `needsReconciliation Boolean @default(false)` flag in `prisma/schema.prisma` and regenerate migration
+- [X] T052 [US3] Expose `completeProductionOrderInventory(productionOrderId, outputWarehouseId, finishedItemId, producedQty)` Server Action (to be called from production-orders feature on completion) in `src/features/inventory/actions.ts`
+- [X] T053 [US3] Add pre-completion warning dialog to production order UI: if any ingredient would go negative, display a list of affected items with a "Confirm with Warning" button (this task coordinates with the production-orders feature) in `src/features/inventory/lib/production-consumption.ts` (return warning payload) and document the expected integration contract
+- [X] T054 [US3] Write `InventoryConsumptionLog` and `InventoryOutputLog` entries inside the production completion transaction in `src/features/inventory/lib/production-consumption.ts` and `production-output.ts`
 
 **Checkpoint**: Production completion automatically triggers inventory deductions and additions. Negative stock is logged and flagged. All movements are linked to the production order.
 
@@ -134,12 +134,12 @@
 
 ### Implementation
 
-- [ ] T055 [P] [US4] Implement `transferInventory(input)` Server Action with: warehouse-scope guard (`assertUserWarehouseAccess`), sufficient-stock check (block if `availableQuantity < qty`), atomic dual-balance update with row locking, dual `StockMovement` entries (TRANSFER_OUT + TRANSFER_IN), and `InventoryTransfer` record creation in `src/features/inventory/actions.ts`
-- [ ] T056 [US4] Create Warehouse Transfer form page with item selector, source/destination warehouse dropdowns, quantity input, notes field, and confirmation step showing current source stock in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
-- [ ] T057 [US4] Create transfer history DataTable (columns: date, user, item, from-warehouse, to-warehouse, quantity) in `src/app/[locale]/(protected)/inventory/transfers/_components/TransferHistoryTable.tsx`
-- [ ] T058 [US4] Filter source warehouse dropdown to only show warehouses the current user is assigned to (non-admins); admins see all in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
-- [ ] T059 [US4] Display real-time available stock for the selected source warehouse + item alongside the quantity input field in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
-- [ ] T060 [US4] Show inline error when transfer is blocked due to insufficient stock (`INSUFFICIENT_STOCK` error code) in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
+- [X] T055 [P] [US4] Implement `transferInventory(input)` Server Action with: warehouse-scope guard (`assertUserWarehouseAccess`), sufficient-stock check (block if `availableQuantity < qty`), atomic dual-balance update with row locking, dual `StockMovement` entries (TRANSFER_OUT + TRANSFER_IN), and `InventoryTransfer` record creation in `src/features/inventory/actions.ts`
+- [X] T056 [US4] Create Warehouse Transfer form page with item selector, source/destination warehouse dropdowns, quantity input, notes field, and confirmation step showing current source stock in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
+- [X] T057 [US4] Create transfer history DataTable (columns: date, user, item, from-warehouse, to-warehouse, quantity) in `src/app/[locale]/(protected)/inventory/transfers/_components/TransferHistoryTable.tsx`
+- [X] T058 [US4] Filter source warehouse dropdown to only show warehouses the current user is assigned to (non-admins); admins see all in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
+- [X] T059 [US4] Display real-time available stock for the selected source warehouse + item alongside the quantity input field in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
+- [X] T060 [US4] Show inline error when transfer is blocked due to insufficient stock (`INSUFFICIENT_STOCK` error code) in `src/app/[locale]/(protected)/inventory/transfers/page.tsx`
 
 **Checkpoint**: Warehouse transfers are atomic, enforced for warehouse scope, blocked when stock is insufficient, and fully logged.
 
@@ -153,11 +153,11 @@
 
 ### Implementation
 
-- [ ] T061 [P] [US5] Implement `recordManualAdjustment(input)` Server Action with: warehouse-scope guard, negative-stock block (`ADJUSTMENT_BLOCKED_NEGATIVE_STOCK`), balance update, `StockMovement` entry (ADJUSTMENT_INCREASE or ADJUSTMENT_DECREASE), and `InventoryAdjustment` record in `src/features/inventory/actions.ts`
-- [ ] T062 [US5] Create manual adjustment form page with item selector, warehouse selector (scoped to user's assignments), quantity input (with +/− toggle or signed value), reason dropdown (STOCK_COUNT_CORRECTION, DAMAGED_GOODS, INVENTORY_RECONCILIATION, LOST_MATERIALS), and notes textarea in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
-- [ ] T063 [US5] Display current stock level for the selected item+warehouse combination inline with the quantity input in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
-- [ ] T064 [US5] Show inline validation error when adjustment would result in negative stock, with message instructing user to use a stock correction instead in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
-- [ ] T065 [US5] Create adjustment history DataTable (columns: date, user, item, warehouse, delta, reason, notes) in `src/app/[locale]/(protected)/inventory/adjustments/_components/AdjustmentHistoryTable.tsx`
+- [X] T061 [P] [US5] Implement `recordManualAdjustment(input)` Server Action with: warehouse-scope guard, negative-stock block (`ADJUSTMENT_BLOCKED_NEGATIVE_STOCK`), balance update, `StockMovement` entry (ADJUSTMENT_INCREASE or ADJUSTMENT_DECREASE), and `InventoryAdjustment` record in `src/features/inventory/actions.ts`
+- [X] T062 [US5] Create manual adjustment form page with item selector, warehouse selector (scoped to user's assignments), quantity input (with +/− toggle or signed value), reason dropdown (STOCK_COUNT_CORRECTION, DAMAGED_GOODS, INVENTORY_RECONCILIATION, LOST_MATERIALS), and notes textarea in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
+- [X] T063 [US5] Display current stock level for the selected item+warehouse combination inline with the quantity input in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
+- [X] T064 [US5] Show inline validation error when adjustment would result in negative stock, with message instructing user to use a stock correction instead in `src/app/[locale]/(protected)/inventory/adjustments/page.tsx`
+- [X] T065 [US5] Create adjustment history DataTable (columns: date, user, item, warehouse, delta, reason, notes) in `src/app/[locale]/(protected)/inventory/adjustments/_components/AdjustmentHistoryTable.tsx`
 
 **Checkpoint**: Manual adjustments work correctly, negative stock is blocked with a clear message, and all entries are logged with mandatory reason.
 
@@ -171,12 +171,12 @@
 
 ### Implementation
 
-- [ ] T066 [P] [US6] Implement `getInventoryMovementHistory(filters)` paginated Server Action with filters: inventoryItemId, warehouseId, movementType, dateFrom, dateTo — returning MovementDto with sourceRefId and resolved source type in `src/features/inventory/queries.ts`
-- [ ] T067 [US6] Create movement history page with full-width DataTable (columns: timestamp, user, item, warehouse, delta+unit, movementType badge, source link) in `src/app/[locale]/(protected)/inventory/history/page.tsx`
-- [ ] T068 [US6] Add filter panel: item search, warehouse dropdown, movement type multi-select, date range pickers in `src/app/[locale]/(protected)/inventory/history/_components/MovementFilters.tsx`
-- [ ] T069 [US6] Implement source link resolver: given `sourceRefId` and `movementType`, render a clickable link to the appropriate detail page (Production Order, Transfer record, or Adjustment record) in `src/app/[locale]/(protected)/inventory/history/_components/SourceLink.tsx`
-- [ ] T070 [US6] Add server-side pagination (50 rows/page) with total count to movement history query in `src/features/inventory/queries.ts`
-- [ ] T071 [US6] Add `needsReconciliation` filter toggle on the stock dashboard to surface only flagged negative-stock items in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
+- [X] T066 [P] [US6] Implement `getInventoryMovementHistory(filters)` paginated Server Action with filters: inventoryItemId, warehouseId, movementType, dateFrom, dateTo — returning MovementDto with sourceRefId and resolved source type in `src/features/inventory/queries.ts`
+- [X] T067 [US6] Create movement history page with full-width DataTable (columns: timestamp, user, item, warehouse, delta+unit, movementType badge, source link) in `src/app/[locale]/(protected)/inventory/history/page.tsx`
+- [X] T068 [US6] Add filter panel: item search, warehouse dropdown, movement type multi-select, date range pickers in `src/app/[locale]/(protected)/inventory/history/_components/MovementFilters.tsx`
+- [X] T069 [US6] Implement source link resolver: given `sourceRefId` and `movementType`, render a clickable link to the appropriate detail page (Production Order, Transfer record, or Adjustment record) in `src/app/[locale]/(protected)/inventory/history/_components/SourceLink.tsx`
+- [X] T070 [US6] Add server-side pagination (50 rows/page) with total count to movement history query in `src/features/inventory/queries.ts`
+- [X] T071 [US6] Add `needsReconciliation` filter toggle on the stock dashboard to surface only flagged negative-stock items in `src/app/[locale]/(protected)/inventory/_components/StockFilters.tsx`
 
 **Checkpoint**: Full inventory ledger is browsable, filterable, and every entry links back to its originating transaction.
 
@@ -190,10 +190,10 @@
 
 ### Implementation
 
-- [ ] T072 [P] Implement `recordInventoryWaste(input)` Server Action with warehouse-scope guard, balance deduction, `StockMovement` entry (WASTE type), and `InventoryWasteRecord` creation in `src/features/inventory/actions.ts`
-- [ ] T073 Implement waste recording Zod schema (warehouseId, inventoryItemId, quantity > 0, reason, notes?) in `src/features/inventory/validation.ts`
-- [ ] T074 Create waste recording form page with item selector, warehouse selector (scoped), quantity input, reason dropdown (BURNED_BATCH, SPOILAGE, PRODUCTION_LOSS, DAMAGED_MATERIAL), notes textarea in `src/app/[locale]/(protected)/inventory/waste/page.tsx`
-- [ ] T075 Create waste history DataTable (columns: date, user, item, warehouse, quantity, reason, notes) in `src/app/[locale]/(protected)/inventory/waste/_components/WasteHistoryTable.tsx`
+- [X] T072 [P] Implement `recordInventoryWaste(input)` Server Action with warehouse-scope guard, balance deduction, `StockMovement` entry (WASTE type), and `InventoryWasteRecord` creation in `src/features/inventory/actions.ts`
+- [X] T073 Implement waste recording Zod schema (warehouseId, inventoryItemId, quantity > 0, reason, notes?) in `src/features/inventory/validation.ts`
+- [X] T074 Create waste recording form page with item selector, warehouse selector (scoped), quantity input, reason dropdown (BURNED_BATCH, SPOILAGE, PRODUCTION_LOSS, DAMAGED_MATERIAL), notes textarea in `src/app/[locale]/(protected)/inventory/waste/page.tsx`
+- [X] T075 Create waste history DataTable (columns: date, user, item, warehouse, quantity, reason, notes) in `src/app/[locale]/(protected)/inventory/waste/_components/WasteHistoryTable.tsx`
 
 **Checkpoint**: Waste is tracked separately from adjustments and production consumption, preserving recipe consumption accuracy.
 
@@ -203,15 +203,15 @@
 
 **Purpose**: Low-stock monitoring, error handling refinement, performance indexes, and nav wiring.
 
-- [ ] T076 [P] Add database indexes for `inventory_balances(warehouseId, inventoryItemId)`, `inventory_movements(timestamp)`, `inventory_movements(warehouseId, inventoryItemId)`, `inventory_items(code)` in `prisma/schema.prisma` migration
-- [ ] T077 [P] Add low-stock alert banner/section to main inventory dashboard: a count badge in the nav and a collapsible alert listing items below minimum stock in `src/app/[locale]/(protected)/inventory/page.tsx`
-- [ ] T078 [P] Add inventory discrepancy report section to dashboard: list all items with `needsReconciliation = true` grouped by warehouse in `src/app/[locale]/(protected)/inventory/_components/DiscrepancyReport.tsx`
-- [ ] T079 [P] Implement `getUserWarehouseAssignments(userId)` query for use in all action-scoping checks in `src/features/inventory/queries.ts`
-- [ ] T080 [P] Add inventory sidebar navigation entries and breadcrumb component shared across all inventory pages in `src/components/layout/AppNav.tsx` and `src/app/[locale]/(protected)/inventory/_components/InventoryBreadcrumb.tsx`
-- [ ] T081 [P] Add consistent empty-state components for all DataTables (zero items, no search results) following design system in `src/app/[locale]/(protected)/inventory/_components/EmptyState.tsx`
-- [ ] T082 Run all 9 quickstart validation scenarios from [quickstart.md](file:///f:/CodingProjects/PinoProductionSys/specs/004-inventory-management/quickstart.md) and document results
-- [ ] T083 [P] Review all Server Action error messages for clarity and consistency against the error codes defined in [contracts/server-actions.md](file:///f:/CodingProjects/PinoProductionSys/specs/004-inventory-management/contracts/server-actions.md)
-- [ ] T084 [P] Verify all inventory pages are responsive and usable at tablet breakpoint (1024px) per constitution Principle V
+- [X] T076 [P] Add database indexes for `inventory_balances(warehouseId, inventoryItemId)`, `inventory_movements(timestamp)`, `inventory_movements(warehouseId, inventoryItemId)`, `inventory_items(code)` in `prisma/schema.prisma` migration
+- [X] T077 [P] Add low-stock alert banner/section to main inventory dashboard: a count badge in the nav and a collapsible alert listing items below minimum stock in `src/app/[locale]/(protected)/inventory/page.tsx`
+- [X] T078 [P] Add inventory discrepancy report section to dashboard: list all items with `needsReconciliation = true` grouped by warehouse in `src/app/[locale]/(protected)/inventory/_components/DiscrepancyReport.tsx`
+- [X] T079 [P] Implement `getUserWarehouseAssignments(userId)` query for use in all action-scoping checks in `src/features/inventory/queries.ts`
+- [X] T080 [P] Add inventory sidebar navigation entries and breadcrumb component shared across all inventory pages in `src/components/layout/AppNav.tsx` and `src/app/[locale]/(protected)/inventory/_components/InventoryBreadcrumb.tsx`
+- [X] T081 [P] Add consistent empty-state components for all DataTables (zero items, no search results) following design system in `src/app/[locale]/(protected)/inventory/_components/EmptyState.tsx`
+- [X] T082 Run all 9 quickstart validation scenarios from [quickstart.md](file:///f:/CodingProjects/PinoProductionSys/specs/004-inventory-management/quickstart.md) and document results
+- [X] T083 [P] Review all Server Action error messages for clarity and consistency against the error codes defined in [contracts/server-actions.md](file:///f:/CodingProjects/PinoProductionSys/specs/004-inventory-management/contracts/server-actions.md)
+- [X] T084 [P] Verify all inventory pages are responsive and usable at tablet breakpoint (1024px) per constitution Principle V
 
 ---
 

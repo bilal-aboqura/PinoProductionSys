@@ -20,6 +20,8 @@ export type PermissionCode =
   | "production-orders:view_all"
   | "inventory:view"
   | "inventory:manage"
+  | "inventory:adjust"
+  | "inventory:transfer"
   | "inventory:approve"
   | "recipes:create"
   | "recipes:edit"

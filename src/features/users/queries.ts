@@ -6,7 +6,7 @@ export const userSummaryInclude = {
   departments: { include: { department: true } },
   recipeCategories: { include: { recipeCategory: true } },
   productionLines: { include: { productionLine: true } },
-  inventoryAreas: { include: { inventoryArea: true } }
+  userWarehouses: { include: { warehouse: true } }
 } as const;
 
 type UserWithRelations = Awaited<ReturnType<typeof getUserById>>;
@@ -26,7 +26,7 @@ export function toUserSummary(user: NonNullable<UserWithRelations>): UserSummary
       departments: user.departments.map(({ department }) => ({ id: department.id, name: department.name })),
       recipeCategories: user.recipeCategories.map(({ recipeCategory }) => ({ id: recipeCategory.id, name: recipeCategory.name })),
       productionLines: user.productionLines.map(({ productionLine }) => ({ id: productionLine.id, name: productionLine.name })),
-      inventoryAreas: user.inventoryAreas.map(({ inventoryArea }) => ({ id: inventoryArea.id, name: inventoryArea.name }))
+      inventoryAreas: user.userWarehouses.map(({ warehouse }) => ({ id: warehouse.id, name: warehouse.name }))
     },
     createdAt: user.createdAt.toISOString(),
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null
@@ -125,7 +125,7 @@ export async function getScopeOptions() {
     db.department.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     db.recipeCategory.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     db.productionLine.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
-    db.inventoryArea.findMany({ where: { isActive: true }, orderBy: { name: "asc" } })
+    db.warehouse.findMany({ where: { isActive: true }, orderBy: { name: "asc" } })
   ]);
 
   return { departments, recipeCategories, productionLines, inventoryAreas };

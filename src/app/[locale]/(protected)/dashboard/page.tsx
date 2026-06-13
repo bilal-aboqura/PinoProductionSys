@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExpiryAlerts } from "@/app/[locale]/(protected)/inventory/batches/_components/ExpiryAlerts";
 import { getFastNavUser } from "@/lib/fast-nav";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const user = await getFastNavUser();
   const nav = await getTranslations("navigation");
   const permissions = new Set(user?.permissions ?? []);
@@ -37,6 +39,11 @@ export default async function DashboardPage() {
           </Card>
         ) : null}
       </div>
+      {permissions.has("inventory:view") ? (
+        <div className="mt-6">
+          <ExpiryAlerts locale={locale} />
+        </div>
+      ) : null}
     </section>
   );
 }

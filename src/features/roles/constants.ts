@@ -15,6 +15,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionCode[]> = {
     "production:reject",
     "inventory:view",
     "inventory:manage",
+    "inventory:adjust",
+    "inventory:transfer",
     "inventory:approve",
     "reports:view",
     "system:configure"
@@ -24,9 +26,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionCode[]> = {
     "production:approve",
     "production:reject",
     "inventory:view",
+    "inventory:adjust",
+    "inventory:transfer",
     "inventory:approve",
     "reports:view"
   ],
   production_staff: ["production:view", "production:execute"],
-  warehouse_staff: ["inventory:view", "inventory:manage"]
+  warehouse_staff: ["inventory:view", "inventory:manage", "inventory:adjust", "inventory:transfer"]
 };

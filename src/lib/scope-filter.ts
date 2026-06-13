@@ -5,7 +5,7 @@ const dimensionConfig = {
   departments: { model: "userDepartment", field: "departmentId" },
   recipeCategories: { model: "userRecipeCategory", field: "recipeCategoryId" },
   productionLines: { model: "userProductionLine", field: "productionLineId" },
-  inventoryAreas: { model: "userInventoryArea", field: "inventoryAreaId" }
+  inventoryAreas: { model: "userWarehouse", field: "warehouseId" }
 } as const;
 
 /**

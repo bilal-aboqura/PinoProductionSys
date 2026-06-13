@@ -56,9 +56,25 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
               </Link>
             ) : null}
             {permissions.has("inventory:view") ? (
-              <Link className={linkClass} href={`/${locale}/inventory`}>
-                {text.inventory}
-              </Link>
+              <>
+                <Link className={linkClass} href={`/${locale}/inventory`}>
+                  {text.inventory}
+                </Link>
+                <Link className={linkClass} href={`/${locale}/inventory/items`}>
+                  Catalog
+                </Link>
+                {permissions.has("inventory:manage") ? (
+                  <Link className={linkClass} href={`/${locale}/inventory/warehouses`}>
+                    Warehouses
+                  </Link>
+                ) : null}
+                <Link className={linkClass} href={`/${locale}/inventory/history`}>
+                  History
+                </Link>
+                <Link className={linkClass} href={`/${locale}/inventory/batches`}>
+                  Batches
+                </Link>
+              </>
             ) : null}
             {permissions.has("recipes:view") ? (
               <Link className={linkClass} href={`/${locale}/recipes`}>

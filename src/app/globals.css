@@ -41,3 +41,34 @@ textarea {
   width: min(100% - 2rem, 1180px);
   margin-inline: auto;
 }
+
+.label-print-root {
+  display: grid;
+  gap: 12px;
+}
+
+.label-print-sheet {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  background: #ffffff;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .print-hidden {
+    display: none !important;
+  }
+
+  .label-print-root {
+    display: block;
+  }
+
+  .label-print-sheet {
+    box-shadow: none !important;
+    border-color: #000000 !important;
+    page-break-after: always;
+  }
+}

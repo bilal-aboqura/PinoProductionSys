@@ -47,26 +47,37 @@ model VerificationToken {
 }
 
 model User {
-  id                 String               @id @default(cuid())
-  username           String               @unique
-  email              String?              @unique
-  displayName        String
-  passwordHash       String
-  mustChangePassword Boolean              @default(false)
-  isActive           Boolean              @default(true)
-  languagePreference String               @default("ar")
-  lastLoginAt        DateTime?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  accounts           Account[]
-  sessions           Session[]
-  userRoles          UserRole[]
-  departments        UserDepartment[]
-  recipeCategories   UserRecipeCategory[]
-  productionLines    UserProductionLine[]
-  inventoryAreas     UserInventoryArea[]
-  auditLogsAsActor   AuditLog[]           @relation("AuditActor")
-  auditLogsAsTarget  AuditLog[]           @relation("AuditTarget")
+  id                    String                 @id @default(cuid())
+  username              String                 @unique
+  email                 String?                @unique
+  displayName           String
+  passwordHash          String
+  mustChangePassword    Boolean                @default(false)
+  isActive              Boolean                @default(true)
+  languagePreference    String                 @default("ar")
+  lastLoginAt           DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  accounts              Account[]
+  sessions              Session[]
+  userRoles             UserRole[]
+  departments           UserDepartment[]
+  recipeCategories      UserRecipeCategory[]
+  productionLines       UserProductionLine[]
+  userWarehouses        UserWarehouse[]
+  stockMovements        StockMovement[]
+  inventoryTransfers    InventoryTransfer[]
+  inventoryAdjustments  InventoryAdjustment[]
+  inventoryWasteRecords InventoryWasteRecord[]
+  inventoryAuditLogs    InventoryAuditLog[]
+  createdBatches        ProductionBatch[]      @relation("BatchCreator")
+  batchStatusChanges    BatchStatusHistory[]   @relation("BatchStatusChanger")
+  batchPrints           BatchPrintHistory[]    @relation("BatchPrinter")
+  batchDisposals        BatchDisposal[]        @relation("BatchDisposer")
+  batchEvidenceUploads  BatchEvidence[]        @relation("BatchEvidenceUploader")
+  batchAuditLogs        BatchAuditLog[]        @relation("BatchAuditActor")
+  auditLogsAsActor      AuditLog[]             @relation("AuditActor")
+  auditLogsAsTarget     AuditLog[]             @relation("AuditTarget")
 
   @@map("users")
 }
@@ -167,35 +178,36 @@ model UserRecipeCategory {
 }
 
 model Recipe {
-  id               String             @id @default(cuid())
-  nameAr           String
-  nameEn           String             @default("")
-  code             String             @unique
-  categoryId       String?
-  category         RecipeCategory?    @relation(fields: [categoryId], references: [id])
-  description      String?
-  status           RecipeStatus       @default(DRAFT)
-  yieldQuantity    Decimal            @default(0) @db.Decimal(10, 3)
-  yieldUnit        YieldUnit          @default(KG)
-  shelfLifeValue   Int                @default(0)
-  shelfLifeUnit    ShelfLifeUnit      @default(DAYS)
-  storageMethod    StorageMethod      @default(ROOM_TEMPERATURE)
-  storageNotes     String?
-  productionNotes  String?
-  version          Int                @default(0)
-  publishedVersion Int                @default(0)
-  publishedAt      DateTime?
-  publishedById    String?
-  createdById      String
-  updatedById      String
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  ingredients      RecipeIngredient[]
-  steps            RecipeStep[]
-  versions         RecipeVersion[]
-  productionOrders ProductionOrder[]
-  assignments      RecipeAssignment[]
-  auditLogs        RecipeAuditLog[]
+  id                String             @id @default(cuid())
+  nameAr            String
+  nameEn            String             @default("")
+  code              String             @unique
+  categoryId        String?
+  category          RecipeCategory?    @relation(fields: [categoryId], references: [id])
+  description       String?
+  status            RecipeStatus       @default(DRAFT)
+  yieldQuantity     Decimal            @default(0) @db.Decimal(10, 3)
+  yieldUnit         YieldUnit          @default(KG)
+  shelfLifeValue    Int                @default(0)
+  shelfLifeUnit     ShelfLifeUnit      @default(DAYS)
+  storageMethod     StorageMethod      @default(ROOM_TEMPERATURE)
+  storageNotes      String?
+  productionNotes   String?
+  version           Int                @default(0)
+  publishedVersion  Int                @default(0)
+  publishedAt       DateTime?
+  publishedById     String?
+  createdById       String
+  updatedById       String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  ingredients       RecipeIngredient[]
+  steps             RecipeStep[]
+  versions          RecipeVersion[]
+  productionOrders  ProductionOrder[]
+  productionBatches ProductionBatch[]
+  assignments       RecipeAssignment[]
+  auditLogs         RecipeAuditLog[]
 
   @@index([status])
   @@index([categoryId])
@@ -204,16 +216,17 @@ model Recipe {
 }
 
 model RecipeIngredient {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   recipeId        String
-  recipe          Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe          Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   inventoryItemId String
-  quantity        Decimal  @db.Decimal(10, 3)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Decimal       @db.Decimal(10, 3)
   unit            String
   purpose         String?
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([recipeId, sortOrder])
   @@map("recipe_ingredients")
@@ -238,14 +251,15 @@ model RecipeStep {
 }
 
 model RecipeVersion {
-  id               String            @id @default(cuid())
-  recipeId         String
-  recipe           Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  versionNumber    Int
-  snapshot         Json
-  publishedById    String
-  publishedAt      DateTime          @default(now())
-  productionOrders ProductionOrder[]
+  id                String            @id @default(cuid())
+  recipeId          String
+  recipe            Recipe            @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  versionNumber     Int
+  snapshot          Json
+  publishedById     String
+  publishedAt       DateTime          @default(now())
+  productionOrders  ProductionOrder[]
+  productionBatches ProductionBatch[]
 
   @@unique([recipeId, versionNumber])
   @@index([recipeId, versionNumber])
@@ -253,33 +267,36 @@ model RecipeVersion {
 }
 
 model ProductionOrder {
-  id                 String                            @id @default(cuid())
-  orderNumber        String                            @unique
-  status             ProductionOrderStatus             @default(PENDING_UNASSIGNED)
-  version            Int                               @default(0)
-  recipeId           String
-  recipe             Recipe                            @relation(fields: [recipeId], references: [id])
-  recipeVersionId    String
-  recipeVersion      RecipeVersion                     @relation(fields: [recipeVersionId], references: [id])
-  recipeNameSnapshot String
-  yieldUnit          String
-  targetQuantity     Decimal?                          @db.Decimal(10, 3)
-  producedQuantity   Decimal?                          @db.Decimal(10, 3)
-  creationNotes      String?
-  createdById        String
-  assignedToId       String?
-  claimedById        String?
-  completedById      String?
-  cancelledById      String?
-  cancellationReason String?
-  cancelledAt        DateTime?
-  createdAt          DateTime                          @default(now())
-  startedAt          DateTime?
-  completedAt        DateTime?
-  durationSeconds    Int?
-  downstreamActions  ProductionOrderDownstreamAction[]
-  steps              ProductionOrderStep[]
-  statusHistory      ProductionOrderStatusHistory[]
+  id                       String                            @id @default(cuid())
+  orderNumber              String                            @unique
+  status                   ProductionOrderStatus             @default(PENDING_UNASSIGNED)
+  version                  Int                               @default(0)
+  recipeId                 String
+  recipe                   Recipe                            @relation(fields: [recipeId], references: [id])
+  recipeVersionId          String
+  recipeVersion            RecipeVersion                     @relation(fields: [recipeVersionId], references: [id])
+  recipeNameSnapshot       String
+  yieldUnit                String
+  targetQuantity           Decimal?                          @db.Decimal(10, 3)
+  producedQuantity         Decimal?                          @db.Decimal(10, 3)
+  creationNotes            String?
+  createdById              String
+  assignedToId             String?
+  claimedById              String?
+  completedById            String?
+  cancelledById            String?
+  cancellationReason       String?
+  cancelledAt              DateTime?
+  createdAt                DateTime                          @default(now())
+  startedAt                DateTime?
+  completedAt              DateTime?
+  durationSeconds          Int?
+  downstreamActions        ProductionOrderDownstreamAction[]
+  productionBatch          ProductionBatch?
+  steps                    ProductionOrderStep[]
+  statusHistory            ProductionOrderStatusHistory[]
+  inventoryConsumptionLogs InventoryConsumptionLog[]
+  inventoryOutputLogs      InventoryOutputLog[]
 
   @@index([status])
   @@index([assignedToId])
@@ -416,25 +433,377 @@ model UserProductionLine {
   @@map("user_production_lines")
 }
 
-model InventoryArea {
-  id                 String              @id @default(cuid())
-  name               String              @unique
-  isActive           Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  userInventoryAreas UserInventoryArea[]
+model InventoryCategory {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  items       InventoryItem[]
 
-  @@map("inventory_areas")
+  @@map("inventory_categories")
 }
 
-model UserInventoryArea {
-  userId          String
-  inventoryAreaId String
-  assignedAt      DateTime      @default(now())
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  inventoryArea   InventoryArea @relation(fields: [inventoryAreaId], references: [id], onDelete: Cascade)
+model InventoryItem {
+  id            String                    @id @default(cuid())
+  code          String                    @unique
+  nameAr        String
+  nameEn        String
+  itemType      ItemType
+  categoryId    String
+  category      InventoryCategory         @relation(fields: [categoryId], references: [id])
+  unit          Unit
+  minStockLevel Decimal                   @default(0.0) @db.Decimal(10, 3)
+  isActive      Boolean                   @default(true)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  balances      InventoryBalance[]
+  movements     StockMovement[]
+  ingredients   RecipeIngredient[]
+  transfers     InventoryTransfer[]
+  adjustments   InventoryAdjustment[]
+  wasteRecords  InventoryWasteRecord[]
+  consumption   InventoryConsumptionLog[]
+  outputs       InventoryOutputLog[]
 
-  @@id([userId, inventoryAreaId])
-  @@map("user_inventory_areas")
+  @@index([code])
+  @@index([itemType])
+  @@map("inventory_items")
+}
+
+model Warehouse {
+  id                String                    @id @default(cuid())
+  name              String                    @unique
+  code              String                    @unique
+  description       String?
+  isActive          Boolean                   @default(true)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  userWarehouses    UserWarehouse[]
+  balances          InventoryBalance[]
+  movements         StockMovement[]
+  transfersFrom     InventoryTransfer[]       @relation("SourceWarehouse")
+  transfersTo       InventoryTransfer[]       @relation("DestinationWarehouse")
+  adjustments       InventoryAdjustment[]
+  wasteRecords      InventoryWasteRecord[]
+  consumption       InventoryConsumptionLog[]
+  outputs           InventoryOutputLog[]
+  productionBatches ProductionBatch[]
+  batchContainers   BatchContainer[]
+
+  @@map("warehouses")
+}
+
+model UserWarehouse {
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime  @default(now())
+
+  @@id([userId, warehouseId])
+  @@map("user_warehouses")
+}
+
+model InventoryBalance {
+  id                  String        @id @default(cuid())
+  warehouseId         String
+  warehouse           Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  inventoryItemId     String
+  inventoryItem       InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  currentQuantity     Decimal       @default(0.0) @db.Decimal(10, 3)
+  reservedQuantity    Decimal       @default(0.0) @db.Decimal(10, 3)
+  availableQuantity   Decimal       @default(0.0) @db.Decimal(10, 3)
+  needsReconciliation Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@unique([warehouseId, inventoryItemId])
+  @@index([warehouseId, inventoryItemId])
+  @@map("inventory_balances")
+}
+
+model StockMovement {
+  id              String        @id @default(cuid())
+  timestamp       DateTime      @default(now())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  warehouseId     String
+  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  quantityDelta   Decimal       @db.Decimal(10, 3)
+  movementType    MovementType
+  sourceRefId     String?
+
+  @@index([timestamp])
+  @@index([warehouseId, inventoryItemId])
+  @@map("inventory_movements")
+}
+
+model InventoryTransfer {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  itemId     String
+  item       InventoryItem @relation(fields: [itemId], references: [id])
+  sourceWhId String
+  sourceWh   Warehouse     @relation("SourceWarehouse", fields: [sourceWhId], references: [id])
+  destWhId   String
+  destWh     Warehouse     @relation("DestinationWarehouse", fields: [destWhId], references: [id])
+  quantity   Decimal       @db.Decimal(10, 3)
+  timestamp  DateTime      @default(now())
+  notes      String?
+
+  @@map("inventory_transfers")
+}
+
+model InventoryAdjustment {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  warehouseId     String
+  warehouse       Warehouse        @relation(fields: [warehouseId], references: [id])
+  inventoryItemId String
+  inventoryItem   InventoryItem    @relation(fields: [inventoryItemId], references: [id])
+  quantityDelta   Decimal          @db.Decimal(10, 3)
+  reason          AdjustmentReason
+  notes           String?
+  timestamp       DateTime         @default(now())
+
+  @@map("inventory_adjustments")
+}
+
+model InventoryWasteRecord {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  warehouseId     String
+  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id])
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Decimal       @db.Decimal(10, 3)
+  reason          WasteReason
+  notes           String?
+  timestamp       DateTime      @default(now())
+
+  @@map("inventory_waste_records")
+}
+
+model InventoryConsumptionLog {
+  id                String          @id @default(cuid())
+  productionOrderId String
+  productionOrder   ProductionOrder @relation(fields: [productionOrderId], references: [id])
+  warehouseId       String
+  warehouse         Warehouse       @relation(fields: [warehouseId], references: [id])
+  inventoryItemId   String
+  inventoryItem     InventoryItem   @relation(fields: [inventoryItemId], references: [id])
+  quantityConsumed  Decimal         @db.Decimal(10, 3)
+  timestamp         DateTime        @default(now())
+
+  @@index([productionOrderId])
+  @@map("inventory_consumption_logs")
+}
+
+model InventoryOutputLog {
+  id                String          @id @default(cuid())
+  productionOrderId String
+  productionOrder   ProductionOrder @relation(fields: [productionOrderId], references: [id])
+  warehouseId       String
+  warehouse         Warehouse       @relation(fields: [warehouseId], references: [id])
+  inventoryItemId   String
+  inventoryItem     InventoryItem   @relation(fields: [inventoryItemId], references: [id])
+  quantityProduced  Decimal         @db.Decimal(10, 3)
+  timestamp         DateTime        @default(now())
+
+  @@index([productionOrderId])
+  @@map("inventory_output_logs")
+}
+
+model InventoryAuditLog {
+  id            String   @id @default(cuid())
+  timestamp     DateTime @default(now())
+  actorId       String
+  actor         User     @relation(fields: [actorId], references: [id])
+  action        String
+  targetId      String
+  previousValue Json?
+  newValue      Json?
+
+  @@map("inventory_audit_logs")
+}
+
+model ProductionBatch {
+  id                String               @id @default(cuid())
+  batchNumber       String               @unique
+  status            BatchStatus          @default(ACTIVE)
+  recipeId          String
+  recipe            Recipe               @relation(fields: [recipeId], references: [id])
+  recipeVersionId   String
+  recipeVersion     RecipeVersion        @relation(fields: [recipeVersionId], references: [id])
+  productionOrderId String               @unique
+  productionOrder   ProductionOrder      @relation(fields: [productionOrderId], references: [id])
+  productionDate    DateTime             @default(now())
+  expiryDate        DateTime
+  producedQuantity  Decimal              @db.Decimal(10, 3)
+  remainingQuantity Decimal              @db.Decimal(10, 3)
+  unit              YieldUnit
+  warehouseId       String
+  warehouse         Warehouse            @relation(fields: [warehouseId], references: [id])
+  createdById       String
+  createdBy         User                 @relation("BatchCreator", fields: [createdById], references: [id])
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  containers        BatchContainer[]
+  statusHistory     BatchStatusHistory[]
+  printHistory      BatchPrintHistory[]
+  disposals         BatchDisposal[]
+  qrCode            BatchQrCode?
+  labels            BatchLabel[]
+  evidence          BatchEvidence[]
+  auditLogs         BatchAuditLog[]
+
+  @@index([status])
+  @@index([expiryDate])
+  @@index([warehouseId])
+  @@map("production_batches")
+}
+
+model BatchContainer {
+  id                String              @id @default(cuid())
+  batchId           String
+  batch             ProductionBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  containerNumber   String              @unique
+  quantity          Decimal             @db.Decimal(10, 3)
+  remainingQuantity Decimal             @db.Decimal(10, 3)
+  status            BatchStatus         @default(ACTIVE)
+  warehouseId       String
+  warehouse         Warehouse           @relation(fields: [warehouseId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  labels            BatchLabel[]
+  printHistory      BatchPrintHistory[]
+  disposals         BatchDisposal[]
+
+  @@index([batchId])
+  @@index([warehouseId])
+  @@map("batch_containers")
+}
+
+model BatchQrCode {
+  id          String          @id @default(cuid())
+  batchId     String          @unique
+  batch       ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  qrCodeData  String
+  targetUrl   String
+  generatedAt DateTime        @default(now())
+
+  @@map("batch_qr_codes")
+}
+
+model BatchLabel {
+  id                  String          @id @default(cuid())
+  batchId             String
+  batch               ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  containerId         String?
+  container           BatchContainer? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  labelTemplate       LabelTemplate
+  productName         String
+  batchNumber         String
+  productionDate      DateTime
+  expiryDate          DateTime
+  quantity            Decimal         @db.Decimal(10, 3)
+  unit                String
+  storageInstructions String?
+  productCode         String?
+  warehouseName       String?
+  qrCodeData          String
+  createdAt           DateTime        @default(now())
+
+  @@index([batchId])
+  @@index([containerId])
+  @@map("batch_labels")
+}
+
+model BatchStatusHistory {
+  id          String          @id @default(cuid())
+  batchId     String
+  batch       ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  fromStatus  BatchStatus?
+  toStatus    BatchStatus
+  changedById String
+  changedBy   User            @relation("BatchStatusChanger", fields: [changedById], references: [id])
+  reason      String?
+  changedAt   DateTime        @default(now())
+
+  @@index([batchId])
+  @@map("batch_status_history")
+}
+
+model BatchPrintHistory {
+  id            String          @id @default(cuid())
+  batchId       String
+  batch         ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  containerId   String?
+  container     BatchContainer? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  printedById   String
+  printedBy     User            @relation("BatchPrinter", fields: [printedById], references: [id])
+  printedAt     DateTime        @default(now())
+  labelTemplate LabelTemplate
+  isReprint     Boolean         @default(false)
+  reprintReason String?
+
+  @@index([batchId])
+  @@map("batch_print_history")
+}
+
+model BatchDisposal {
+  id               String          @id @default(cuid())
+  batchId          String
+  batch            ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  containerId      String?
+  container        BatchContainer? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  quantityDisposed Decimal         @db.Decimal(10, 3)
+  disposedById     String
+  disposedBy       User            @relation("BatchDisposer", fields: [disposedById], references: [id])
+  disposedAt       DateTime        @default(now())
+  reason           DisposalReason
+  notes            String?
+
+  @@index([batchId])
+  @@map("batch_disposals")
+}
+
+model BatchEvidence {
+  id           String          @id @default(cuid())
+  batchId      String
+  batch        ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  fileName     String
+  storagePath  String
+  mimeType     String
+  sizeBytes    Int
+  uploadedById String
+  uploadedBy   User            @relation("BatchEvidenceUploader", fields: [uploadedById], references: [id])
+  uploadedAt   DateTime        @default(now())
+
+  @@index([batchId])
+  @@map("batch_evidence")
+}
+
+model BatchAuditLog {
+  id            String          @id @default(cuid())
+  batchId       String
+  batch         ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  actorId       String
+  actor         User            @relation("BatchAuditActor", fields: [actorId], references: [id])
+  actorName     String
+  action        String
+  previousValue Json?
+  newValue      Json?
+  createdAt     DateTime        @default(now())
+
+  @@index([batchId])
+  @@map("batch_audit_logs")
 }
 
 model AuditLog {
@@ -512,6 +881,25 @@ enum ProductionOrderDownstreamActionType {
   LABEL_PRINT
 }
 
+enum BatchStatus {
+  ACTIVE
+  CONSUMED
+  EXPIRED
+  DISPOSED
+}
+
+enum LabelTemplate {
+  SMALL
+  STANDARD
+  LARGE
+}
+
+enum DisposalReason {
+  EXPIRED
+  DAMAGED_GOODS
+  QUALITY_ISSUE
+}
+
 enum RecipeStatus {
   DRAFT
   ACTIVE
@@ -544,4 +932,43 @@ enum ScopeType {
   DEPARTMENT
   PRODUCTION_LINE
   USER
+}
+
+enum ItemType {
+  RAW_MATERIAL
+  FINISHED_PRODUCT
+}
+
+enum Unit {
+  KG
+  GRAM
+  LITER
+  MILLILITER
+  PIECE
+}
+
+enum MovementType {
+  PURCHASE
+  PRODUCTION_CONSUMPTION
+  PRODUCTION_OUTPUT
+  TRANSFER_OUT
+  TRANSFER_IN
+  ADJUSTMENT_INCREASE
+  ADJUSTMENT_DECREASE
+  WASTE
+  RETURN
+}
+
+enum AdjustmentReason {
+  STOCK_COUNT_CORRECTION
+  DAMAGED_GOODS
+  INVENTORY_RECONCILIATION
+  LOST_MATERIALS
+}
+
+enum WasteReason {
+  BURNED_BATCH
+  SPOILAGE
+  PRODUCTION_LOSS
+  DAMAGED_MATERIAL
 }

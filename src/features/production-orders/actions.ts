@@ -10,6 +10,7 @@ import { validateStepCompletable } from "@/lib/production-orders/completion-chec
 import { generateOrderNumber } from "@/lib/production-orders/order-number";
 import { seedStepsFromSnapshot } from "@/lib/production-orders/step-seeder";
 import type { ActionResult } from "@/lib/types/action-result";
+import { createBatchForCompletedOrder } from "@/features/batches/actions";
 import { writeProductionAuditLog } from "./lib/audit";
 import {
   ASSIGN_PRODUCTION_ORDERS,
@@ -416,11 +417,17 @@ export async function completeStep(
   }
 }
 
-export async function completeProductionOrder(orderId: string, producedQuantity: number, version: number): Promise<ActionResult<{ newVersion: number }>> {
+export async function completeProductionOrder(
+  orderId: string,
+  producedQuantity: number,
+  version: number,
+  warehouseId?: string
+): Promise<ActionResult<{ newVersion: number; batchNumber: string }>> {
   try {
     const session = await getServerSession();
     requireProductionPermission(session.user.permissions, COMPLETE_PRODUCTION_ORDERS);
     if (!Number.isFinite(producedQuantity) || producedQuantity <= 0) return validationError(["Produced quantity must be greater than zero."]);
+    if (!warehouseId) return validationError(["A storage warehouse is required to create the finished-product batch."]);
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.productionOrder.findUnique({ where: { id: orderId } });
       if (!order) return { kind: "missing" as const };
@@ -455,14 +462,22 @@ export async function completeProductionOrder(orderId: string, producedQuantity:
         prevValue: order,
         newValue: updated
       });
-      return { kind: "saved" as const, newVersion: updated.version };
+      const batch = await createBatchForCompletedOrder(tx, {
+        productionOrderId: orderId,
+        warehouseId,
+        actorId: session.user.id,
+        actorName: session.user.name ?? session.user.email ?? session.user.id,
+        locale: session.user.languagePreference
+      });
+      return { kind: "saved" as const, newVersion: updated.version, batchNumber: batch.batchNumber };
     });
     if (result.kind === "missing") return { success: false, code: "NOT_FOUND", error: "Order not found." };
     if (result.kind === "conflict") return { success: false, code: "CONFLICT", error: "This order was modified by another user." };
     if (result.kind === "forbidden") return { success: false, code: "UNAUTHORIZED", error: "You are not assigned to this order." };
     if (result.kind === "invalid") return { success: false, code: "VALIDATION", error: result.message };
     productionPaths();
-    return { success: true, data: { newVersion: result.newVersion } };
+    revalidatePath("/[locale]/inventory/batches", "page");
+    return { success: true, data: { newVersion: result.newVersion, batchNumber: result.batchNumber } };
   } catch (error) {
     return unknownError(error);
   }
