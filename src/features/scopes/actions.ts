@@ -51,9 +51,9 @@ export async function assignUserScopes(userId: string, scopes: ScopeAssignment):
       });
     }
     if (parsed.data.inventoryAreaIds) {
-      await tx.userInventoryArea.deleteMany({ where: { userId } });
-      await tx.userInventoryArea.createMany({
-        data: parsed.data.inventoryAreaIds.map((inventoryAreaId) => ({ userId, inventoryAreaId })),
+      await tx.userWarehouse.deleteMany({ where: { userId } });
+      await tx.userWarehouse.createMany({
+        data: parsed.data.inventoryAreaIds.map((warehouseId) => ({ userId, warehouseId })),
         skipDuplicates: true
       });
     }

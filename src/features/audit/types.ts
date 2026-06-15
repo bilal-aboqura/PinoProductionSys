@@ -73,5 +73,15 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   CATEGORY_CHANGED: "Recipe category changed",
   CATEGORY_ARCHIVED: "Recipe category archived",
   RECIPE_SCOPE_ASSIGNED: "Recipe scope assigned",
-  RECIPE_SCOPE_REMOVED: "Recipe scope removed"
+  RECIPE_SCOPE_REMOVED: "Recipe scope removed",
+  PRODUCTION_ORDER_CREATED: "Production order created",
+  PRODUCTION_ORDER_ASSIGNED: "Production order assigned",
+  PRODUCTION_ORDER_CLAIMED: "Production order claimed",
+  PRODUCTION_ORDER_STARTED: "Production order started",
+  PRODUCTION_ORDER_STEP_COMPLETED: "Production order step completed",
+  PRODUCTION_ORDER_PHOTO_UPLOADED: "Production order photo uploaded",
+  PRODUCTION_ORDER_NOTE_ADDED: "Production order note added",
+  PRODUCTION_ORDER_QUANTITY_CONFIRMED: "Production order quantity confirmed",
+  PRODUCTION_ORDER_COMPLETED: "Production order completed",
+  PRODUCTION_ORDER_CANCELLED: "Production order cancelled"
 };

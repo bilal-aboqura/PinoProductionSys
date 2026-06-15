@@ -33,6 +33,15 @@ const config: Config = {
         lg: "0.5rem",
         md: "0.375rem",
         sm: "0.25rem"
+      },
+      screens: {
+        print: { raw: "print" }
+      },
+      spacing: {
+        "label-sm": "50mm",
+        "label-std-w": "100mm",
+        "label-std-h": "50mm",
+        "label-lg": "100mm"
       }
     }
   },

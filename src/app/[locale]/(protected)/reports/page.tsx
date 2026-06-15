@@ -1,16 +1,6 @@
 import { getTranslations } from "next-intl/server";
-import { AccessDenied } from "@/components/shared/AccessDenied";
-import { getServerSession } from "@/lib/auth";
-import { requirePermission } from "@/lib/permissions";
 
-export default async function ReportsPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const session = await getServerSession();
-  try {
-    requirePermission(session, "reports:view");
-  } catch {
-    return <AccessDenied locale={locale} />;
-  }
+export default async function ReportsPage() {
   const t = await getTranslations("navigation");
   const common = await getTranslations("common");
   return (

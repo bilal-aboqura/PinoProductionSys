@@ -1,16 +1,41 @@
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
-import { LogOut } from "lucide-react";
-import { logout } from "@/features/auth/actions";
-import { PermissionGate } from "@/components/shared/PermissionGate";
-import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
-import { getServerSession } from "@/lib/auth";
+"use client";
 
-export async function AppNav({ locale }: { locale: string }) {
-  const t = await getTranslations("navigation");
-  const common = await getTranslations("common");
-  const auth = await getTranslations("auth");
-  const session = await getServerSession();
+import Link from "next/link";
+import { LogOut } from "lucide-react";
+import { useTransition } from "react";
+import { logout } from "@/features/auth/actions";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import type { FastNavUser } from "@/lib/fast-nav";
+
+const labels = {
+  en: {
+    appName: "Pino Production System",
+    dashboard: "Dashboard",
+    production: "Production",
+    inventory: "Inventory",
+    recipes: "Recipes",
+    reports: "Reports",
+    users: "Users",
+    audit: "Audit Log",
+    logout: "Log out"
+  },
+  ar: {
+    appName: "نظام إنتاج بينو",
+    dashboard: "لوحة التحكم",
+    production: "الإنتاج",
+    inventory: "المخزون",
+    recipes: "الوصفات",
+    reports: "التقارير",
+    users: "المستخدمون",
+    audit: "سجل التدقيق",
+    logout: "تسجيل الخروج"
+  }
+};
+
+export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) {
+  const [, startTransition] = useTransition();
+  const text = locale === "en" ? labels.en : labels.ar;
+  const permissions = new Set(user.permissions);
 
   const linkClass = "rounded-md px-3 py-2 text-sm font-semibold text-secondary hover:bg-accent/45";
 
@@ -19,62 +44,77 @@ export async function AppNav({ locale }: { locale: string }) {
       <div className="logical-container flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
         <div className="flex items-center gap-4">
           <Link href={`/${locale}/dashboard`} className="font-bold text-primary">
-            {common("appName")}
+            {text.appName}
           </Link>
           <nav className="flex flex-wrap items-center gap-1">
             <Link className={linkClass} href={`/${locale}/dashboard`}>
-              {t("dashboard")}
+              {text.dashboard}
             </Link>
-            <PermissionGate permission="production:view">
+            {permissions.has("production-orders:view") || permissions.has("production-orders:view_all") || permissions.has("production:view") ? (
               <Link className={linkClass} href={`/${locale}/production`}>
-                {t("production")}
+                {text.production}
               </Link>
-            </PermissionGate>
-            <PermissionGate permission="inventory:view">
-              <Link className={linkClass} href={`/${locale}/inventory`}>
-                {t("inventory")}
-              </Link>
-            </PermissionGate>
-            <PermissionGate permission="recipes:view">
+            ) : null}
+            {permissions.has("inventory:view") ? (
+              <>
+                <Link className={linkClass} href={`/${locale}/inventory`}>
+                  {text.inventory}
+                </Link>
+                <Link className={linkClass} href={`/${locale}/inventory/items`}>
+                  Catalog
+                </Link>
+                {permissions.has("inventory:manage") ? (
+                  <Link className={linkClass} href={`/${locale}/inventory/warehouses`}>
+                    Warehouses
+                  </Link>
+                ) : null}
+                <Link className={linkClass} href={`/${locale}/inventory/history`}>
+                  History
+                </Link>
+                <Link className={linkClass} href={`/${locale}/inventory/batches`}>
+                  Batches
+                </Link>
+              </>
+            ) : null}
+            {permissions.has("recipes:view") ? (
               <Link className={linkClass} href={`/${locale}/recipes`}>
-                Recipes
+                {text.recipes}
               </Link>
-            </PermissionGate>
-            <PermissionGate permission="reports:view">
+            ) : null}
+            {permissions.has("reports:view") ? (
               <Link className={linkClass} href={`/${locale}/reports`}>
-                {t("reports")}
+                {text.reports}
               </Link>
-            </PermissionGate>
-            <PermissionGate permission="users:view">
+            ) : null}
+            {permissions.has("users:view") ? (
               <Link className={linkClass} href={`/${locale}/admin/users`}>
-                {t("users")}
+                {text.users}
               </Link>
-            </PermissionGate>
-            <PermissionGate permission="audit:view">
+            ) : null}
+            {permissions.has("audit:view") ? (
               <Link className={linkClass} href={`/${locale}/admin/audit`}>
-                {t("audit")}
+                {text.audit}
               </Link>
-            </PermissionGate>
+            ) : null}
           </nav>
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <span className="text-sm font-semibold text-secondary">{session.user.displayName}</span>
-          <form
-            action={async () => {
-              "use server";
-              await logout(locale);
-            }}
+          <span className="text-sm font-semibold text-secondary">{user.displayName}</span>
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-secondary hover:bg-accent/45"
+            title={text.logout}
+            aria-label={text.logout}
+            onClick={() =>
+              startTransition(async () => {
+                window.localStorage.removeItem("pino_nav");
+                await logout(locale);
+              })
+            }
           >
-            <button
-              type="submit"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-secondary hover:bg-accent/45"
-              title={auth("logout")}
-              aria-label={auth("logout")}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </form>
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </header>

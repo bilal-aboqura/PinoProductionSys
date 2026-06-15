@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { UserTable } from "@/features/users/components/UserTable";
 import { getUserList } from "@/features/users/queries";
-import { getServerSession } from "@/lib/auth";
-import { requirePermission } from "@/lib/permissions";
 
 export default async function UsersPage({
   params,
@@ -16,12 +13,6 @@ export default async function UsersPage({
 }) {
   const { locale } = await params;
   const search = await searchParams;
-  const session = await getServerSession();
-  try {
-    requirePermission(session, "users:view");
-  } catch {
-    return <AccessDenied locale={locale} />;
-  }
 
   const t = await getTranslations("users");
   const result = await getUserList({ search: search.q, page: Number(search.page ?? 1) });

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { AppNav } from "@/components/layout/AppNav";
-import { getServerSession } from "@/lib/auth";
+import { ProtectedShell } from "@/components/layout/ProtectedShell";
 
 export default async function ProtectedLayout({
   children,
@@ -11,16 +9,5 @@ export default async function ProtectedLayout({
 }) {
   const { locale } = await params;
 
-  try {
-    await getServerSession();
-  } catch {
-    redirect(`/${locale}/login`);
-  }
-
-  return (
-    <>
-      <AppNav locale={locale} />
-      <main>{children}</main>
-    </>
-  );
+  return <ProtectedShell locale={locale}>{children}</ProtectedShell>;
 }

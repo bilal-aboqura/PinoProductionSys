@@ -16,8 +16,18 @@ const permissions = [
   ["production:execute", "Execute Production Steps", "production", "execute"],
   ["production:approve", "Approve Production Actions", "production", "approve"],
   ["production:reject", "Reject Production Actions", "production", "reject"],
+  ["production-orders:view", "View Production Orders", "production-orders", "view"],
+  ["production-orders:create", "Create Production Orders", "production-orders", "create"],
+  ["production-orders:assign", "Assign Production Orders", "production-orders", "assign"],
+  ["production-orders:claim", "Claim Production Orders", "production-orders", "claim"],
+  ["production-orders:execute", "Execute Production Orders", "production-orders", "execute"],
+  ["production-orders:complete", "Complete Production Orders", "production-orders", "complete"],
+  ["production-orders:cancel", "Cancel Production Orders", "production-orders", "cancel"],
+  ["production-orders:view_all", "View All Production Orders", "production-orders", "view_all"],
   ["inventory:view", "View Inventory", "inventory", "view"],
   ["inventory:manage", "Manage Inventory Transactions", "inventory", "manage"],
+  ["inventory:adjust", "Adjust Inventory", "inventory", "adjust"],
+  ["inventory:transfer", "Transfer Inventory", "inventory", "transfer"],
   ["inventory:approve", "Approve Inventory Actions", "inventory", "approve"],
   ["recipes:create", "Create Recipes", "recipes", "create"],
   ["recipes:edit", "Edit Recipes", "recipes", "edit"],
@@ -37,8 +47,16 @@ const rolePermissions: Record<string, string[]> = {
     "production:view",
     "production:approve",
     "production:reject",
+    "production-orders:view",
+    "production-orders:view_all",
+    "production-orders:create",
+    "production-orders:assign",
+    "production-orders:complete",
+    "production-orders:cancel",
     "inventory:view",
     "inventory:approve",
+    "inventory:adjust",
+    "inventory:transfer",
     "recipes:create",
     "recipes:edit",
     "recipes:publish",
@@ -46,8 +64,15 @@ const rolePermissions: Record<string, string[]> = {
     "recipes:view_versions",
     "reports:view"
   ],
-  production_staff: ["production:view", "production:execute", "recipes:view"],
-  warehouse_staff: ["inventory:view", "inventory:manage", "recipes:view"]
+  production_staff: [
+    "production:view",
+    "production:execute",
+    "production-orders:view",
+    "production-orders:claim",
+    "production-orders:execute",
+    "recipes:view"
+  ],
+  warehouse_staff: ["inventory:view", "inventory:manage", "inventory:adjust", "inventory:transfer", "recipes:view"]
 };
 
 const roleLabels: Record<string, string> = {
@@ -100,8 +125,24 @@ async function main() {
   for (const name of ["Main Kitchen", "Pizza Station"]) {
     await prisma.productionLine.upsert({ where: { name }, update: {}, create: { name } });
   }
-  for (const name of ["Main Warehouse", "Branch Warehouse"]) {
-    await prisma.inventoryArea.upsert({ where: { name }, update: {}, create: { name } });
+  const inventoryCategories = [
+    ["Dry Goods", "Shelf-stable powders, grains, and dry ingredients"],
+    ["Liquids", "Water, oils, sauces, and other liquid materials"],
+    ["Dairy", "Milk, cheese, butter, and refrigerated dairy inputs"],
+    ["Vegetables", "Fresh and prepared vegetable ingredients"],
+    ["Packaging", "Boxes, bags, labels, and disposable packaging"],
+    ["Prepped Foods", "Semi-finished and finished prepared food items"]
+  ] as const;
+  for (const [name, description] of inventoryCategories) {
+    await prisma.inventoryCategory.upsert({ where: { name }, update: { description }, create: { name, description } });
+  }
+
+  const warehouses = [
+    ["WH-MAIN", "Main Warehouse", "Primary raw-material storage"],
+    ["WH-BRANCH", "Branch Warehouse", "Branch-level inventory storage"]
+  ] as const;
+  for (const [code, name, description] of warehouses) {
+    await prisma.warehouse.upsert({ where: { code }, update: { name, description }, create: { code, name, description } });
   }
 
   const password = tempPassword();

@@ -1,11 +1,23 @@
-import { redirect } from "next/navigation";
-import { AccessDenied } from "@/components/shared/AccessDenied";
-import { createRecipe } from "@/features/recipes/actions";
+import Link from "next/link";
+import { RecipeCreateForm } from "@/components/recipes/RecipeCreateForm";
+import { listRecipeCategories } from "@/features/recipes/actions";
 
 export default async function NewRecipePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const result = await createRecipe({ nameAr: "Untitled recipe" });
-  if (!result.success) return <AccessDenied locale={locale} />;
-  redirect(`/${locale}/recipes/${result.data.id}`);
-}
+  const categories = await listRecipeCategories();
 
+  return (
+    <section className="logical-container py-8">
+      <Link className="text-sm font-semibold text-primary" href={`/${locale}/recipes`}>
+        Back to recipes
+      </Link>
+      <div className="mb-6 mt-3">
+        <p className="text-sm font-semibold text-secondary">Recipes / New</p>
+        <h1 className="text-3xl font-bold">New Recipe</h1>
+      </div>
+      <div className="rounded-md border bg-surface p-5">
+        <RecipeCreateForm categories={categories.success ? categories.data : []} locale={locale} />
+      </div>
+    </section>
+  );
+}

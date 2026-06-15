@@ -102,8 +102,8 @@ export async function createUser(input: CreateUserInput): Promise<CreateUserResu
         productionLines: {
           createMany: { data: (parsed.data.productionLineIds ?? []).map((productionLineId) => ({ productionLineId })) }
         },
-        inventoryAreas: {
-          createMany: { data: (parsed.data.inventoryAreaIds ?? []).map((inventoryAreaId) => ({ inventoryAreaId })) }
+        userWarehouses: {
+          createMany: { data: (parsed.data.inventoryAreaIds ?? []).map((warehouseId) => ({ warehouseId })) }
         }
       }
     });

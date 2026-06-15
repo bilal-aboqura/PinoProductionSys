@@ -17,15 +17,15 @@
 
 **Purpose**: Database schema, permission constants, and feature folder scaffolding — zero application logic.
 
-- [ ] T001 Extend `prisma/schema.prisma` — add `ProductionOrderStatus` enum, `ProductionOrder`, `ProductionOrderStep`, `ProductionOrderStepPhoto`, `ProductionOrderStepNote`, `ProductionOrderStatusHistory` models, and new `AuditAction` values per `data-model.md`
-- [ ] T002 Run `npx prisma migrate dev --name production_orders` and verify migration applies cleanly
-- [ ] T003 [P] Create `src/features/production-orders/` directory with empty `actions.ts`, `queries.ts`, `types.ts` files and `lib/` subdirectory
-- [ ] T004 [P] Create `src/features/production-orders/lib/permissions.ts` — export all `production-orders:*` permission constants and `ProductionOrderPermissionKey` union type (mirrors pattern in `src/lib/permissions.ts`)
-- [ ] T005 [P] Create `src/features/production-orders/lib/status.ts` — implement `assertValidTransition(from, to)` pure guard function covering all valid/invalid status transitions per `data-model.md` state diagram
-- [ ] T006 [P] Create `src/features/production-orders/lib/audit.ts` — implement `writeProductionAuditLog` helper wrapping the existing `AuditLog` model, mirroring `src/lib/recipes/audit.ts` pattern
-- [ ] T007 [P] Create `src/features/production-orders/types.ts` — define all DTOs: `ProductionOrderListItemDto`, `ProductionOrderDetailDto`, `ProductionOrderStepDto`, `ProductionOrderStepPhotoDto`, `ProductionOrderStepNoteDto`, `OrderQueueItemDto`
-- [ ] T008 [P] Seed new permission codes (`production-orders:view`, `create`, `assign`, `claim`, `execute`, `complete`, `cancel`, `view_all`) into the `permissions` table via updated `prisma/seed.ts`
-- [ ] T009 Create `src/components/production-orders/` directory with empty index barrel file
+- [X] T001 Extend `prisma/schema.prisma` — add `ProductionOrderStatus` enum, `ProductionOrder`, `ProductionOrderStep`, `ProductionOrderStepPhoto`, `ProductionOrderStepNote`, `ProductionOrderStatusHistory` models, and new `AuditAction` values per `data-model.md`
+- [X] T002 Run `npx prisma migrate dev --name production_orders` and verify migration applies cleanly
+- [X] T003 [P] Create `src/features/production-orders/` directory with empty `actions.ts`, `queries.ts`, `types.ts` files and `lib/` subdirectory
+- [X] T004 [P] Create `src/features/production-orders/lib/permissions.ts` — export all `production-orders:*` permission constants and `ProductionOrderPermissionKey` union type (mirrors pattern in `src/lib/permissions.ts`)
+- [X] T005 [P] Create `src/features/production-orders/lib/status.ts` — implement `assertValidTransition(from, to)` pure guard function covering all valid/invalid status transitions per `data-model.md` state diagram
+- [X] T006 [P] Create `src/features/production-orders/lib/audit.ts` — implement `writeProductionAuditLog` helper wrapping the existing `AuditLog` model, mirroring `src/lib/recipes/audit.ts` pattern
+- [X] T007 [P] Create `src/features/production-orders/types.ts` — define all DTOs: `ProductionOrderListItemDto`, `ProductionOrderDetailDto`, `ProductionOrderStepDto`, `ProductionOrderStepPhotoDto`, `ProductionOrderStepNoteDto`, `OrderQueueItemDto`
+- [X] T008 [P] Seed new permission codes (`production-orders:view`, `create`, `assign`, `claim`, `execute`, `complete`, `cancel`, `view_all`) into the `permissions` table via updated `prisma/seed.ts`
+- [X] T009 Create `src/components/production-orders/` directory with empty index barrel file
 
 **Checkpoint**: Schema migrated, permissions seeded, all empty stubs in place. No application logic yet.
 
@@ -37,10 +37,10 @@
 
 ⚠️ **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T010 Create `src/lib/production-orders/order-number.ts` — implement `generateOrderNumber()` that queries `MAX` order number for today's date prefix (`PO-YYYYMMDD-`) and returns next padded number (e.g. `PO-20260613-0001`); pure function + DB query helper
-- [ ] T011 Create `src/lib/production-orders/step-seeder.ts` — implement `seedStepsFromSnapshot(tx, orderId, snapshot)` that creates one `ProductionOrderStep` row per step in the `RecipeVersion.snapshot.steps` array, copying `stepNumber`, `title`, `instructions`, `estimatedMinutes`, `requiresPhoto`, `requiresNotes`; also sets `requiresQuantity` from snapshot if present
-- [ ] T012 Create `src/lib/production-orders/completion-check.ts` — implement `validateStepCompletable(tx, step)` checking photo, note, and quantity requirements; returns `{ valid: boolean; missing: string[] }`
-- [ ] T013 [P] Create `src/features/production-orders/queries.ts` — implement `getProductionOrderList`, `getUnassignedQueue`, `getProductionOrderDetail`, `getMyProductionOrders`, `getStepPhotoUrl` using Prisma reads and `getServerSession` auth guard; no mutations
+- [X] T010 Create `src/lib/production-orders/order-number.ts` — implement `generateOrderNumber()` that queries `MAX` order number for today's date prefix (`PO-YYYYMMDD-`) and returns next padded number (e.g. `PO-20260613-0001`); pure function + DB query helper
+- [X] T011 Create `src/lib/production-orders/step-seeder.ts` — implement `seedStepsFromSnapshot(tx, orderId, snapshot)` that creates one `ProductionOrderStep` row per step in the `RecipeVersion.snapshot.steps` array, copying `stepNumber`, `title`, `instructions`, `estimatedMinutes`, `requiresPhoto`, `requiresNotes`; also sets `requiresQuantity` from snapshot if present
+- [X] T012 Create `src/lib/production-orders/completion-check.ts` — implement `validateStepCompletable(tx, step)` checking photo, note, and quantity requirements; returns `{ valid: boolean; missing: string[] }`
+- [X] T013 [P] Create `src/features/production-orders/queries.ts` — implement `getProductionOrderList`, `getUnassignedQueue`, `getProductionOrderDetail`, `getMyProductionOrders`, `getStepPhotoUrl` using Prisma reads and `getServerSession` auth guard; no mutations
 
 **Checkpoint**: Shared utilities ready. All foundational helpers unit-testable independently.
 
@@ -54,7 +54,7 @@
 
 ### Implementation
 
-- [ ] T014 [US1] Implement `createProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T014 [US1] Implement `createProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - `getServerSession` + `requirePermission(production-orders:create)`
   - Category-scope check via `UserRecipeCategory` for staff roles
   - Validate `recipeVersionId` resolves to an ACTIVE recipe
@@ -64,27 +64,27 @@
   - Write `ProductionOrderStatusHistory` entry
   - Call `writeProductionAuditLog` (`PRODUCTION_ORDER_CREATED`)
   - Revalidate `/[locale]/production` and `/[locale]/production/queue`
-- [ ] T015 [US1] Implement `assignProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T015 [US1] Implement `assignProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:assign`, status must be `PENDING_UNASSIGNED`
   - Validate target user has `production-orders:execute`
   - Update `assignedToId`, transition to `PENDING`, increment `version`
   - Write status history + audit log (`PRODUCTION_ORDER_ASSIGNED`)
-- [ ] T016 [P] [US1] Create `src/app/[locale]/(protected)/production/new/page.tsx` — Server Component page for "Create Order" form:
+- [X] T016 [P] [US1] Create `src/app/[locale]/(protected)/production/new/page.tsx` — Server Component page for "Create Order" form:
   - Fetch active recipe list (filtered by user's category scope via `queries.ts`)
   - Fetch eligible staff list for assignment selector
   - Render `CreateOrderForm` client component
-- [ ] T017 [P] [US1] Create `src/components/production-orders/CreateOrderForm.tsx` — client component with:
+- [X] T017 [P] [US1] Create `src/components/production-orders/CreateOrderForm.tsx` — client component with:
   - Recipe version selector (filtered list from server)
   - Target quantity field (unit displayed from selected recipe)
   - Optional assignee selector (search/select staff)
   - Creation notes textarea
   - Submit calls `createProductionOrder` Server Action; shows toast on success/error
-- [ ] T018 [US1] Create `src/app/[locale]/(protected)/production/page.tsx` — Server Component order list page:
+- [X] T018 [US1] Create `src/app/[locale]/(protected)/production/page.tsx` — Server Component order list page:
   - Calls `getProductionOrderList` with filters (status, recipe, date range, assigned user)
   - Renders `OrderListTable` with columns: Order #, Recipe, Status, Assigned To, Created At, Actions
   - Paginated (server-side cursor pagination)
-- [ ] T019 [P] [US1] Create `src/components/production-orders/OrderListTable.tsx` — dense sortable table matching existing table design system
-- [ ] T020 [P] [US1] Create `src/components/production-orders/OrderStatusBadge.tsx` — status badge component with correct design-system colors for each of the 5 statuses
+- [X] T019 [P] [US1] Create `src/components/production-orders/OrderListTable.tsx` — dense sortable table matching existing table design system
+- [X] T020 [P] [US1] Create `src/components/production-orders/OrderStatusBadge.tsx` — status badge component with correct design-system colors for each of the 5 statuses
 
 **Checkpoint**: Supervisors can create orders (assigned and unassigned); order list renders; order number generated correctly; recipe version locked.
 
@@ -98,12 +98,12 @@
 
 ### Implementation
 
-- [ ] T021 [US2] Implement `startProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T021 [US2] Implement `startProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:execute`; acting user must be `assignedToId`
   - Status must be `PENDING`; call `assertValidTransition(PENDING, IN_PROGRESS)`
   - Set `startedAt = now()`, transition status, increment `version`
   - Write status history + audit log (`PRODUCTION_ORDER_STARTED`)
-- [ ] T022 [US2] Implement `completeStep` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T022 [US2] Implement `completeStep` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:execute`; acting user must be `assignedToId`
   - Order must be `PENDING` or `IN_PROGRESS`
   - Enforce step sequencing: query lowest-numbered incomplete step; reject if `stepId` doesn't match
@@ -111,42 +111,42 @@
   - Auto-start: if order is `PENDING`, set `startedAt`, transition to `IN_PROGRESS`, write history + audit log (`PRODUCTION_ORDER_STARTED`), set `autoStarted = true` in response
   - Mark step complete: set `isCompleted`, `completedAt`, `completedById`, `confirmedQuantity`/`confirmedUnit` if applicable
   - Write audit log (`PRODUCTION_ORDER_STEP_COMPLETED`); increment `version`
-- [ ] T023 [US2] Create photo upload Route Handler at `src/app/api/production-orders/[id]/steps/[stepId]/photo/route.ts`:
+- [X] T023 [US2] Create photo upload Route Handler at `src/app/api/production-orders/[id]/steps/[stepId]/photo/route.ts`:
   - Parse `multipart/form-data`; validate MIME type and 10 MB size limit
   - Auth + `production-orders:execute` permission + `assignedToId` check
   - Upload to Supabase Storage `production-evidence` bucket at path `orders/{orderId}/steps/{stepId}/{ts}-{uuid}.{ext}`
   - Create `ProductionOrderStepPhoto` row with `storagePath`
   - Write audit log (`PRODUCTION_ORDER_PHOTO_UPLOADED`)
   - Return `{ success: true, data: { id, storagePath } }`
-- [ ] T024 [US2] Implement `addStepNote` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T024 [US2] Implement `addStepNote` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:execute`; acting user must be `assignedToId`
   - Order must be `PENDING` or `IN_PROGRESS`
   - Validate content 1–2000 chars
   - Create `ProductionOrderStepNote`; write audit log (`PRODUCTION_ORDER_NOTE_ADDED`)
-- [ ] T025 [US2] Create `src/app/[locale]/(protected)/production/queue/page.tsx` — unassigned queue page:
+- [X] T025 [US2] Create `src/app/[locale]/(protected)/production/queue/page.tsx` — unassigned queue page:
   - Calls `getUnassignedQueue()`
   - Renders list of unassigned orders with recipe name, category, creation time, "Claim" button
-- [ ] T026 [US2] Implement `claimProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T026 [US2] Implement `claimProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:claim`; check user's category matches order's recipe category
   - Order must be `PENDING_UNASSIGNED`; optimistic lock on `version`
   - Set `assignedToId`, `claimedById`; transition to `PENDING`; increment `version`
   - Write status history + audit log (`PRODUCTION_ORDER_CLAIMED`)
-- [ ] T027 [US2] Create `src/app/[locale]/(protected)/production/[id]/page.tsx` — order detail/execution page (Server Component):
+- [X] T027 [US2] Create `src/app/[locale]/(protected)/production/[id]/page.tsx` — order detail/execution page (Server Component):
   - Calls `getProductionOrderDetail(id)`; redirects if not found
   - Renders `OrderDetailHeader` + step list (`StepExecutionCard` per step)
   - Shows "Start Production" button if status is `PENDING` and user is `assignedToId`
-- [ ] T028 [P] [US2] Create `src/components/production-orders/OrderDetailHeader.tsx` — displays order number, recipe name, status badge, assignee, timestamps, target quantity
-- [ ] T029 [P] [US2] Create `src/components/production-orders/StepExecutionCard.tsx` — single step card showing:
+- [X] T028 [P] [US2] Create `src/components/production-orders/OrderDetailHeader.tsx` — displays order number, recipe name, status badge, assignee, timestamps, target quantity
+- [X] T029 [P] [US2] Create `src/components/production-orders/StepExecutionCard.tsx` — single step card showing:
   - Step number, title, instructions, estimated duration
   - Evidence requirements badges (Photo required, Notes required, Qty required)
   - Locked state (grayed) for future steps
   - Completed state with evidence summary for past steps
   - Active state with all input controls for the current step
-- [ ] T030 [P] [US2] Create `src/components/production-orders/StepPhotoUploader.tsx` — handles camera/file input, calls photo upload Route Handler (T023), shows upload progress, displays thumbnails of uploaded photos
-- [ ] T031 [P] [US2] Create `src/components/production-orders/StepNotesInput.tsx` — textarea for step note; calls `addStepNote` action on submit; shows saved notes list below input
-- [ ] T032 [P] [US2] Create `src/components/production-orders/StepQuantityConfirm.tsx` — numeric input for step-level quantity confirmation; unit label from recipe snapshot; calls `completeStep` with `confirmedQuantity`
-- [ ] T033 [P] [US2] Create `src/components/production-orders/StartProductionButton.tsx` — prominent button shown on `PENDING` orders; calls `startProductionOrder`; shows loading/success/error states
-- [ ] T034 [US2] Add navigation entry for `/production` in `src/components/layout/AppNav.tsx` and ensure route is protected by existing auth middleware
+- [X] T030 [P] [US2] Create `src/components/production-orders/StepPhotoUploader.tsx` — handles camera/file input, calls photo upload Route Handler (T023), shows upload progress, displays thumbnails of uploaded photos
+- [X] T031 [P] [US2] Create `src/components/production-orders/StepNotesInput.tsx` — textarea for step note; calls `addStepNote` action on submit; shows saved notes list below input
+- [X] T032 [P] [US2] Create `src/components/production-orders/StepQuantityConfirm.tsx` — numeric input for step-level quantity confirmation; unit label from recipe snapshot; calls `completeStep` with `confirmedQuantity`
+- [X] T033 [P] [US2] Create `src/components/production-orders/StartProductionButton.tsx` — prominent button shown on `PENDING` orders; calls `startProductionOrder`; shows loading/success/error states
+- [X] T034 [US2] Add navigation entry for `/production` in `src/components/layout/AppNav.tsx` and ensure route is protected by existing auth middleware
 
 **Checkpoint**: Staff can claim, start, and execute all steps; photo upload works; note saving works; step sequencing is enforced server-side; auto-start fires on first step completion.
 
@@ -160,7 +160,7 @@
 
 ### Implementation
 
-- [ ] T035 [US3] Implement `completeProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T035 [US3] Implement `completeProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:complete`; acting user must be `assignedToId`
   - Order must be `IN_PROGRESS`
   - Count incomplete steps; reject if any `isCompleted = false`
@@ -170,11 +170,11 @@
   - Transition status to `COMPLETED`; increment `version`
   - Write status history + audit log (`PRODUCTION_ORDER_COMPLETED`)
   - Revalidate order detail path
-- [ ] T036 [P] [US3] Create `src/components/production-orders/CompleteOrderButton.tsx` — shown when order is `IN_PROGRESS` and all steps are completed:
+- [X] T036 [P] [US3] Create `src/components/production-orders/CompleteOrderButton.tsx` — shown when order is `IN_PROGRESS` and all steps are completed:
   - Renders produced quantity input field (numeric, with recipe unit label)
   - Warns if `producedQuantity` deviates > 20% from `targetQuantity`
   - Calls `completeProductionOrder`; shows success confirmation with order summary
-- [ ] T037 [US3] Wire `CompleteOrderButton` into `src/app/[locale]/(protected)/production/[id]/page.tsx` — conditionally rendered when all `ProductionOrderStep.isCompleted = true`
+- [X] T037 [US3] Wire `CompleteOrderButton` into `src/app/[locale]/(protected)/production/[id]/page.tsx` — conditionally rendered when all `ProductionOrderStep.isCompleted = true`
 
 **Checkpoint**: Completed orders have full traceability data; quantity deviation warning shown; `COMPLETED` status is immutable.
 
@@ -188,13 +188,13 @@
 
 ### Implementation
 
-- [ ] T038 [US4] Extend `src/app/[locale]/(protected)/production/[id]/page.tsx` — add read-only "History View" rendering for `COMPLETED` and `CANCELLED` orders:
+- [X] T038 [US4] Extend `src/app/[locale]/(protected)/production/[id]/page.tsx` — add read-only "History View" rendering for `COMPLETED` and `CANCELLED` orders:
   - Shows all steps with evidence (photos as thumbnails using presigned URLs, notes text)
   - Shows status history timeline
   - Shows produced quantity, duration, all traceability fields
   - No action buttons (immutable)
-- [ ] T039 [P] [US4] Create `src/components/production-orders/StepEvidenceSummary.tsx` — read-only component showing step photos (thumbnails via presigned URL), notes, and confirmed quantity for a completed step
-- [ ] T040 [P] [US4] Create `src/components/production-orders/StatusHistoryTimeline.tsx` — vertical timeline of all `ProductionOrderStatusHistory` entries with actor, timestamp, and reason
+- [X] T039 [P] [US4] Create `src/components/production-orders/StepEvidenceSummary.tsx` — read-only component showing step photos (thumbnails via presigned URL), notes, and confirmed quantity for a completed step
+- [X] T040 [P] [US4] Create `src/components/production-orders/StatusHistoryTimeline.tsx` — vertical timeline of all `ProductionOrderStatusHistory` entries with actor, timestamp, and reason
 - [ ] T041 [US4] Add filtering controls to `src/app/[locale]/(protected)/production/page.tsx`:
   - Order number search
   - Status filter (multi-select)
@@ -202,7 +202,7 @@
   - Assigned user filter
   - Date range picker (createdAt)
   - Sort by: Created Date, Start Date, Completion Date, Status
-- [ ] T042 [US4] Enforce visibility scoping in `src/features/production-orders/queries.ts`:
+- [X] T042 [US4] Enforce visibility scoping in `src/features/production-orders/queries.ts`:
   - Users with `production-orders:view_all`: see all orders
   - Users with only `production-orders:view`: see only orders where `assignedToId = session.user.id`
 
@@ -218,26 +218,26 @@
 
 ### Implementation
 
-- [ ] T043 [P] [US5] Add `src/features/production-orders/actions.ts` — stub action `triggerInventoryConsumption(orderId)`:
+- [X] T043 [P] [US5] Add `src/features/production-orders/actions.ts` — stub action `triggerInventoryConsumption(orderId)`:
   - Require `production-orders:complete` permission
   - Order must be `COMPLETED`
   - Create an inventory consumption record linked to `orderId` (uses existing inventory feature's DB table; implement as a thin record creation — full inventory logic is that feature's concern)
   - Write audit log entry
-- [ ] T044 [P] [US5] Add stub action `createBatchRecord(orderId)` in `src/features/production-orders/actions.ts`:
+- [X] T044 [P] [US5] Add stub action `createBatchRecord(orderId)` in `src/features/production-orders/actions.ts`:
   - Require `production-orders:complete` permission
   - Order must be `COMPLETED`
   - Create a batch record referencing `orderId` and `recipeVersionId`
   - Write audit log entry
-- [ ] T045 [P] [US5] Add stub action `triggerLabelPrint(orderId)` in `src/features/production-orders/actions.ts`:
+- [X] T045 [P] [US5] Add stub action `triggerLabelPrint(orderId)` in `src/features/production-orders/actions.ts`:
   - Require `production-orders:complete` permission
   - Order must be `COMPLETED`
   - Record a label print event with `orderId`, `producedQuantity`, `yieldUnit`, `completedAt`
   - Write audit log entry
-- [ ] T046 [US5] Create `src/components/production-orders/DownstreamActionsPanel.tsx` — panel shown on `COMPLETED` order detail page:
+- [X] T046 [US5] Create `src/components/production-orders/DownstreamActionsPanel.tsx` — panel shown on `COMPLETED` order detail page:
   - Three action buttons: "Record Inventory Consumption", "Create Batch Record", "Print Label"
   - Each button shows loading/success/error state
   - Shows confirmation when action has already been triggered (idempotent display)
-- [ ] T047 [US5] Wire `DownstreamActionsPanel` into `src/app/[locale]/(protected)/production/[id]/page.tsx` — visible only for `COMPLETED` orders
+- [X] T047 [US5] Wire `DownstreamActionsPanel` into `src/app/[locale]/(protected)/production/[id]/page.tsx` — visible only for `COMPLETED` orders
 
 **Checkpoint**: All three downstream actions can be triggered from a completed order; each creates a linked record with the production order ID.
 
@@ -247,19 +247,19 @@
 
 **Goal**: Supervisors can cancel orders at any non-terminal stage; cancellation is irreversible; all evidence is preserved.
 
-- [ ] T048 [US4] Implement `cancelProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
+- [X] T048 [US4] Implement `cancelProductionOrder` Server Action in `src/features/production-orders/actions.ts`:
   - Require `production-orders:cancel`
   - Order must be `PENDING_UNASSIGNED`, `PENDING`, or `IN_PROGRESS`; call `assertValidTransition`
   - `cancellationReason` must be non-empty (min 10 chars)
   - Set `cancelledById`, `cancellationReason`, `cancelledAt`; transition to `CANCELLED`; increment `version`
   - Do NOT delete photos, notes, or step records
   - Write status history (with reason) + audit log (`PRODUCTION_ORDER_CANCELLED`)
-- [ ] T049 [US4] Create `src/app/[locale]/(protected)/production/[id]/cancel/page.tsx` — cancellation confirmation page:
+- [X] T049 [US4] Create `src/app/[locale]/(protected)/production/[id]/cancel/page.tsx` — cancellation confirmation page:
   - Shows order summary
   - Cancellation reason textarea (required, min 10 chars)
   - Confirm/abort buttons
   - Redirects to order detail after success
-- [ ] T050 [P] [US4] Create `src/components/production-orders/CancelOrderDialog.tsx` — confirmation dialog component used from order detail page; calls `cancelProductionOrder`; shows irreversibility warning
+- [X] T050 [P] [US4] Create `src/components/production-orders/CancelOrderDialog.tsx` — confirmation dialog component used from order detail page; calls `cancelProductionOrder`; shows irreversibility warning
 
 ---
 
@@ -268,13 +268,13 @@
 **Purpose**: UX polish, performance hardening, responsive layout, error states, and final validation.
 
 - [ ] T051 [P] Verify all production order pages are responsive at desktop (1280px), tablet (768px), and mobile (430px) breakpoints; fix any layout issues in `src/app/[locale]/(protected)/production/`
-- [ ] T052 [P] Add empty state components for: no orders in list, no orders in queue, no steps in order (should never occur but defensive), no photos uploaded yet
+- [X] T052 [P] Add empty state components for: no orders in list, no orders in queue, no steps in order (should never occur but defensive), no photos uploaded yet
 - [ ] T053 [P] Add loading skeleton components for order list, queue, and order detail pages
 - [ ] T054 [P] Implement optimistic UI feedback for `completeStep` action — immediately mark step visually complete before server round-trip; revert on error
 - [ ] T055 [P] Add toast notifications (success/error) for all mutating actions using the existing toast pattern in the codebase
-- [ ] T056 [P] Add `production-orders:view` and `production-orders:view_all` checks to `src/components/layout/AppNav.tsx` navigation item — hide nav link if user has neither permission
-- [ ] T057 Verify all Server Actions return correctly typed `ActionResult<T>` matching `src/lib/types/action-result.ts`; fix any type drift
-- [ ] T058 [P] Add `AUDIT_ACTION_LABELS` entries for all 10 new `PRODUCTION_ORDER_*` actions in `src/features/audit/types.ts`
+- [X] T056 [P] Add `production-orders:view` and `production-orders:view_all` checks to `src/components/layout/AppNav.tsx` navigation item — hide nav link if user has neither permission
+- [X] T057 Verify all Server Actions return correctly typed `ActionResult<T>` matching `src/lib/types/action-result.ts`; fix any type drift
+- [X] T058 [P] Add `AUDIT_ACTION_LABELS` entries for all 10 new `PRODUCTION_ORDER_*` actions in `src/features/audit/types.ts`
 - [ ] T059 Run quickstart.md validation scenarios 1–7 end-to-end; document any gaps
 - [ ] T060 [P] Performance check: measure order list load (target ≤ 500 ms) and step complete action (target ≤ 300 ms) using browser DevTools; add any missing DB indexes identified during testing
 

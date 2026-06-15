@@ -3,17 +3,27 @@
 Restaurant production management platform foundation built with Next.js, Auth.js, Prisma,
 PostgreSQL/Supabase, Tailwind CSS, and next-intl.
 
-## Current Feature
+## Current Features
 
-This implementation adds the user authentication and role-management foundation:
+This implementation includes the user authentication and role-management foundation:
 
 - Username-or-email login with database sessions
-- Four seeded roles and 16 permissions
+- Four seeded roles and permission-gated navigation
 - Permission-gated navigation and protected routes
 - Administrator user management with temporary password flow
 - Scope assignments across departments, recipe categories, production lines, and inventory areas
 - Immutable audit log for user-management events
 - Arabic default UI with English toggle
+
+It also includes operational production, inventory, and finished-product batch traceability workflows:
+
+- Production order execution with completion audit history
+- Inventory catalog, warehouse balances, movements, transfers, adjustments, and waste logging
+- Automatic finished-product batch creation when a production order is completed
+- Sequential batch IDs in `B-YYYY-NNNNN` format with recipe shelf-life expiry calculation
+- Gated batch dashboard and traceability detail pages under `/inventory/batches`
+- QR-backed label previews for Small, Standard, and Large label templates
+- Container splits, audited reprints, evidence upload validation, and batch disposal ledger entries
 
 ## Setup
 
@@ -24,6 +34,7 @@ This implementation adds the user authentication and role-management foundation:
 5. Start the app with `npm run dev`.
 
 See [specs/001-user-auth-roles/quickstart.md](specs/001-user-auth-roles/quickstart.md) for the full setup and validation workflow.
+See [specs/005-batch-mgmt-traceability/quickstart.md](specs/005-batch-mgmt-traceability/quickstart.md) for batch traceability validation scenarios.
 
 ## Scripts
 

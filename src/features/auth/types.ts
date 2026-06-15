@@ -1,10 +1,12 @@
+import type { FastNavUser } from "@/lib/fast-nav";
+
 export type LoginInput = {
   identifier: string;
   password: string;
 };
 
 export type LoginResult =
-  | { success: true; redirectTo: "/change-password" | "/dashboard" }
+  | { success: true; redirectTo: "/change-password" | "/dashboard"; user: FastNavUser }
   | { success: false; error: "INVALID_CREDENTIALS" | "ACCOUNT_INACTIVE" | "DATABASE_UNAVAILABLE" };
 
 export type ChangePasswordInput = {

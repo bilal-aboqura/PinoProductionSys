@@ -19,6 +19,22 @@ declare module "next-auth" {
   interface User {
     username?: string;
     displayName?: string;
+    role?: string | null;
+    roleDisplayName?: string | null;
+    permissions?: PermissionCode[];
+    mustChangePassword?: boolean;
+    isActive?: boolean;
+    languagePreference?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    username?: string;
+    displayName?: string;
+    role?: string | null;
+    roleDisplayName?: string | null;
+    permissions?: PermissionCode[];
     mustChangePassword?: boolean;
     isActive?: boolean;
     languagePreference?: string;

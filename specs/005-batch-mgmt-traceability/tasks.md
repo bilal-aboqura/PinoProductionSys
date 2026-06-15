@@ -17,8 +17,8 @@
 
 **Purpose**: Project initialization and configuring shared libraries.
 
-- [ ] T001 Configure Tailwind CSS printing utilities in `tailwind.config.ts` and add print media styles in `src/app/globals.css`
-- [ ] T002 Install the `qrcode` npm package and its types `@types/qrcode` in `package.json`
+- [X] T001 Configure Tailwind CSS printing utilities in `tailwind.config.ts` and add print media styles in `src/app/globals.css`
+- [X] T002 Install the `qrcode` npm package and its types `@types/qrcode` in `package.json`
 
 ---
 
@@ -28,9 +28,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 Update `prisma/schema.prisma` to add the `BatchStatus` enum and models: `ProductionBatch`, `BatchContainer`, `BatchQrCode`, `BatchLabel`, `BatchStatusHistory`, `BatchPrintHistory`, `BatchDisposal`, and `BatchAuditLog`
+- [X] T003 Update `prisma/schema.prisma` to add the `BatchStatus` enum and models: `ProductionBatch`, `BatchContainer`, `BatchQrCode`, `BatchLabel`, `BatchStatusHistory`, `BatchPrintHistory`, `BatchDisposal`, and `BatchAuditLog`
 - [ ] T004 Run Prisma migrations and regenerate the Prisma client using `npx prisma migrate dev`
-- [ ] T005 [P] Implement year-padded sequence number generation helper (`B-YYYY-NNNNN`) in `src/features/batches/utils.ts`
+- [X] T005 [P] Implement year-padded sequence number generation helper (`B-YYYY-NNNNN`) in `src/features/batches/utils.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -44,11 +44,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T006 [P] [US1] Create Zod validation schemas for batch creation in `src/features/batches/validation.ts`
-- [ ] T007 [P] [US1] Define batch DTOs and return interfaces in `src/features/batches/types.ts`
-- [ ] T008 [US1] Implement `createBatchFromOrder` server action in `src/features/batches/actions.ts` that creates the batch and appends the initial `BatchStatusHistory` and `BatchAuditLog` entries
-- [ ] T009 [US1] Hook the `createBatchFromOrder` handler into the production order completion flow inside `src/features/production-orders/actions.ts`
-- [ ] T010 [P] [US1] Implement unit tests for sequence generation, expiry date calculation, and order completion integration in `src/features/batches/__tests__/actions.test.ts`
+- [X] T006 [P] [US1] Create Zod validation schemas for batch creation in `src/features/batches/validation.ts`
+- [X] T007 [P] [US1] Define batch DTOs and return interfaces in `src/features/batches/types.ts`
+- [X] T008 [US1] Implement `createBatchFromOrder` server action in `src/features/batches/actions.ts` that creates the batch and appends the initial `BatchStatusHistory` and `BatchAuditLog` entries
+- [X] T009 [US1] Hook the `createBatchFromOrder` handler into the production order completion flow inside `src/features/production-orders/actions.ts`
+- [X] T010 [P] [US1] Implement unit tests for sequence generation, expiry date calculation, and order completion integration in `src/features/batches/__tests__/actions.test.ts`
 
 **Checkpoint**: User Story 1 is fully functional and testable independently.
 
@@ -62,13 +62,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T011 [P] [US2] Implement QR code generation utility (URL encoding to Base64 image) in `src/features/batches/qr.ts`
-- [ ] T012 [P] [US2] Implement `printBatchLabelAction` server action to generate snapshots and write print logs in `src/features/batches/actions.ts`
-- [ ] T013 [US2] Implement batch container split logic (creating child `BatchContainer` records with sequence suffixes) in `src/features/batches/actions.ts`
-- [ ] T014 [US2] Build CSS print template layouts for Small (50x50mm), Standard (100x50mm), and Large (100x100mm) inside `src/app/[locale]/(protected)/inventory/batches/_components/LabelPrintLayout.tsx`
-- [ ] T015 [US2] Create the Label Print modal dialog (handling template choice, print preview, reprint reason collection) in `src/app/[locale]/(protected)/inventory/batches/_components/LabelModal.tsx`
-- [ ] T016 [US2] Create the Container Split modal dialog (collecting split quantities) in `src/app/[locale]/(protected)/inventory/batches/_components/SplitModal.tsx`
-- [ ] T017 [P] [US2] Write unit tests for label preview compiling, reprint validation, and container split math in `src/features/batches/__tests__/label.test.ts`
+- [X] T011 [P] [US2] Implement QR code generation utility (URL encoding to Base64 image) in `src/features/batches/qr.ts`
+- [X] T012 [P] [US2] Implement `printBatchLabelAction` server action to generate snapshots and write print logs in `src/features/batches/actions.ts`
+- [X] T013 [US2] Implement batch container split logic (creating child `BatchContainer` records with sequence suffixes) in `src/features/batches/actions.ts`
+- [X] T014 [US2] Build CSS print template layouts for Small (50x50mm), Standard (100x50mm), and Large (100x100mm) inside `src/app/[locale]/(protected)/inventory/batches/_components/LabelPrintLayout.tsx`
+- [X] T015 [US2] Create the Label Print modal dialog (handling template choice, print preview, reprint reason collection) in `src/app/[locale]/(protected)/inventory/batches/_components/LabelModal.tsx`
+- [X] T016 [US2] Create the Container Split modal dialog (collecting split quantities) in `src/app/[locale]/(protected)/inventory/batches/_components/SplitModal.tsx`
+- [X] T017 [P] [US2] Write unit tests for label preview compiling, reprint validation, and container split math in `src/features/batches/__tests__/label.test.ts`
 
 **Checkpoint**: User Stories 1 & 2 are complete. Labels and QR codes can be generated, split, and printed.
 
@@ -82,12 +82,12 @@
 
 ### Implementation for User Story 3
 
-- [ ] T018 [P] [US3] Implement `getBatchTraceabilityAction` query action and search/filter queries in `src/features/batches/queries.ts`
-- [ ] T019 [US3] Build the Batches dashboard list page (with sorting, filtering by status/warehouse, and pagination) in `src/app/[locale]/(protected)/inventory/batches/page.tsx`
-- [ ] T020 [US3] Build the gated batch details and traceability timeline view (enforcing role-based page section visibility) in `src/app/[locale]/(protected)/inventory/batches/[batchNumber]/page.tsx`
-- [ ] T021 [US3] Implement `updateBatchStatusAction` server action in `src/features/batches/actions.ts` to transition batch states (e.g., active to consumed)
-- [ ] T022 [US3] Add a dashboard near-expiry alert widget (threshold warning) in `src/app/[locale]/(protected)/inventory/batches/_components/ExpiryAlerts.tsx` and integrate into the main dashboard page
-- [ ] T023 [P] [US3] Write integration tests checking authentication gates and role-based field rendering in `src/features/batches/__tests__/queries.test.ts`
+- [X] T018 [P] [US3] Implement `getBatchTraceabilityAction` query action and search/filter queries in `src/features/batches/queries.ts`
+- [X] T019 [US3] Build the Batches dashboard list page (with sorting, filtering by status/warehouse, and pagination) in `src/app/[locale]/(protected)/inventory/batches/page.tsx`
+- [X] T020 [US3] Build the gated batch details and traceability timeline view (enforcing role-based page section visibility) in `src/app/[locale]/(protected)/inventory/batches/[batchNumber]/page.tsx`
+- [X] T021 [US3] Implement `updateBatchStatusAction` server action in `src/features/batches/actions.ts` to transition batch states (e.g., active to consumed)
+- [X] T022 [US3] Add a dashboard near-expiry alert widget (threshold warning) in `src/app/[locale]/(protected)/inventory/batches/_components/ExpiryAlerts.tsx` and integrate into the main dashboard page
+- [X] T023 [P] [US3] Write integration tests checking authentication gates and role-based field rendering in `src/features/batches/__tests__/queries.test.ts`
 
 **Checkpoint**: Core traceability lookup and lifecycle management is functional and gated.
 
@@ -101,10 +101,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T024 [P] [US4] Implement `uploadProductionEvidenceAction` server action (integrating with Supabase storage) in `src/features/batches/actions.ts`
-- [ ] T025 [US4] Build file uploader drag-and-drop component in `src/app/[locale]/(protected)/inventory/batches/_components/EvidenceUploader.tsx`
-- [ ] T026 [US4] Add the evidence list and preview gallery section inside `src/app/[locale]/(protected)/inventory/batches/[batchNumber]/page.tsx`
-- [ ] T027 [P] [US4] Write unit tests for file type validation and size limits (max 5MB) in `src/features/batches/__tests__/evidence.test.ts`
+- [X] T024 [P] [US4] Implement `uploadProductionEvidenceAction` server action (integrating with Supabase storage) in `src/features/batches/actions.ts`
+- [X] T025 [US4] Build file uploader drag-and-drop component in `src/app/[locale]/(protected)/inventory/batches/_components/EvidenceUploader.tsx`
+- [X] T026 [US4] Add the evidence list and preview gallery section inside `src/app/[locale]/(protected)/inventory/batches/[batchNumber]/page.tsx`
+- [X] T027 [P] [US4] Write unit tests for file type validation and size limits (max 5MB) in `src/features/batches/__tests__/evidence.test.ts`
 
 **Checkpoint**: Production evidence can be attached and viewed on the traceability portal.
 
@@ -118,10 +118,10 @@
 
 ### Implementation for User Story 5
 
-- [ ] T028 [US5] Implement `disposeBatchAction` server action in `src/features/batches/actions.ts` to create the `BatchDisposal` record, update batch status, and trigger a `WASTE` stock movement
-- [ ] T029 [US5] Integrate disposal action with stock balance adjustment and stock movement ledger inside `src/features/inventory/actions.ts` (from Inventory module)
-- [ ] T030 [US5] Build the Batch Disposal dialog modal in `src/app/[locale]/(protected)/inventory/batches/_components/DisposalModal.tsx` and hook it into the batch detail screen
-- [ ] T031 [P] [US5] Write integration tests for stock ledger reductions and over-disposal validation in `src/features/batches/__tests__/disposals.test.ts`
+- [X] T028 [US5] Implement `disposeBatchAction` server action in `src/features/batches/actions.ts` to create the `BatchDisposal` record, update batch status, and trigger a `WASTE` stock movement
+- [X] T029 [US5] Integrate disposal action with stock balance adjustment and stock movement ledger inside `src/features/inventory/actions.ts` (from Inventory module)
+- [X] T030 [US5] Build the Batch Disposal dialog modal in `src/app/[locale]/(protected)/inventory/batches/_components/DisposalModal.tsx` and hook it into the batch detail screen
+- [X] T031 [P] [US5] Write integration tests for stock ledger reductions and over-disposal validation in `src/features/batches/__tests__/disposals.test.ts`
 
 **Checkpoint**: Disposals are fully linked with inventory records.
 
@@ -133,8 +133,8 @@
 
 - [ ] T032 Verify performance goals (lookup < 500ms, label compilation < 2s) under large list rendering
 - [ ] T033 Execute manual scenarios in `quickstart.md`
-- [ ] T034 Run TypeScript typechecking (`npm run typecheck`) and ESLint checks (`npm run lint`)
-- [ ] T035 [P] Add user-facing feature documentation in `README.md`
+- [X] T034 Run TypeScript typechecking (`npm run typecheck`) and ESLint checks (`npm run lint`)
+- [X] T035 [P] Add user-facing feature documentation in `README.md`
 
 ---
 
