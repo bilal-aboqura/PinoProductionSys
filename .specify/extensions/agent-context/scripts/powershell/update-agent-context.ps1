@@ -78,10 +78,14 @@ if ($null -eq $Options) {
     foreach ($candidate in @('python3', 'python')) {
         if (Get-Command $candidate -ErrorAction SilentlyContinue) {
             # Verify it is Python 3
-            $verOut = & $candidate --version 2>&1
-            if ($verOut -match 'Python 3') {
-                $pythonCmd = $candidate
-                break
+            try {
+                $verOut = & $candidate --version 2>&1
+                if ($verOut -match 'Python 3') {
+                    $pythonCmd = $candidate
+                    break
+                }
+            } catch {
+                # Ignore execution alias or launch errors
             }
         }
     }
@@ -120,6 +124,48 @@ print(json.dumps(data))
             }
         } catch {
             $Options = $null
+        }
+    }
+
+    if (-not $Options) {
+        try {
+            $yamlContent = Get-Content -LiteralPath $ExtConfig -Raw
+            $parsedFile = $null
+            $parsedStart = $null
+            $parsedEnd = $null
+            if ($yamlContent -match 'context_file:\s*(.*)') {
+                $parsedFile = $Matches[1].Trim().Trim('"').Trim("'")
+            }
+            $lines = $yamlContent -split '\r?\n'
+            $inMarkers = $false
+            foreach ($line in $lines) {
+                if ($line -match 'context_markers:') {
+                    $inMarkers = $true
+                    continue
+                }
+                if ($inMarkers) {
+                    if ($line -match '^\s+start:\s*(.*)') {
+                        $parsedStart = $Matches[1].Trim().Trim('"').Trim("'")
+                    }
+                    elseif ($line -match '^\s+end:\s*(.*)') {
+                        $parsedEnd = $Matches[1].Trim().Trim('"').Trim("'")
+                    }
+                    elseif ($line -match '^\S') {
+                        $inMarkers = $false
+                    }
+                }
+            }
+            if ($parsedFile) {
+                $Options = [PSCustomObject]@{
+                    context_file = $parsedFile
+                    context_markers = [PSCustomObject]@{
+                        start = $parsedStart
+                        end = $parsedEnd
+                    }
+                }
+            }
+        } catch {
+            # fall through to warning
         }
     }
 
@@ -177,7 +223,11 @@ if (-not $PlanPath) {
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1
         if ($candidate) {
-            $PlanPath = [System.IO.Path]::GetRelativePath($ProjectRoot, $candidate.FullName).Replace('\','/')
+            $rel = $candidate.FullName
+            if ($rel.StartsWith($ProjectRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $rel = $rel.Substring($ProjectRoot.Length).TrimStart('\/')
+            }
+            $PlanPath = $rel.Replace('\','/')
         }
     } catch {
         # Non-fatal: continue without a plan path.
