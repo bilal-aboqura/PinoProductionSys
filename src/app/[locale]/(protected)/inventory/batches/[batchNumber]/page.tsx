@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { getBatchTraceabilityAction } from "@/features/batches/queries";
+import { PrintBatchButton } from "@/features/printing/components/PrintBatchButton";
+import { getPrinters, getPrintTemplates } from "@/features/printing/queries";
 import { DisposalModal } from "../_components/DisposalModal";
 import { EvidenceUploader } from "../_components/EvidenceUploader";
 import { LabelModal } from "../_components/LabelModal";
@@ -21,6 +23,10 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
   }
   if (!result.success) notFound();
   const batch = result.data;
+  const [templates, printers] = await Promise.all([
+    getPrintTemplates(true).catch(() => []),
+    getPrinters(true).catch(() => [])
+  ]);
 
   return (
     <section className="logical-container space-y-6 py-8">
@@ -60,6 +66,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </dl>
       </div>
 
+      <PrintBatchButton batchId={batch.id} locale={locale} templates={templates} printers={printers} />
       <LabelModal batchId={batch.id} containers={batch.containers.map((container) => ({ id: container.id, containerNumber: container.containerNumber }))} />
 
       <div className="grid gap-4 lg:grid-cols-2 print-hidden">

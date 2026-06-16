@@ -1,12 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { recordInventoryWaste } from "@/features/inventory/actions";
 import { getInventoryItems, getInventoryWasteHistory, getWarehouses } from "@/features/inventory/queries";
+import { getWasteReasonOptions } from "@/features/settings/queries";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { WasteHistoryTable } from "./_components/WasteHistoryTable";
 
 export default async function WastePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [items, warehouses, wasteRecords] = await Promise.all([getInventoryItems({ isActive: true }), getWarehouses(), getInventoryWasteHistory()]);
+  const [items, warehouses, wasteRecords, reasons] = await Promise.all([
+    getInventoryItems({ isActive: true }),
+    getWarehouses(),
+    getInventoryWasteHistory(),
+    getWasteReasonOptions()
+  ]);
 
   async function submitWaste(formData: FormData) {
     "use server";
@@ -41,10 +47,9 @@ export default async function WastePage({ params }: { params: Promise<{ locale: 
         </select>
         <input className="rounded-md border px-3 py-2 text-sm" name="quantity" placeholder="Quantity" type="number" step="0.001" min="0.001" required />
         <select className="rounded-md border px-3 py-2 text-sm" name="reason" required>
-          <option value="SPOILAGE">Spoilage</option>
-          <option value="BURNED_BATCH">Burned Batch</option>
-          <option value="PRODUCTION_LOSS">Production Loss</option>
-          <option value="DAMAGED_MATERIAL">Damaged Material</option>
+          {reasons.map((reason) => (
+            <option key={reason.id} value={reason.code}>{reason.nameEn}</option>
+          ))}
         </select>
         <input className="rounded-md border px-3 py-2 text-sm" name="notes" placeholder="Notes" />
         <Button type="submit">Record Waste</Button>

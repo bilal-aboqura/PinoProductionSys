@@ -9,8 +9,8 @@
 
 **Purpose**: Initial database migration and dependency verification
 
-- [ ] T001 Run database migrations to apply schema changes: `npx prisma db push`
-- [ ] T002 Verify UI dependency packages, running npm install swr if missing in `package.json`
+- [X] T001 Run database migrations to apply schema changes: `npx prisma db push`
+- [X] T002 Verify UI dependency packages, running npm install swr if missing in `package.json`
 
 ---
 
@@ -20,10 +20,10 @@
 
 **⚠️ CRITICAL**: No user story implementation can begin until these foundational tasks are completed.
 
-- [ ] T003 Define Prisma models `Notification`, `NotificationRecipient`, `AlertRule`, and `NotificationPreference` in `prisma/schema.prisma`
-- [ ] T004 Define seed script changes to populate default alert rules in `prisma/seed.ts`
-- [ ] T005 [P] Create skeleton rules engine structure and threshold evaluator in `src/features/notifications/engine.ts`
-- [ ] T006 [P] Define TypeScript types and API interfaces in `src/features/notifications/types.ts`
+- [X] T003 Define Prisma models `Notification`, `NotificationRecipient`, `AlertRule`, and `NotificationPreference` in `prisma/schema.prisma`
+- [X] T004 Define seed script changes to populate default alert rules in `prisma/seed.ts`
+- [X] T005 [P] Create skeleton rules engine structure and threshold evaluator in `src/features/notifications/engine.ts`
+- [X] T006 [P] Define TypeScript types and API interfaces in `src/features/notifications/types.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -37,12 +37,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Create unit tests for notification queries and recipient mapping in `src/features/notifications/__tests__/queries.test.ts`
-- [ ] T008 [US1] Implement DB query helpers for unread count and recent notifications in `src/features/notifications/queries.ts`
-- [ ] T009 [US1] Create REST API route handlers `/api/notifications/unread` and `/api/notifications/recent` in `src/app/api/notifications/unread/route.ts` and `src/app/api/notifications/recent/route.ts`
-- [ ] T010 [P] [US1] Build the interactive header `NotificationBell` client component using SWR polling in `src/components/layout/NotificationBell.tsx`
-- [ ] T011 [US1] Integrate the `NotificationBell` component into the header bar inside `src/components/layout/AppNav.tsx`
-- [ ] T012 [P] [US1] Create in-app banner/toast rendering utility for high-priority alerts in `src/components/layout/NotificationToast.tsx`
+- [X] T007 [P] [US1] Create unit tests for notification queries and recipient mapping in `src/features/notifications/__tests__/queries.test.ts`
+- [X] T008 [US1] Implement DB query helpers for unread count and recent notifications in `src/features/notifications/queries.ts`
+- [X] T009 [US1] Create REST API route handlers `/api/notifications/unread` and `/api/notifications/recent` in `src/app/api/notifications/unread/route.ts` and `src/app/api/notifications/recent/route.ts`
+- [X] T010 [P] [US1] Build the interactive header `NotificationBell` client component using SWR polling in `src/components/layout/NotificationBell.tsx`
+- [X] T011 [US1] Integrate the `NotificationBell` component into the header bar inside `src/components/layout/AppNav.tsx`
+- [X] T012 [P] [US1] Create in-app banner/toast rendering utility for high-priority alerts in `src/components/layout/NotificationToast.tsx`
 
 **Checkpoint**: User Story 1 is fully functional as a standalone MVP.
 
@@ -56,10 +56,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Implement Server Actions to mark read and archive notifications in `src/features/notifications/actions.ts`
-- [ ] T014 [US2] Create query helper to fetch paginated notification history with status/category filters in `src/features/notifications/queries.ts`
-- [ ] T015 [P] [US2] Add translation strings for notifications in `src/i18n/locales/ar.json` and `src/i18n/locales/en.json`
-- [ ] T016 [US2] Build the dedicated Notification History screen at `src/app/[locale]/(protected)/notifications/page.tsx`
+- [X] T013 [P] [US2] Implement Server Actions to mark read and archive notifications in `src/features/notifications/actions.ts`
+- [X] T014 [US2] Create query helper to fetch paginated notification history with status/category filters in `src/features/notifications/queries.ts`
+- [X] T015 [P] [US2] Add translation strings for notifications in `src/i18n/locales/ar.json` and `src/i18n/locales/en.json`
+- [X] T016 [US2] Build the dedicated Notification History screen at `src/app/[locale]/(protected)/notifications/page.tsx`
 
 **Checkpoint**: Notification history and archiving functions are verified.
 
@@ -73,8 +73,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T017 [P] [US3] Create path resolver utility mapping `relatedEntityType` and `relatedEntityId` to URL paths in `src/features/notifications/utils.ts`
-- [ ] T018 [US3] Update item click event handlers in `NotificationBell.tsx` and `notifications/page.tsx` to call `markNotificationRead` and navigate to the resolved entity URL.
+- [X] T017 [P] [US3] Create path resolver utility mapping `relatedEntityType` and `relatedEntityId` to URL paths in `src/features/notifications/utils.ts`
+- [X] T018 [US3] Update item click event handlers in `NotificationBell.tsx` and `notifications/page.tsx` to call `markNotificationRead` and navigate to the resolved entity URL.
 
 **Checkpoint**: Click-through links successfully redirect users to target pages.
 
@@ -88,10 +88,10 @@
 
 ### Implementation for User Story 6
 
-- [ ] T019 [P] [US4] Create Server Actions to edit, enable, or disable alert rules in `src/features/notifications/actions.ts`
-- [ ] T020 [P] [US4] Add rule schema validation using Zod in `src/features/notifications/validation.ts`
-- [ ] T021 [US4] Build the rules management page at `src/app/[locale]/(protected)/admin/alert-rules/page.tsx`
-- [ ] T022 [US4] Integrate rule engine trigger checks inside state-mutating actions (e.g. inventory adjustments, production completion) in `src/features/inventory/actions.ts` and `src/features/production/actions.ts`
+- [X] T019 [P] [US4] Create Server Actions to edit, enable, or disable alert rules in `src/features/notifications/actions.ts`
+- [X] T020 [P] [US4] Add rule schema validation using Zod in `src/features/notifications/validation.ts`
+- [X] T021 [US4] Build the rules management page at `src/app/[locale]/(protected)/admin/alert-rules/page.tsx`
+- [X] T022 [US4] Integrate rule engine trigger checks inside state-mutating actions (e.g. inventory adjustments, production completion) in `src/features/inventory/actions.ts` and `src/features/production/actions.ts`
 
 **Checkpoint**: Alert rules are configurable and dynamically trigger alerts.
 
@@ -105,9 +105,9 @@
 
 ### Implementation for User Story 7
 
-- [ ] T023 [P] [US5] Implement Server Action to update personal user notification preferences in `src/features/notifications/actions.ts`
-- [ ] T024 [US5] Build preferences UI panel in profile settings page at `src/app/[locale]/(protected)/profile/notifications/page.tsx`
-- [ ] T025 [US5] Update the rules engine to check recipient preferences before inserting `NotificationRecipient` records in `src/features/notifications/engine.ts`
+- [X] T023 [P] [US5] Implement Server Action to update personal user notification preferences in `src/features/notifications/actions.ts`
+- [X] T024 [US5] Build preferences UI panel in profile settings page at `src/app/[locale]/(protected)/profile/notifications/page.tsx`
+- [X] T025 [US5] Update the rules engine to check recipient preferences before inserting `NotificationRecipient` records in `src/features/notifications/engine.ts`
 
 **Checkpoint**: User preferences successfully filter active notifications.
 
@@ -117,9 +117,9 @@
 
 **Purpose**: Cleanup, automatic data retention cleanup, and E2E validation
 
-- [ ] T026 Implement 90-day automatic data pruning route handler in `src/app/api/internal/notification-cleanup/route.ts` secured by Bearer Token for VPS cron trigger
-- [ ] T027 [P] Perform security hardening to ensure users cannot access or read notifications of other users
-- [ ] T028 Run end-to-end scenarios documented in `specs/007-notifications-alerts/quickstart.md`
+- [X] T026 Implement 90-day automatic data pruning route handler in `src/app/api/internal/notification-cleanup/route.ts` secured by Bearer Token for VPS cron trigger
+- [X] T027 [P] Perform security hardening to ensure users cannot access or read notifications of other users
+- [X] T028 Run end-to-end scenarios documented in `specs/007-notifications-alerts/quickstart.md`
 
 ---
 

@@ -83,5 +83,16 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   PRODUCTION_ORDER_NOTE_ADDED: "Production order note added",
   PRODUCTION_ORDER_QUANTITY_CONFIRMED: "Production order quantity confirmed",
   PRODUCTION_ORDER_COMPLETED: "Production order completed",
-  PRODUCTION_ORDER_CANCELLED: "Production order cancelled"
+  PRODUCTION_ORDER_CANCELLED: "Production order cancelled",
+  SYSTEM_SETTING_UPDATED: "System setting updated",
+  MASTER_DATA_CREATED: "Master data created",
+  MASTER_DATA_UPDATED: "Master data updated",
+  MASTER_DATA_ARCHIVED: "Master data archived",
+  MASTER_DATA_RESTORED: "Master data restored",
+  PRINTER_CREATED: "Printer created",
+  PRINTER_UPDATED: "Printer updated",
+  PRINTER_DEACTIVATED: "Printer deactivated",
+  LABEL_PRINTED: "Label printed",
+  LABEL_REPRINTED: "Label reprinted",
+  PRINT_JOB_FAILED: "Print job failed"
 };

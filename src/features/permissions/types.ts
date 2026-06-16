@@ -32,6 +32,13 @@ export type PermissionCode =
   | "recipes:manage_categories"
   | "recipes:manage_scope"
   | "reports:view"
+  | "notifications:view"
+  | "notifications:manage_rules"
+  | "printing:view"
+  | "printing:create"
+  | "printing:reprint"
+  | "printing:manage_printers"
+  | "settings:view"
   | "system:configure";
 
 export type PermissionSet = PermissionCode[];

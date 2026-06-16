@@ -104,15 +104,13 @@ export async function getProductionOrderList(
 
   const where: Prisma.ProductionOrderWhereInput = andFilters.length ? { AND: andFilters } : {};
   const pageSize = Math.min(Math.max(pagination.pageSize ?? 25, 1), 100);
-  const [items, total] = await Promise.all([
-    prisma.productionOrder.findMany({
-      where,
-      orderBy: orderByFor(filters.sort),
-      take: pageSize + 1,
-      ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
-    }),
-    prisma.productionOrder.count({ where })
-  ]);
+  const items = await prisma.productionOrder.findMany({
+    where,
+    orderBy: orderByFor(filters.sort),
+    take: pageSize + 1,
+    ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
+  });
+  const total = await prisma.productionOrder.count({ where });
   const page = items.slice(0, pageSize);
   const names = await displayNames(page.map((item) => item.assignedToId));
   return {

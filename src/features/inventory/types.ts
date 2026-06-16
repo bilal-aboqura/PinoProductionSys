@@ -1,4 +1,4 @@
-import type { AdjustmentReason, ItemType, MovementType, Unit, WasteReason } from "@prisma/client";
+import type { AdjustmentReason, ItemType, MovementType, Unit } from "@prisma/client";
 
 export const INVENTORY_ERROR_CODES = {
   UNAUTHORIZED: "UNAUTHORIZED",
@@ -131,7 +131,7 @@ export type WasteInput = {
   warehouseId: string;
   inventoryItemId: string;
   quantity: number | string;
-  reason: WasteReason;
+  reason: string;
   notes?: string | null;
 };
 

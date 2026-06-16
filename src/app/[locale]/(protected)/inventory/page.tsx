@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getInventoryBalances, getWarehouses } from "@/features/inventory/queries";
 import { DiscrepancyReport } from "./_components/DiscrepancyReport";
 import { StockFilters } from "./_components/StockFilters";
@@ -17,17 +18,15 @@ export default async function InventoryPage({
   const { locale } = await params;
   const filters = await searchParams;
   try {
-    const [warehouses, balances] = await Promise.all([
-      getWarehouses(),
-      getInventoryBalances({
-        warehouseId: filters.warehouseId || undefined,
-        search: filters.search || undefined,
-        itemType: filters.itemType === "RAW_MATERIAL" || filters.itemType === "FINISHED_PRODUCT" ? filters.itemType : undefined,
-        lowStockOnly: filters.lowStockOnly === "1",
-        needsReconciliationOnly: filters.needsReconciliationOnly === "1",
-        pageSize: 50
-      })
-    ]);
+    const warehouses = await getWarehouses();
+    const balances = await getInventoryBalances({
+      warehouseId: filters.warehouseId || undefined,
+      search: filters.search || undefined,
+      itemType: filters.itemType === "RAW_MATERIAL" || filters.itemType === "FINISHED_PRODUCT" ? filters.itemType : undefined,
+      lowStockOnly: filters.lowStockOnly === "1",
+      needsReconciliationOnly: filters.needsReconciliationOnly === "1",
+      pageSize: 50
+    });
     const lowStockItems = balances.items.filter((item) => item.isLowStock);
     const lowStock = lowStockItems.length;
     const negative = balances.items.filter((item) => item.isNegativeStock).length;
@@ -40,6 +39,7 @@ export default async function InventoryPage({
             <h1 className="text-3xl font-bold">Stock Levels</h1>
           </div>
           <div className="flex flex-wrap gap-2">
+            <PrintPageButton label="Print Summary" />
             <Link href={`/${locale}/inventory/items`}>
               <Button variant="secondary">Catalog</Button>
             </Link>

@@ -1,3 +1,4 @@
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getWarehouses } from "@/features/inventory/queries";
@@ -8,7 +9,16 @@ import { WarehouseForm } from "./_components/WarehouseForm";
 
 export default async function WarehousesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [warehouses, session] = await Promise.all([getWarehouses(false), getServerSession()]);
+  let warehouses;
+  let session;
+  try {
+    [warehouses, session] = await Promise.all([getWarehouses(false), getServerSession()]);
+  } catch (error) {
+    if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
+      return <AccessDenied locale={locale} />;
+    }
+    throw error;
+  }
   const canManage = session.user.permissions.includes("inventory:manage");
 
   return (

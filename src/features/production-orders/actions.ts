@@ -11,6 +11,7 @@ import { generateOrderNumber } from "@/lib/production-orders/order-number";
 import { seedStepsFromSnapshot } from "@/lib/production-orders/step-seeder";
 import type { ActionResult } from "@/lib/types/action-result";
 import { createBatchForCompletedOrder } from "@/features/batches/actions";
+import { triggerProductionAlert } from "@/features/notifications/engine";
 import { writeProductionAuditLog } from "./lib/audit";
 import {
   ASSIGN_PRODUCTION_ORDERS,
@@ -55,6 +56,14 @@ function productionPaths() {
   revalidatePath("/[locale]/production", "page");
   revalidatePath("/[locale]/production/queue", "page");
   revalidatePath("/[locale]/production/[id]", "page");
+}
+
+async function runProductionAlertCheck(orderId: string) {
+  try {
+    await triggerProductionAlert(orderId);
+  } catch (error) {
+    console.error("Production alert check failed", error);
+  }
 }
 
 function decimal(value: number | undefined | null) {
@@ -477,6 +486,7 @@ export async function completeProductionOrder(
     if (result.kind === "invalid") return { success: false, code: "VALIDATION", error: result.message };
     productionPaths();
     revalidatePath("/[locale]/inventory/batches", "page");
+    await runProductionAlertCheck(orderId);
     return { success: true, data: { newVersion: result.newVersion, batchNumber: result.batchNumber } };
   } catch (error) {
     return unknownError(error);

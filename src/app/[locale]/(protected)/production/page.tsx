@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Button } from "@/components/ui/button";
 import { OrderListTable } from "@/components/production-orders/OrderListTable";
+import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getProductionOrderList } from "@/features/production-orders/queries";
 
 export default async function ProductionPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -24,6 +25,7 @@ export default async function ProductionPage({ params }: { params: Promise<{ loc
           <h1 className="text-3xl font-bold">Production Orders</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PrintPageButton label="Print Summary" />
           <Link href={`/${locale}/production/queue`}>
             <Button variant="secondary">Queue</Button>
           </Link>

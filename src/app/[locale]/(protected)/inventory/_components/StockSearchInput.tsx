@@ -2,23 +2,37 @@
 
 import { Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useKeyboardScanner } from "@/hooks/useKeyboardScanner";
 
 export function StockSearchInput({ initialValue = "" }: { initialValue?: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(initialValue);
+  const applySearch = useCallback(
+    (nextValue: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextValue.trim()) params.set("search", nextValue.trim());
+      else params.delete("search");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  useKeyboardScanner({
+    onScan: (scanned) => {
+      setValue(scanned);
+      applySearch(scanned);
+    }
+  });
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value.trim()) params.set("search", value.trim());
-      else params.delete("search");
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      applySearch(value);
     }, 350);
     return () => window.clearTimeout(timeout);
-  }, [pathname, router, searchParams, value]);
+  }, [applySearch, value]);
 
   return (
     <label className="flex items-center gap-2 rounded-md border bg-white px-3 py-2 text-sm">

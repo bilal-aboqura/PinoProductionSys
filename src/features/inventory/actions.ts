@@ -17,6 +17,7 @@ import {
   wasteSchema
 } from "./validation";
 import { getInventoryCategories as queryInventoryCategories } from "./queries";
+import { checkInventoryAlerts } from "@/features/notifications/engine";
 import type {
   ActionResult,
   AdjustmentResultDto,
@@ -67,6 +68,14 @@ function revalidateInventory() {
   revalidatePath("/[locale]/inventory/items", "page");
   revalidatePath("/[locale]/inventory/warehouses", "page");
   revalidatePath("/[locale]/inventory/history", "page");
+}
+
+async function runInventoryAlertCheck(inventoryItemId: string) {
+  try {
+    await checkInventoryAlerts(inventoryItemId);
+  } catch (error) {
+    console.error("Inventory alert check failed", error);
+  }
 }
 
 function toItemDto(item: Prisma.InventoryItemGetPayload<{ include: { category: true } }>): InventoryItemDto {
@@ -147,6 +156,7 @@ export async function createInventoryItem(input: unknown): Promise<ActionResult<
       return created;
     });
     revalidateInventory();
+    await runInventoryAlertCheck(item.id);
     return ok(toItemDto(item));
   } catch (error) {
     return unknownError(error);
@@ -175,6 +185,7 @@ export async function updateInventoryItem(id: string, input: unknown): Promise<A
       return updated;
     });
     revalidateInventory();
+    await runInventoryAlertCheck(item.id);
     return ok(toItemDto(item));
   } catch (error) {
     return unknownError(error);
@@ -327,6 +338,7 @@ export async function transferInventory(input: unknown): Promise<ActionResult<Tr
     });
     if (transfer.blocked) return fail("INSUFFICIENT_STOCK", "Insufficient stock in source warehouse.");
     revalidateInventory();
+    await runInventoryAlertCheck(parsed.data.itemId);
     return ok({ id: transfer.id });
   } catch (error) {
     return unknownError(error);
@@ -368,6 +380,7 @@ export async function recordManualAdjustment(input: unknown): Promise<ActionResu
     });
     if (result.blocked) return fail("ADJUSTMENT_BLOCKED_NEGATIVE_STOCK", "Adjustment blocked: would result in negative stock.");
     revalidateInventory();
+    await runInventoryAlertCheck(parsed.data.inventoryItemId);
     return ok({ id: result.id, newQuantity: result.newQuantity });
   } catch (error) {
     return unknownError(error);
@@ -409,6 +422,7 @@ export async function recordInventoryWaste(input: unknown): Promise<ActionResult
     });
     if (result.blocked) return fail("INSUFFICIENT_STOCK", "Insufficient stock for waste recording.");
     revalidateInventory();
+    await runInventoryAlertCheck(parsed.data.inventoryItemId);
     return ok({ id: result.id, newQuantity: result.newQuantity });
   } catch (error) {
     return unknownError(error);
@@ -446,6 +460,7 @@ export async function completeProductionOrderInventory(input: unknown): Promise<
     });
     revalidateInventory();
     revalidatePath("/[locale]/production/[id]", "page");
+    await runInventoryAlertCheck(parsed.data.itemId);
     return ok({ warnings });
   } catch (error) {
     return unknownError(error);

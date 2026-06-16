@@ -21,8 +21,8 @@
 
 **Purpose**: Folder structure setup and package installation.
 
-- [ ] T001 Create folder structures for `src/features/reports` and `src/app/[locale]/(protected)/reports`
-- [ ] T002 Install `exceljs` and `pdfkit` packages (along with `@types/pdfkit`) in `package.json`
+- [X] T001 Create folder structures for `src/features/reports` and `src/app/[locale]/(protected)/reports`
+- [X] T002 Install `exceljs` and `pdfkit` packages (along with `@types/pdfkit`) in `package.json`
 
 ---
 
@@ -32,11 +32,11 @@
 
 **⚠️ CRITICAL**: No user story implementation can begin until database views are compiled and generated.
 
-- [ ] T003 Create ScheduledReport and ReportArchive models in `prisma/schema.prisma`
-- [ ] T004 Define SQL Migration for reporting database views (`production_summary_view`, `inventory_summary_view`, `batch_summary_view`, `waste_summary_view`, `staff_performance_view`) in `prisma/migrations/`
-- [ ] T005 Run database migrations and generate Prisma Client in `prisma/`
-- [ ] T006 [P] Define TypeScript interfaces in `src/features/reports/types.ts`
-- [ ] T007 [P] Create Zod validation schemas in `src/features/reports/validation.ts`
+- [X] T003 Create ScheduledReport and ReportArchive models in `prisma/schema.prisma`
+- [X] T004 Define SQL Migration for reporting database views (`production_summary_view`, `inventory_summary_view`, `batch_summary_view`, `waste_summary_view`, `staff_performance_view`) in `prisma/migrations/`
+- [X] T005 Run database migrations and generate Prisma Client in `prisma/`
+- [X] T006 [P] Define TypeScript interfaces in `src/features/reports/types.ts`
+- [X] T007 [P] Create Zod validation schemas in `src/features/reports/validation.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -48,10 +48,10 @@
 
 **Independent Test**: Navigate to `/reports` and verify that the dashboard widgets load accurate data within 2s.
 
-- [ ] T008 [P] [US1] Create database queries for dashboard metrics in `src/features/reports/queries.ts`
-- [ ] T009 [US1] Implement server action getDashboardKPIs in `src/features/reports/actions.ts`
-- [ ] T010 [P] [US1] Create reusable KPI Card and Trend Chart components in `src/app/[locale]/(protected)/reports/_components/`
-- [ ] T011 [US1] Build the main Reports dashboard page in `src/app/[locale]/(protected)/reports/page.tsx`
+- [X] T008 [P] [US1] Create database queries for dashboard metrics in `src/features/reports/queries.ts`
+- [X] T009 [US1] Implement server action getDashboardKPIs in `src/features/reports/actions.ts`
+- [X] T010 [P] [US1] Create reusable KPI Card and Trend Chart components in `src/app/[locale]/(protected)/reports/_components/`
+- [X] T011 [US1] Build the main Reports dashboard page in `src/app/[locale]/(protected)/reports/page.tsx`
 
 **Checkpoint**: Operational dashboard is functional and testable independently.
 
@@ -63,11 +63,11 @@
 
 **Independent Test**: Click on an inventory card, verify navigation to the transaction ledger, and drill down to a specific production order.
 
-- [ ] T012 [P] [US2] Implement database queries for detailed reports in `src/features/reports/queries.ts`
-- [ ] T013 [US2] Implement server action getReportData in `src/features/reports/actions.ts`
-- [ ] T014 [P] [US2] Build ReportTable component with pagination/sorting/filters in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
-- [ ] T015 [US2] Build pages for production, inventory, waste, and warehouse reports in `src/app/[locale]/(protected)/reports/`
-- [ ] T016 [US2] Add drill-down navigation routes in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
+- [X] T012 [P] [US2] Implement database queries for detailed reports in `src/features/reports/queries.ts`
+- [X] T013 [US2] Implement server action getReportData in `src/features/reports/actions.ts`
+- [X] T014 [P] [US2] Build ReportTable component with pagination/sorting/filters in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
+- [X] T015 [US2] Build pages for production, inventory, waste, and warehouse reports in `src/app/[locale]/(protected)/reports/`
+- [X] T016 [US2] Add drill-down navigation routes in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
 
 **Checkpoint**: Detailed reports and navigation are operational.
 
@@ -79,10 +79,10 @@
 
 **Independent Test**: Search for a Batch ID on the Batch Report page and view its timeline.
 
-- [ ] T017 [P] [US3] Create database query for batch history timeline in `src/features/reports/queries.ts`
-- [ ] T018 [US3] Add batch report types to getReportData in `src/features/reports/actions.ts`
-- [ ] T019 [P] [US3] Build Batch Report page in `src/app/[locale]/(protected)/reports/batches/page.tsx`
-- [ ] T020 [US3] Build BatchTimeline component in `src/app/[locale]/(protected)/reports/_components/BatchTimeline.tsx`
+- [X] T017 [P] [US3] Create database query for batch history timeline in `src/features/reports/queries.ts`
+- [X] T018 [US3] Add batch report types to getReportData in `src/features/reports/actions.ts`
+- [X] T019 [P] [US3] Build Batch Report page in `src/app/[locale]/(protected)/reports/batches/page.tsx`
+- [X] T020 [US3] Build BatchTimeline component in `src/app/[locale]/(protected)/reports/_components/BatchTimeline.tsx`
 
 **Checkpoint**: Batch tracing and timelines are functional.
 
@@ -94,10 +94,10 @@
 
 **Independent Test**: Filter a report, click Export, and verify download completes under 10 seconds.
 
-- [ ] T021 [P] [US4] Implement Excel generation utility using exceljs in `src/features/reports/exports/excel.ts`
-- [ ] T022 [P] [US4] Implement PDF generation utility using pdfkit in `src/features/reports/exports/pdf.ts`
-- [ ] T023 [US4] Create Next.js API route handlers for downloads in `src/app/api/reports/export/route.ts`
-- [ ] T024 [US4] Add export button triggers to ReportTable in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
+- [X] T021 [P] [US4] Implement Excel generation utility using exceljs in `src/features/reports/exports/excel.ts`
+- [X] T022 [P] [US4] Implement PDF generation utility using pdfkit in `src/features/reports/exports/pdf.ts`
+- [X] T023 [US4] Create Next.js API route handlers for downloads in `src/app/api/reports/export/route.ts`
+- [X] T024 [US4] Add export button triggers to ReportTable in `src/app/[locale]/(protected)/reports/_components/ReportTable.tsx`
 
 **Checkpoint**: Excel and PDF exporting work.
 
@@ -109,9 +109,9 @@
 
 **Independent Test**: Query a specific operator's performance and verify metrics populate correctly.
 
-- [ ] T025 [P] [US5] Create database query for individual staff performance metrics in `src/features/reports/queries.ts`
-- [ ] T026 [US5] Add staff report types to getReportData in `src/features/reports/actions.ts`
-- [ ] T027 [US5] Build Staff Performance page in `src/app/[locale]/(protected)/reports/staff/page.tsx`
+- [X] T025 [P] [US5] Create database query for individual staff performance metrics in `src/features/reports/queries.ts`
+- [X] T026 [US5] Add staff report types to getReportData in `src/features/reports/actions.ts`
+- [X] T027 [US5] Build Staff Performance page in `src/app/[locale]/(protected)/reports/staff/page.tsx`
 
 **Checkpoint**: Individual staff reporting dashboard is functional.
 
@@ -123,10 +123,10 @@
 
 **Independent Test**: Trigger scheduled report route, check report is saved in Supabase storage and visible in the download archive.
 
-- [ ] T028 [P] [US6] Create scheduled report configuration queries in `src/features/reports/queries.ts`
-- [ ] T029 [US6] Implement scheduled report Server Actions in `src/features/reports/actions.ts`
-- [ ] T030 [US6] Create API route handler for report scheduling cron in `src/app/api/reports/cron/route.ts`
-- [ ] T031 [US6] Build Scheduled Reports configuration page in `src/app/[locale]/(protected)/reports/scheduled/page.tsx`
+- [X] T028 [P] [US6] Create scheduled report configuration queries in `src/features/reports/queries.ts`
+- [X] T029 [US6] Implement scheduled report Server Actions in `src/features/reports/actions.ts`
+- [X] T030 [US6] Create API route handler for report scheduling cron in `src/app/api/reports/cron/route.ts`
+- [X] T031 [US6] Build Scheduled Reports configuration page in `src/app/[locale]/(protected)/reports/scheduled/page.tsx`
 
 **Checkpoint**: Automated reporting schedules are functional.
 
@@ -136,11 +136,11 @@
 
 **Purpose**: Security hardening, test coverage, and design system alignment.
 
-- [ ] T032 [P] Enforce page-level RBAC permission gates in `src/app/[locale]/(protected)/reports/`
-- [ ] T033 Add unit tests for report queries in `src/features/reports/queries.test.ts`
-- [ ] T034 [P] Add integration tests for report filters and exports in `tests/integration/reports.test.ts`
-- [ ] T035 Verify responsive dashboard layouts on desktop/tablet/mobile viewports
-- [ ] T036 Run quickstart validation scenarios defined in `specs/006-reports-analytics/quickstart.md`
+- [X] T032 [P] Enforce page-level RBAC permission gates in `src/app/[locale]/(protected)/reports/`
+- [X] T033 Add unit tests for report queries in `src/features/reports/queries.test.ts`
+- [X] T034 [P] Add integration tests for report filters and exports in `tests/integration/reports.test.ts`
+- [X] T035 Verify responsive dashboard layouts on desktop/tablet/mobile viewports
+- [X] T036 Run quickstart validation scenarios defined in `specs/006-reports-analytics/quickstart.md`
 
 ---
 

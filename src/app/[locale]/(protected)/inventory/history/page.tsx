@@ -1,3 +1,4 @@
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getInventoryItems, getInventoryMovementHistory, getWarehouses } from "@/features/inventory/queries";
@@ -33,19 +34,29 @@ export default async function InventoryHistoryPage({
   ];
   const movementTypes = rawMovementTypes.filter((type) => validTypes.includes(type));
   const normalizedFilters = Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, Array.isArray(value) ? value.join(",") : value]));
-  const [items, warehouses, movements] = await Promise.all([
-    getInventoryItems({ isActive: true }),
-    getWarehouses(),
-    getInventoryMovementHistory({
-      inventoryItemId: typeof filters.inventoryItemId === "string" && filters.inventoryItemId ? filters.inventoryItemId : undefined,
-      itemSearch: typeof filters.itemSearch === "string" && filters.itemSearch ? filters.itemSearch : undefined,
-      warehouseId: typeof filters.warehouseId === "string" && filters.warehouseId ? filters.warehouseId : undefined,
-      movementTypes: movementTypes as never,
-      dateFrom: typeof filters.dateFrom === "string" && filters.dateFrom ? filters.dateFrom : undefined,
-      dateTo: typeof filters.dateTo === "string" && filters.dateTo ? filters.dateTo : undefined,
-      pageSize: 50
-    })
-  ]);
+  let items;
+  let warehouses;
+  let movements;
+  try {
+    [items, warehouses, movements] = await Promise.all([
+      getInventoryItems({ isActive: true }),
+      getWarehouses(),
+      getInventoryMovementHistory({
+        inventoryItemId: typeof filters.inventoryItemId === "string" && filters.inventoryItemId ? filters.inventoryItemId : undefined,
+        itemSearch: typeof filters.itemSearch === "string" && filters.itemSearch ? filters.itemSearch : undefined,
+        warehouseId: typeof filters.warehouseId === "string" && filters.warehouseId ? filters.warehouseId : undefined,
+        movementTypes: movementTypes as never,
+        dateFrom: typeof filters.dateFrom === "string" && filters.dateFrom ? filters.dateFrom : undefined,
+        dateTo: typeof filters.dateTo === "string" && filters.dateTo ? filters.dateTo : undefined,
+        pageSize: 50
+      })
+    ]);
+  } catch (error) {
+    if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
+      return <AccessDenied locale={locale} />;
+    }
+    throw error;
+  }
 
   return (
     <section className="logical-container space-y-6 py-8">

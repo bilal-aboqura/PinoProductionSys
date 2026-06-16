@@ -125,15 +125,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = user.id;
-        token.username = user.username;
-        token.displayName = user.displayName;
-        token.role = user.role;
-        token.roleDisplayName = user.roleDisplayName;
-        token.permissions = user.permissions ?? [];
-        token.mustChangePassword = user.mustChangePassword;
-        token.isActive = user.isActive;
-        token.languagePreference = user.languagePreference;
-      } else if (token.sub && !token.permissions) {
+      }
+
+      if (token.sub) {
         const claims = await loadSessionClaims(token.sub);
         if (claims) {
           token.username = claims.username;

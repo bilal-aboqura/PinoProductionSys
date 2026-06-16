@@ -54,7 +54,7 @@ export const wasteSchema = z.object({
   warehouseId: z.string().min(1),
   inventoryItemId: z.string().min(1),
   quantity: positiveDecimal,
-  reason: z.enum(["BURNED_BATCH", "SPOILAGE", "PRODUCTION_LOSS", "DAMAGED_MATERIAL"]),
+  reason: z.string().trim().min(1).max(80),
   notes: z.string().trim().max(1000).optional().nullable()
 });
 

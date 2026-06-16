@@ -9,6 +9,7 @@ import { OrderDetailHeader } from "@/components/production-orders/OrderDetailHea
 import { StartProductionButton } from "@/components/production-orders/StartProductionButton";
 import { StatusHistoryTimeline } from "@/components/production-orders/StatusHistoryTimeline";
 import { StepExecutionCard } from "@/components/production-orders/StepExecutionCard";
+import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getWarehouses } from "@/features/inventory/queries";
 import { getProductionOrderDetail } from "@/features/production-orders/queries";
 
@@ -40,6 +41,7 @@ export default async function ProductionOrderDetailPage({ params }: { params: Pr
             <Button variant="danger">Cancel</Button>
           </Link>
         ) : null}
+        <PrintPageButton label="Print Summary" />
       </div>
       <OrderDetailHeader order={order} />
       {order.status === "PENDING" && order.canExecute ? <StartProductionButton orderId={order.id} version={order.version} /> : null}

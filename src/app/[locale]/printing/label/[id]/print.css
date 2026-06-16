@@ -1,0 +1,124 @@
+.print-label-page {
+  min-height: 100vh;
+  background: #f7f3ee;
+  color: #221f1c;
+  padding: 24px;
+}
+
+.print-label-stack {
+  display: grid;
+  gap: 16px;
+  place-items: start center;
+}
+
+.thermal-label {
+  display: grid;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  grid-template-columns: 1fr auto;
+  gap: 3mm;
+  overflow: hidden;
+  border: 1px solid #221f1c;
+  background: #ffffff;
+  padding: 4mm;
+  color: #111111;
+}
+
+.thermal-label[data-size="50x50mm"] {
+  width: 50mm;
+  height: 50mm;
+  grid-template-columns: 1fr;
+  place-items: center;
+  text-align: center;
+}
+
+.thermal-label[data-size="100x50mm"] {
+  width: 100mm;
+  height: 50mm;
+}
+
+.thermal-label[data-size="100x100mm"] {
+  width: 100mm;
+  height: 100mm;
+}
+
+.thermal-label h1 {
+  margin: 0;
+  font-size: 12pt;
+  line-height: 1.1;
+}
+
+.thermal-label[data-size="50x50mm"] h1 {
+  font-size: 9pt;
+}
+
+.thermal-label dl {
+  display: grid;
+  gap: 1.5mm;
+  margin: 2mm 0 0;
+  font-size: 8pt;
+}
+
+.thermal-label dt {
+  font-weight: 700;
+}
+
+.thermal-label dd {
+  margin: 0;
+}
+
+.thermal-label img {
+  width: 24mm;
+  height: 24mm;
+}
+
+.thermal-label[data-size="100x100mm"] img {
+  width: 34mm;
+  height: 34mm;
+}
+
+@page {
+  margin: 0;
+}
+
+@media print {
+  .print-label-page {
+    min-height: auto;
+    background: #ffffff;
+    padding: 0;
+  }
+
+  .print-label-stack {
+    display: block;
+  }
+
+  .thermal-label {
+    border-color: #000000;
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .thermal-label[data-size="50x50mm"] {
+    page: label-50;
+  }
+
+  .thermal-label[data-size="100x50mm"] {
+    page: label-100-50;
+  }
+
+  .thermal-label[data-size="100x100mm"] {
+    page: label-100;
+  }
+}
+
+@page label-50 {
+  size: 50mm 50mm;
+}
+
+@page label-100-50 {
+  size: 100mm 50mm;
+}
+
+@page label-100 {
+  size: 100mm 100mm;
+}

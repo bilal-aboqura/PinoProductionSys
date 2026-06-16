@@ -47,37 +47,44 @@ model VerificationToken {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
-  username              String                 @unique
-  email                 String?                @unique
-  displayName           String
-  passwordHash          String
-  mustChangePassword    Boolean                @default(false)
-  isActive              Boolean                @default(true)
-  languagePreference    String                 @default("ar")
-  lastLoginAt           DateTime?
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-  accounts              Account[]
-  sessions              Session[]
-  userRoles             UserRole[]
-  departments           UserDepartment[]
-  recipeCategories      UserRecipeCategory[]
-  productionLines       UserProductionLine[]
-  userWarehouses        UserWarehouse[]
-  stockMovements        StockMovement[]
-  inventoryTransfers    InventoryTransfer[]
-  inventoryAdjustments  InventoryAdjustment[]
-  inventoryWasteRecords InventoryWasteRecord[]
-  inventoryAuditLogs    InventoryAuditLog[]
-  createdBatches        ProductionBatch[]      @relation("BatchCreator")
-  batchStatusChanges    BatchStatusHistory[]   @relation("BatchStatusChanger")
-  batchPrints           BatchPrintHistory[]    @relation("BatchPrinter")
-  batchDisposals        BatchDisposal[]        @relation("BatchDisposer")
-  batchEvidenceUploads  BatchEvidence[]        @relation("BatchEvidenceUploader")
-  batchAuditLogs        BatchAuditLog[]        @relation("BatchAuditActor")
-  auditLogsAsActor      AuditLog[]             @relation("AuditActor")
-  auditLogsAsTarget     AuditLog[]             @relation("AuditTarget")
+  id                     String                  @id @default(cuid())
+  username               String                  @unique
+  email                  String?                 @unique
+  displayName            String
+  passwordHash           String
+  mustChangePassword     Boolean                 @default(false)
+  isActive               Boolean                 @default(true)
+  languagePreference     String                  @default("ar")
+  lastLoginAt            DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  accounts               Account[]
+  sessions               Session[]
+  userRoles              UserRole[]
+  departments            UserDepartment[]
+  recipeCategories       UserRecipeCategory[]
+  productionLines        UserProductionLine[]
+  userWarehouses         UserWarehouse[]
+  stockMovements         StockMovement[]
+  inventoryTransfers     InventoryTransfer[]
+  inventoryAdjustments   InventoryAdjustment[]
+  inventoryWasteRecords  InventoryWasteRecord[]
+  inventoryAuditLogs     InventoryAuditLog[]
+  createdBatches         ProductionBatch[]       @relation("BatchCreator")
+  batchStatusChanges     BatchStatusHistory[]    @relation("BatchStatusChanger")
+  batchPrints            BatchPrintHistory[]     @relation("BatchPrinter")
+  batchDisposals         BatchDisposal[]         @relation("BatchDisposer")
+  batchEvidenceUploads   BatchEvidence[]         @relation("BatchEvidenceUploader")
+  batchAuditLogs         BatchAuditLog[]         @relation("BatchAuditActor")
+  scheduledReports       ScheduledReport[]       @relation("ScheduledReportCreator")
+  auditLogsAsActor       AuditLog[]              @relation("AuditActor")
+  auditLogsAsTarget      AuditLog[]              @relation("AuditTarget")
+  notificationRecipients NotificationRecipient[]
+  notificationPreference NotificationPreference?
+  alertRulesUpdated      AlertRule[]             @relation("AlertRuleUpdater")
+  createdPrintJobs       PrintJob[]              @relation("PrintJobCreator")
+  printHistoryEntries    PrintHistory[]          @relation("PrintHistoryActor")
+  printReprints          PrintReprint[]          @relation("PrintReprintRequester")
 
   @@map("users")
 }
@@ -132,8 +139,12 @@ model UserRole {
 model Department {
   id              String           @id @default(cuid())
   name            String           @unique
+  nameAr          String           @default("")
+  nameEn          String           @default("")
+  description     String?
   isActive        Boolean          @default(true)
   createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   userDepartments UserDepartment[]
 
   @@map("departments")
@@ -415,8 +426,12 @@ model RecipeAuditLog {
 model ProductionLine {
   id                  String               @id @default(cuid())
   name                String               @unique
+  nameAr              String               @default("")
+  nameEn              String               @default("")
+  description         String?
   isActive            Boolean              @default(true)
   createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   userProductionLines UserProductionLine[]
 
   @@map("production_lines")
@@ -475,6 +490,8 @@ model Warehouse {
   id                String                    @id @default(cuid())
   name              String                    @unique
   code              String                    @unique
+  nameAr            String                    @default("")
+  nameEn            String                    @default("")
   description       String?
   isActive          Boolean                   @default(true)
   createdAt         DateTime                  @default(now())
@@ -492,6 +509,44 @@ model Warehouse {
   batchContainers   BatchContainer[]
 
   @@map("warehouses")
+}
+
+model StorageCondition {
+  id             String   @id @default(cuid())
+  nameAr         String
+  nameEn         String
+  description    String?
+  minTemperature Decimal? @db.Decimal(5, 2)
+  maxTemperature Decimal? @db.Decimal(5, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("storage_conditions")
+}
+
+model LabelPrintTemplate {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  dimensions String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("label_templates")
+}
+
+model WasteReasonOption {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  nameAr      String
+  nameEn      String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("waste_reason_options")
 }
 
 model UserWarehouse {
@@ -583,7 +638,7 @@ model InventoryWasteRecord {
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
   quantity        Decimal       @db.Decimal(10, 3)
-  reason          WasteReason
+  reason          String
   notes           String?
   timestamp       DateTime      @default(now())
 
@@ -806,6 +861,91 @@ model BatchAuditLog {
   @@map("batch_audit_logs")
 }
 
+model Printer {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  type        PrinterType @default(THERMAL)
+  isDefault   Boolean     @default(false)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  printJobs   PrintJob[]
+
+  @@index([isActive, isDefault])
+  @@map("printers")
+}
+
+model PrintTemplate {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  dimensions String
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  printJobs  PrintJob[]
+
+  @@map("print_templates")
+}
+
+model PrintJob {
+  id          String         @id @default(cuid())
+  printerId   String?
+  printer     Printer?       @relation(fields: [printerId], references: [id], onDelete: SetNull)
+  templateId  String
+  template    PrintTemplate  @relation(fields: [templateId], references: [id])
+  status      PrintJobStatus @default(PENDING)
+  targetType  PrintTarget
+  targetId    String
+  quantity    Int            @default(1)
+  payload     Json
+  createdById String
+  createdBy   User           @relation("PrintJobCreator", fields: [createdById], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  history     PrintHistory[]
+  reprints    PrintReprint[]
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdById])
+  @@map("print_jobs")
+}
+
+model PrintHistory {
+  id           String   @id @default(cuid())
+  printJobId   String
+  printJob     PrintJob @relation(fields: [printJobId], references: [id], onDelete: Cascade)
+  printerName  String
+  templateName String
+  actorId      String
+  actor        User     @relation("PrintHistoryActor", fields: [actorId], references: [id])
+  actorName    String
+  status       String
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([status])
+  @@map("print_history")
+}
+
+model PrintReprint {
+  id              String        @id @default(cuid())
+  printJobId      String
+  printJob        PrintJob      @relation(fields: [printJobId], references: [id], onDelete: Cascade)
+  reason          ReprintReason
+  customReason    String?
+  requestedById   String
+  requestedBy     User          @relation("PrintReprintRequester", fields: [requestedById], references: [id])
+  requestedByName String
+  createdAt       DateTime      @default(now())
+
+  @@index([printJobId, createdAt])
+  @@map("print_reprints")
+}
+
 model AuditLog {
   id            String      @id @default(cuid())
   actorId       String
@@ -822,6 +962,115 @@ model AuditLog {
   target        User?       @relation("AuditTarget", fields: [targetId], references: [id])
 
   @@map("audit_logs")
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  @@map("system_settings")
+}
+
+model ScheduledReport {
+  id          String          @id @default(cuid())
+  name        String
+  reportType  String
+  frequency   String
+  format      String
+  recipients  String[]
+  filters     Json
+  isActive    Boolean         @default(true)
+  createdById String
+  createdBy   User            @relation("ScheduledReportCreator", fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  archives    ReportArchive[]
+
+  @@index([reportType, frequency, isActive])
+  @@index([createdById])
+  @@map("scheduled_reports")
+}
+
+model ReportArchive {
+  id                String           @id @default(cuid())
+  scheduledReportId String?
+  scheduledReport   ScheduledReport? @relation(fields: [scheduledReportId], references: [id], onDelete: SetNull)
+  name              String
+  format            String
+  fileUrl           String
+  sizeBytes         Int
+  generatedAt       DateTime         @default(now())
+
+  @@index([scheduledReportId, generatedAt])
+  @@map("report_archives")
+}
+
+model Notification {
+  id                String                  @id @default(cuid())
+  title             String
+  message           String
+  category          NotificationCategory
+  severity          NotificationSeverity
+  relatedEntityType String?
+  relatedEntityId   String?
+  createdAt         DateTime                @default(now())
+  recipients        NotificationRecipient[]
+
+  @@index([category])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationRecipient {
+  notificationId String
+  userId         String
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  isArchived     Boolean      @default(false)
+  archivedAt     DateTime?
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([notificationId, userId])
+  @@index([userId, isRead, isArchived])
+  @@map("notification_recipients")
+}
+
+model AlertRule {
+  id          String               @id @default(cuid())
+  name        String               @unique
+  category    NotificationCategory
+  triggerType AlertTriggerType
+  parameters  Json
+  severity    NotificationSeverity
+  targetRoles String[]
+  isEnabled   Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  updatedById String?
+  updatedBy   User?                @relation("AlertRuleUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([category, isEnabled])
+  @@map("alert_rules")
+}
+
+model NotificationPreference {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventoryAlerts  Boolean  @default(true)
+  batchAlerts      Boolean  @default(true)
+  productionAlerts Boolean  @default(true)
+  systemAlerts     Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("notification_preferences")
 }
 
 enum AuditAction {
@@ -865,6 +1114,17 @@ enum AuditAction {
   PRODUCTION_ORDER_QUANTITY_CONFIRMED
   PRODUCTION_ORDER_COMPLETED
   PRODUCTION_ORDER_CANCELLED
+  SYSTEM_SETTING_UPDATED
+  MASTER_DATA_CREATED
+  MASTER_DATA_UPDATED
+  MASTER_DATA_ARCHIVED
+  MASTER_DATA_RESTORED
+  PRINTER_CREATED
+  PRINTER_UPDATED
+  PRINTER_DEACTIVATED
+  LABEL_PRINTED
+  LABEL_REPRINTED
+  PRINT_JOB_FAILED
 }
 
 enum ProductionOrderStatus {
@@ -892,6 +1152,32 @@ enum LabelTemplate {
   SMALL
   STANDARD
   LARGE
+}
+
+enum PrinterType {
+  THERMAL
+  STANDARD
+  PDF_OUTPUT
+}
+
+enum PrintJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PrintTarget {
+  BATCH
+  CONTAINER
+  WAREHOUSE
+}
+
+enum ReprintReason {
+  DAMAGE
+  LOSS
+  PRINT_ERROR
+  OTHER
 }
 
 enum DisposalReason {
@@ -971,4 +1257,26 @@ enum WasteReason {
   SPOILAGE
   PRODUCTION_LOSS
   DAMAGED_MATERIAL
+}
+
+enum NotificationCategory {
+  PRODUCTION
+  INVENTORY
+  BATCH
+  WAREHOUSE
+  SYSTEM
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AlertTriggerType {
+  LOW_STOCK
+  NEGATIVE_INVENTORY
+  NEAR_EXPIRY
+  EXPIRED_BATCH
+  PRODUCTION_DELAY
 }

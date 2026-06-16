@@ -1,3 +1,4 @@
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,7 +10,17 @@ import { ItemForm } from "./_components/ItemForm";
 
 export default async function InventoryItemsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [items, categories, session] = await Promise.all([getInventoryItems({}), getInventoryCategories(), getServerSession()]);
+  let items;
+  let categories;
+  let session;
+  try {
+    [items, categories, session] = await Promise.all([getInventoryItems({}), getInventoryCategories(), getServerSession()]);
+  } catch (error) {
+    if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
+      return <AccessDenied locale={locale} />;
+    }
+    throw error;
+  }
   const canManage = session.user.permissions.includes("inventory:manage");
 
   return (

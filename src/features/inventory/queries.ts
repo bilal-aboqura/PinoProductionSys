@@ -136,16 +136,14 @@ export async function getInventoryBalances(filters: BalanceFilters = {}): Promis
         }
       : {})
   };
-  const [items, total] = await Promise.all([
-    prisma.inventoryBalance.findMany({
-      where,
-      include: { inventoryItem: { include: { category: true } }, warehouse: true },
-      orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
-      skip,
-      take: pageSize
-    }),
-    prisma.inventoryBalance.count({ where })
-  ]);
+  const items = await prisma.inventoryBalance.findMany({
+    where,
+    include: { inventoryItem: { include: { category: true } }, warehouse: true },
+    orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
+    skip,
+    take: pageSize
+  });
+  const total = await prisma.inventoryBalance.count({ where });
   const mapped = items.map(toBalanceDto).filter((item) => (filters.lowStockOnly ? item.isLowStock : true));
   return { items: mapped, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
 }
@@ -202,16 +200,14 @@ export async function getInventoryMovementHistory(filters: MovementFilters = {})
         }
       : {})
   };
-  const [items, total] = await Promise.all([
-    prisma.stockMovement.findMany({
-      where,
-      include: { inventoryItem: true, warehouse: true, user: true },
-      orderBy: { timestamp: "desc" },
-      skip,
-      take: pageSize
-    }),
-    prisma.stockMovement.count({ where })
-  ]);
+  const items = await prisma.stockMovement.findMany({
+    where,
+    include: { inventoryItem: true, warehouse: true, user: true },
+    orderBy: { timestamp: "desc" },
+    skip,
+    take: pageSize
+  });
+  const total = await prisma.stockMovement.count({ where });
   return {
     items: items.map((movement) => ({
       id: movement.id,

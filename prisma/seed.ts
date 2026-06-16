@@ -38,6 +38,13 @@ const permissions = [
   ["recipes:manage_categories", "Manage Recipe Categories", "recipes", "manage_categories"],
   ["recipes:manage_scope", "Manage Recipe Scope", "recipes", "manage_scope"],
   ["reports:view", "View Reports", "reports", "view"],
+  ["notifications:view", "View Notifications", "notifications", "view"],
+  ["notifications:manage_rules", "Manage Alert Rules", "notifications", "manage_rules"],
+  ["printing:view", "View Print Queue", "printing", "view"],
+  ["printing:create", "Create Print Jobs", "printing", "create"],
+  ["printing:reprint", "Authorize Reprints", "printing", "reprint"],
+  ["printing:manage_printers", "Manage Printers", "printing", "manage_printers"],
+  ["settings:view", "View Settings", "settings", "view"],
   ["system:configure", "System Configuration", "system", "configure"]
 ] as const;
 
@@ -62,7 +69,13 @@ const rolePermissions: Record<string, string[]> = {
     "recipes:publish",
     "recipes:view",
     "recipes:view_versions",
-    "reports:view"
+    "reports:view",
+    "notifications:view",
+    "notifications:manage_rules",
+    "printing:view",
+    "printing:create",
+    "printing:reprint",
+    "settings:view"
   ],
   production_staff: [
     "production:view",
@@ -70,9 +83,21 @@ const rolePermissions: Record<string, string[]> = {
     "production-orders:view",
     "production-orders:claim",
     "production-orders:execute",
-    "recipes:view"
+    "recipes:view",
+    "printing:view",
+    "printing:create",
+    "notifications:view"
   ],
-  warehouse_staff: ["inventory:view", "inventory:manage", "inventory:adjust", "inventory:transfer", "recipes:view"]
+  warehouse_staff: [
+    "inventory:view",
+    "inventory:manage",
+    "inventory:adjust",
+    "inventory:transfer",
+    "recipes:view",
+    "printing:view",
+    "printing:create",
+    "notifications:view"
+  ]
 };
 
 const roleLabels: Record<string, string> = {
@@ -112,8 +137,13 @@ async function main() {
     }
   }
 
-  for (const name of ["Bakery", "Pizza", "Kitchen"]) {
-    await prisma.department.upsert({ where: { name }, update: {}, create: { name } });
+  const departments = [
+    ["Bakery", "Bakery", "المخبز", "Bread and dough preparation"],
+    ["Pizza", "Pizza", "البيتزا", "Pizza production"],
+    ["Kitchen", "Kitchen", "المطبخ", "General kitchen operations"]
+  ] as const;
+  for (const [name, nameEn, nameAr, description] of departments) {
+    await prisma.department.upsert({ where: { name }, update: { nameEn, nameAr, description }, create: { name, nameEn, nameAr, description } });
   }
   for (const name of ["Dough", "Sauces", "Desserts"]) {
     await prisma.recipeCategory.upsert({
@@ -122,8 +152,12 @@ async function main() {
       create: { name, nameAr: name, nameEn: name }
     });
   }
-  for (const name of ["Main Kitchen", "Pizza Station"]) {
-    await prisma.productionLine.upsert({ where: { name }, update: {}, create: { name } });
+  const productionLines = [
+    ["Main Kitchen", "Main Kitchen", "المطبخ الرئيسي", "Core production line"],
+    ["Pizza Station", "Pizza Station", "محطة البيتزا", "Pizza assembly and baking"]
+  ] as const;
+  for (const [name, nameEn, nameAr, description] of productionLines) {
+    await prisma.productionLine.upsert({ where: { name }, update: { nameEn, nameAr, description }, create: { name, nameEn, nameAr, description } });
   }
   const inventoryCategories = [
     ["Dry Goods", "Shelf-stable powders, grains, and dry ingredients"],
@@ -138,11 +172,161 @@ async function main() {
   }
 
   const warehouses = [
-    ["WH-MAIN", "Main Warehouse", "Primary raw-material storage"],
-    ["WH-BRANCH", "Branch Warehouse", "Branch-level inventory storage"]
+    ["WH-MAIN", "Main Warehouse", "المخزن الرئيسي", "Primary raw-material storage"],
+    ["WH-BRANCH", "Branch Warehouse", "مخزن الفرع", "Branch-level inventory storage"]
   ] as const;
-  for (const [code, name, description] of warehouses) {
-    await prisma.warehouse.upsert({ where: { code }, update: { name, description }, create: { code, name, description } });
+  for (const [code, name, nameAr, description] of warehouses) {
+    const existingWarehouse = await prisma.warehouse.findFirst({ where: { OR: [{ code }, { name }] } });
+    if (existingWarehouse) {
+      await prisma.warehouse.update({ where: { id: existingWarehouse.id }, data: { code, name, nameEn: name, nameAr, description } });
+    } else {
+      await prisma.warehouse.create({ data: { code, name, nameEn: name, nameAr, description } });
+    }
+  }
+
+  const storageConditions = [
+    { nameEn: "Room Temperature", nameAr: "درجة حرارة الغرفة", description: "Dry ambient storage", minTemperature: 18, maxTemperature: 25 },
+    { nameEn: "Chilled", nameAr: "مبرد", description: "Refrigerated storage", minTemperature: 0, maxTemperature: 5 },
+    { nameEn: "Frozen", nameAr: "مجمد", description: "Freezer storage", minTemperature: -25, maxTemperature: -18 }
+  ];
+  for (const condition of storageConditions) {
+    const existing = await prisma.storageCondition.findFirst({ where: { nameEn: condition.nameEn } });
+    const data = { ...condition, minTemperature: condition.minTemperature, maxTemperature: condition.maxTemperature };
+    if (existing) {
+      await prisma.storageCondition.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.storageCondition.create({ data });
+    }
+  }
+
+  const labelTemplates = [
+    ["Small Label", "40x25mm"],
+    ["Standard Label", "50x30mm"],
+    ["Large Label", "80x50mm"]
+  ] as const;
+  for (const [name, dimensions] of labelTemplates) {
+    await prisma.labelPrintTemplate.upsert({ where: { name }, update: { dimensions }, create: { name, dimensions } });
+  }
+
+  const printTemplates = [
+    ["Small Label 50x50mm", "50x50mm"],
+    ["Standard Label 100x50mm", "100x50mm"],
+    ["Large Label 100x100mm", "100x100mm"]
+  ] as const;
+  for (const [name, dimensions] of printTemplates) {
+    await prisma.printTemplate.upsert({ where: { name }, update: { dimensions, isActive: true }, create: { name, dimensions } });
+  }
+
+  const printers = [
+    { name: "Kitchen Thermal Printer", description: "Default thermal label printer", type: "THERMAL" as const, isDefault: true },
+    { name: "Office Document Printer", description: "Default A4 document printer", type: "STANDARD" as const, isDefault: false }
+  ];
+  for (const printer of printers) {
+    await prisma.printer.upsert({
+      where: { name: printer.name },
+      update: { description: printer.description, type: printer.type, isDefault: printer.isDefault, isActive: true },
+      create: { ...printer, isActive: true }
+    });
+  }
+
+  const wasteReasons = [
+    ["SPOILAGE", "Spoilage", "تلف", "Food spoiled before use"],
+    ["BURNED_BATCH", "Burned Batch", "دفعة محترقة", "Production batch burned"],
+    ["PRODUCTION_LOSS", "Production Loss", "فاقد إنتاج", "Loss during production"],
+    ["DAMAGED_MATERIAL", "Damaged Material", "مواد تالفة", "Damaged raw material"]
+  ] as const;
+  for (const [code, nameEn, nameAr, description] of wasteReasons) {
+    await prisma.wasteReasonOption.upsert({ where: { code }, update: { nameEn, nameAr, description }, create: { code, nameEn, nameAr, description } });
+  }
+
+  const systemSettings = [
+    {
+      key: "general_preferences",
+      description: "Company localization and date defaults",
+      value: { companyName: "Pino Restaurant", companyLogoUrl: "/images/logo.png", timeZone: "Africa/Cairo", dateFormat: "YYYY-MM-DD", defaultLanguage: "ar" }
+    },
+    {
+      key: "qr_config",
+      description: "QR rendering defaults",
+      value: { qrEnabled: true, qrSize: 150, errorCorrectionLevel: "M" }
+    },
+    {
+      key: "notification_thresholds",
+      description: "Operational alert thresholds",
+      value: { lowStockThresholdPercent: 10, nearExpiryThresholdDays: 7, productionDelayThresholdMinutes: 30 }
+    }
+  ] as const;
+  for (const setting of systemSettings) {
+    await prisma.systemSetting.upsert({
+      where: { key: setting.key },
+      update: { value: setting.value, description: setting.description },
+      create: { key: setting.key, value: setting.value, description: setting.description }
+    });
+  }
+
+  const alertRules = [
+    {
+      name: "Low Stock",
+      category: "INVENTORY",
+      triggerType: "LOW_STOCK",
+      parameters: { thresholdMode: "itemMinStock" },
+      severity: "WARNING",
+      targetRoles: ["warehouse_staff", "supervisor"]
+    },
+    {
+      name: "Negative Inventory",
+      category: "INVENTORY",
+      triggerType: "NEGATIVE_INVENTORY",
+      parameters: { threshold: 0 },
+      severity: "CRITICAL",
+      targetRoles: ["warehouse_staff", "supervisor"]
+    },
+    {
+      name: "Near Expiry Batch",
+      category: "BATCH",
+      triggerType: "NEAR_EXPIRY",
+      parameters: { daysBefore: 7 },
+      severity: "WARNING",
+      targetRoles: ["warehouse_staff", "supervisor"]
+    },
+    {
+      name: "Expired Batch",
+      category: "BATCH",
+      triggerType: "EXPIRED_BATCH",
+      parameters: {},
+      severity: "CRITICAL",
+      targetRoles: ["warehouse_staff", "supervisor"]
+    },
+    {
+      name: "Production Delay",
+      category: "PRODUCTION",
+      triggerType: "PRODUCTION_DELAY",
+      parameters: { maxDurationMinutes: 120 },
+      severity: "WARNING",
+      targetRoles: ["supervisor"]
+    }
+  ] as const;
+
+  for (const rule of alertRules) {
+    await prisma.alertRule.upsert({
+      where: { name: rule.name },
+      update: {
+        category: rule.category,
+        triggerType: rule.triggerType,
+        parameters: rule.parameters,
+        severity: rule.severity,
+        targetRoles: [...rule.targetRoles],
+        isEnabled: true
+      },
+      create: {
+        name: rule.name,
+        category: rule.category,
+        triggerType: rule.triggerType,
+        parameters: rule.parameters,
+        severity: rule.severity,
+        targetRoles: [...rule.targetRoles]
+      }
+    });
   }
 
   const password = tempPassword();
@@ -173,6 +357,8 @@ async function main() {
 
   console.log("Roles seeded: administrator, supervisor, production_staff, warehouse_staff");
   console.log(`Permissions seeded: ${permissions.length} permissions`);
+  console.log(`Alert rules seeded: ${alertRules.length}`);
+  console.log("Settings defaults seeded");
   console.log("Scope data seeded");
   console.log("Admin user created:");
   console.log("  Username: admin");
