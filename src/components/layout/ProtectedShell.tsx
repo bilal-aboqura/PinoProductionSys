@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppNav } from "@/components/layout/AppNav";
 import type { FastNavUser } from "@/lib/fast-nav";
 
-function readUser() {
+function readUser(): FastNavUser | null {
   try {
     const value = window.localStorage.getItem("pino_nav");
     if (!value) return null;
@@ -24,16 +24,18 @@ export function ProtectedShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<FastNavUser | null>(null);
+  // Read synchronously so the nav renders on the first paint — no hydration flash.
+  // `typeof window === "undefined"` guard makes this SSR-safe (returns null on server,
+  // then the client initializer runs immediately before the first paint).
+  const [user] = [
+    typeof window !== "undefined" ? readUser() : null
+  ] as [FastNavUser | null];
 
   useEffect(() => {
-    const stored = readUser();
-    if (!stored) {
+    if (!user) {
       router.replace(`/${locale}/login`);
-      return;
     }
-    setUser(stored);
-  }, [locale, router]);
+  }, [user, locale, router]);
 
   if (!user) return null;
 
