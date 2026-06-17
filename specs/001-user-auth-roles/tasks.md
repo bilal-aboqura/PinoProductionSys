@@ -50,7 +50,7 @@ and permission resolver. ALL user stories depend on this phase completing first.
 - [X] T012 Create `prisma/schema.prisma` with Supabase datasource (`url = DATABASE_URL`, `directUrl = DIRECT_URL`), all 14 tables and 1 enum from data-model.md: `users`, `accounts`, `sessions`, `verification_tokens`, `roles`, `permissions`, `role_permissions`, `user_roles`, `departments`, `user_departments`, `recipe_categories`, `user_recipe_categories`, `production_lines`, `user_production_lines`, `inventory_areas`, `user_inventory_areas`, `audit_logs`, and `AuditAction` enum
 - [ ] T013 Run `npx prisma migrate dev --name init` to apply schema to Supabase and generate Prisma client (requires `DIRECT_URL` configured)
 - [X] T014 Create `prisma/seed.ts` — seeds 16 permission codes, 4 roles with role_permission assignments per permission-matrix.md, sample scope data (3 departments, 3 recipe categories, 2 production lines, 2 inventory areas), and initial admin account with `mustChangePassword: true`; prints temporary password to console
-- [X] T015 Run Supabase SQL Editor commands from quickstart.md: disable RLS on all 16 application tables; revoke UPDATE and DELETE on `audit_logs` from `authenticated` and `anon` roles
+- [X] T015 Configure database access security (superseded by automated RLS/default-deny hardening in `npm run db:deploy`)
 
 ### Internationalization Foundation
 

@@ -1,6 +1,5 @@
--- Deny direct browser/PostgREST access to application tables.
--- The Next.js server uses the private PostgreSQL owner connection through Prisma,
--- so it continues to work while anon/authenticated access is default-denied.
+-- Enable RLS for every existing public application table. With no policies for
+-- anon/authenticated, PostgreSQL applies default-deny behavior to direct API access.
 DO $rls$
 DECLARE
   table_record record;
@@ -20,12 +19,8 @@ BEGIN
 END
 $rls$;
 
--- No RLS policies are created for these roles: direct API access is denied.
 REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
-
--- Apply the same deny-by-default grants to objects created by future migrations.
--- RLS itself is re-applied by `npm run db:deploy`.
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
 

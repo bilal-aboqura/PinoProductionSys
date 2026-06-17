@@ -59,40 +59,24 @@ SESSION_MAX_AGE=28800
 ## 3. Database Setup
 
 ```bash
-# Apply all migrations (uses DIRECT_URL to bypass pgBouncer)
-npx prisma migrate dev --name init
+# Apply migrations and automatically enable RLS/default-deny security
+npm run db:deploy
 
 # Generate Prisma client
 npx prisma generate
 ```
 
-After the first migration, run the following **once** in the Supabase SQL Editor
-(Dashboard → SQL Editor) to configure security:
+RLS hardening is included in `npm run db:deploy`. To reapply only the security
+configuration without running migrations:
 
-```sql
--- Disable RLS on all application tables (security handled at app layer)
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE roles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE permissions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE role_permissions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_roles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE departments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_departments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE recipe_categories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_recipe_categories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE production_lines DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_production_lines DISABLE ROW LEVEL SECURITY;
-ALTER TABLE inventory_areas DISABLE ROW LEVEL SECURITY;
-ALTER TABLE user_inventory_areas DISABLE ROW LEVEL SECURITY;
-ALTER TABLE sessions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE accounts DISABLE ROW LEVEL SECURITY;
-ALTER TABLE verification_tokens DISABLE ROW LEVEL SECURITY;
-
--- audit_logs: INSERT + SELECT only (no UPDATE / DELETE ever)
-ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
-REVOKE UPDATE, DELETE ON audit_logs FROM authenticated;
-REVOKE UPDATE, DELETE ON audit_logs FROM anon;
+```bash
+# Optional manual reapplication (normally included in db:deploy)
+npm run db:security
 ```
+
+The security script enables RLS on every public application table and grants no
+direct table access or policies to `anon` and `authenticated`. Server-side Prisma
+continues through the private PostgreSQL owner connection.
 
 ---
 

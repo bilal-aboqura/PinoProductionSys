@@ -223,23 +223,11 @@ datasource db {
 ```
 
 **Row Level Security (RLS)**:
-- Supabase enables RLS on tables by default. Since Prisma uses the service role / pooler
-  connection, RLS policies would block all queries unless disabled or explicitly configured.
-- Decision: disable RLS on all application tables (security enforced at application layer
-  via Auth.js + Server Action permission checks).
-- Exception: `audit_logs` — grant INSERT + SELECT only to the application DB user; deny
-  UPDATE and DELETE at the PostgreSQL role level via Supabase SQL editor.
+- RLS is enabled automatically on every public application table after migrations.
+- No policies or table privileges are granted to Supabase's `anon` or `authenticated`
+  roles, so direct browser/PostgREST access is default-denied.
+- Server-side Prisma uses the private PostgreSQL owner connection and remains responsible
+  for Auth.js/RBAC enforcement. The owner connection is never exposed to the browser.
 
-**Supabase-specific setup steps** (one-time, after project creation):
-```sql
--- Run in Supabase SQL Editor after migrations
--- Disable RLS on application tables
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE roles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE permissions DISABLE ROW LEVEL SECURITY;
--- ... (repeat for all tables)
-
--- Restrict audit_logs to INSERT + SELECT only
-REVOKE UPDATE, DELETE ON audit_logs FROM authenticated;
-REVOKE UPDATE, DELETE ON audit_logs FROM anon;
-```
+**Supabase-specific setup**: run `npm run db:deploy`. This applies migrations and
+then executes the idempotent RLS hardening script for all current tables.

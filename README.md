@@ -29,7 +29,7 @@ It also includes operational production, inventory, and finished-product batch t
 
 1. Copy `.env.example` to `.env.local` and fill in Supabase and Auth.js values.
 2. Install dependencies with `npm install`.
-3. Apply the database schema with `npx prisma migrate dev --name init`.
+3. Apply the database schema and automatic RLS hardening with `npm run db:deploy`.
 4. Seed defaults with `npx prisma db seed`.
 5. Start the app with `npm run dev`.
 
@@ -39,6 +39,8 @@ See [specs/005-batch-mgmt-traceability/quickstart.md](specs/005-batch-mgmt-trace
 ## Scripts
 
 - `npm run dev` starts the local Next.js server.
+- `npm run db:deploy` applies migrations and enables RLS/default-deny access on all public application tables.
+- `npm run db:security` reapplies RLS hardening without running migrations.
 - `npm run typecheck` runs TypeScript validation.
 - `npm run lint` runs Next.js linting.
 - `npm test` runs Vitest.

@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:deploy": "prisma migrate deploy && prisma db execute --file prisma/supabase-security.sql --schema prisma/schema.prisma",
+    "db:security": "prisma db execute --file prisma/supabase-security.sql --schema prisma/schema.prisma",
     "lint": "eslint . --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
