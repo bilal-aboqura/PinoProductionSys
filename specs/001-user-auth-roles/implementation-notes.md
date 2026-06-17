@@ -2,7 +2,7 @@
 
 ## Environment-dependent tasks
 
-- `T021` is implemented with Auth.js JWT sessions instead of database sessions because Auth.js v5 Credentials provider rejects database sessions at runtime. The session callback refreshes user, role, permission, active status, and forced-password state from Prisma on each request so role changes and deactivation are enforced on the next request.
+- `T021` is implemented with Auth.js JWT sessions instead of database sessions because Auth.js v5 Credentials provider rejects database sessions at runtime. User, role, permission, active-status, and forced-password claims are resolved at login and embedded in the signed JWT, avoiding repeated role queries during navigation. Role or account changes therefore require a new login/session before cached claims change; sensitive mutations continue to enforce authorization server-side.
 - `T013` was applied with `npx prisma db push` because `npx prisma migrate dev --name init` refuses to run in this non-interactive agent session. Prisma reported the Supabase schema is in sync and the client was generated.
 - The public Supabase URL/key are not enough for Prisma. Login/user administration use Prisma and require the private Postgres connection strings in `.env.local`.
 - `T015` was applied with `npx prisma db execute --file prisma/supabase-security.sql --schema prisma/schema.prisma`.

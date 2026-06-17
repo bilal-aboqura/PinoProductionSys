@@ -125,21 +125,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = user.id;
+        token.username = user.username;
+        token.displayName = user.displayName;
+        token.role = user.role;
+        token.roleDisplayName = user.roleDisplayName;
+        token.permissions = user.permissions;
+        token.mustChangePassword = user.mustChangePassword;
+        token.isActive = user.isActive;
+        token.languagePreference = user.languagePreference;
       }
 
-      if (token.sub) {
-        const claims = await loadSessionClaims(token.sub);
-        if (claims) {
-          token.username = claims.username;
-          token.displayName = claims.displayName;
-          token.role = claims.role;
-          token.roleDisplayName = claims.roleDisplayName;
-          token.permissions = claims.permissions;
-          token.mustChangePassword = claims.mustChangePassword;
-          token.isActive = claims.isActive;
-          token.languagePreference = claims.languagePreference;
-        }
-      }
+      // Role and permission claims are resolved by `authorize` at login and then
+      // reused from the signed JWT. Do not reload them on session reads: this
+      // callback also runs during normal page navigation.
       return token;
     },
     async session({ session, token }) {
