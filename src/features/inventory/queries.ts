@@ -1,16 +1,11 @@
 import { Prisma, type ItemType, type MovementType } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
+import { paginationInput, totalPages } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import type { BalanceDto, BalanceFilters, InventoryItemDto, MovementDto, MovementFilters, PagedList, WarehouseDto } from "./types";
 
 function decimalToString(value: Prisma.Decimal | null | undefined) {
   return value == null ? "0" : value.toString();
-}
-
-function pageInput(page?: number, pageSize?: number) {
-  const safePage = Math.max(1, page ?? 1);
-  const safePageSize = Math.min(100, Math.max(1, pageSize ?? 50));
-  return { page: safePage, pageSize: safePageSize, skip: (safePage - 1) * safePageSize };
 }
 
 function toWarehouseDto(warehouse: { id: string; code: string; name: string; description: string | null; isActive: boolean }): WarehouseDto {
@@ -77,6 +72,67 @@ export async function getInventoryItems(filters: { type?: ItemType; categoryId?:
   }));
 }
 
+export async function getInventoryItemList(
+  filters: { type?: ItemType; categoryId?: string; isActive?: boolean; search?: string; page?: number; pageSize?: number } = {}
+): Promise<PagedList<InventoryItemDto>> {
+  await getServerSession();
+  const { page, pageSize, skip, take } = paginationInput(filters.page, filters.pageSize);
+  const search = filters.search?.trim();
+  const where: Prisma.InventoryItemWhereInput = {
+    ...(filters.type ? { itemType: filters.type } : {}),
+    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+    ...(typeof filters.isActive === "boolean" ? { isActive: filters.isActive } : {}),
+    ...(search
+      ? {
+          OR: [
+            { code: { contains: search, mode: "insensitive" } },
+            { nameEn: { contains: search, mode: "insensitive" } },
+            { nameAr: { contains: search, mode: "insensitive" } }
+          ]
+        }
+      : {})
+  };
+  const [items, total] = await Promise.all([
+    prisma.inventoryItem.findMany({
+      where,
+      select: {
+        id: true,
+        code: true,
+        nameAr: true,
+        nameEn: true,
+        itemType: true,
+        categoryId: true,
+        category: { select: { name: true } },
+        unit: true,
+        minStockLevel: true,
+        isActive: true
+      },
+      orderBy: [{ isActive: "desc" }, { code: "asc" }],
+      skip,
+      take
+    }),
+    prisma.inventoryItem.count({ where })
+  ]);
+  return {
+    items: items.map((item) => ({
+      id: item.id,
+      code: item.code,
+      nameAr: item.nameAr,
+      nameEn: item.nameEn,
+      itemType: item.itemType,
+      categoryId: item.categoryId,
+      categoryName: item.category.name,
+      unit: item.unit,
+      minStockLevel: decimalToString(item.minStockLevel),
+      isActive: item.isActive
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages: totalPages(total, pageSize)
+  };
+}
+
 export async function getInventoryBalance(warehouseId: string, itemId: string) {
   await getServerSession();
   const balance = await prisma.inventoryBalance.findUnique({
@@ -115,7 +171,7 @@ function toBalanceDto(balance: Prisma.InventoryBalanceGetPayload<{ include: { in
 export async function getInventoryBalances(filters: BalanceFilters = {}): Promise<PagedList<BalanceDto>> {
   await getServerSession();
   const search = filters.search?.trim();
-  const { page, pageSize, skip } = pageInput(filters.page, filters.pageSize);
+  const { page, pageSize, skip, take } = paginationInput(filters.page, filters.pageSize ?? 50);
   const where: Prisma.InventoryBalanceWhereInput = {
     ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
     ...(filters.needsReconciliationOnly ? { needsReconciliation: true } : {}),
@@ -136,16 +192,18 @@ export async function getInventoryBalances(filters: BalanceFilters = {}): Promis
         }
       : {})
   };
-  const items = await prisma.inventoryBalance.findMany({
-    where,
-    include: { inventoryItem: { include: { category: true } }, warehouse: true },
-    orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
-    skip,
-    take: pageSize
-  });
-  const total = await prisma.inventoryBalance.count({ where });
+  const [items, total] = await Promise.all([
+    prisma.inventoryBalance.findMany({
+      where,
+      include: { inventoryItem: { include: { category: true } }, warehouse: true },
+      orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
+      skip,
+      take
+    }),
+    prisma.inventoryBalance.count({ where })
+  ]);
   const mapped = items.map(toBalanceDto).filter((item) => (filters.lowStockOnly ? item.isLowStock : true));
-  return { items: mapped, total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+  return { items: mapped, total, page, pageSize, totalPages: totalPages(total, pageSize) };
 }
 
 export async function getInventoryBalanceOptions(): Promise<BalanceDto[]> {
@@ -174,7 +232,7 @@ function sourceTypeFor(type: MovementType): MovementDto["sourceType"] {
 
 export async function getInventoryMovementHistory(filters: MovementFilters = {}): Promise<PagedList<MovementDto>> {
   await getServerSession();
-  const { page, pageSize, skip } = pageInput(filters.page, filters.pageSize);
+  const { page, pageSize, skip, take } = paginationInput(filters.page, filters.pageSize ?? 50);
   const itemSearch = filters.itemSearch?.trim();
   const where: Prisma.StockMovementWhereInput = {
     ...(filters.inventoryItemId ? { inventoryItemId: filters.inventoryItemId } : {}),
@@ -200,14 +258,16 @@ export async function getInventoryMovementHistory(filters: MovementFilters = {})
         }
       : {})
   };
-  const items = await prisma.stockMovement.findMany({
-    where,
-    include: { inventoryItem: true, warehouse: true, user: true },
-    orderBy: { timestamp: "desc" },
-    skip,
-    take: pageSize
-  });
-  const total = await prisma.stockMovement.count({ where });
+  const [items, total] = await Promise.all([
+    prisma.stockMovement.findMany({
+      where,
+      include: { inventoryItem: true, warehouse: true, user: true },
+      orderBy: { timestamp: "desc" },
+      skip,
+      take
+    }),
+    prisma.stockMovement.count({ where })
+  ]);
   return {
     items: items.map((movement) => ({
       id: movement.id,
@@ -225,7 +285,7 @@ export async function getInventoryMovementHistory(filters: MovementFilters = {})
     total,
     page,
     pageSize,
-    totalPages: Math.max(1, Math.ceil(total / pageSize))
+    totalPages: totalPages(total, pageSize)
   };
 }
 

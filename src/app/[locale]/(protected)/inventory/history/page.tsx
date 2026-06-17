@@ -1,7 +1,9 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getInventoryItems, getInventoryMovementHistory, getWarehouses } from "@/features/inventory/queries";
+import { getInventoryMovementHistory, getWarehouses } from "@/features/inventory/queries";
+import { parsePage } from "@/lib/pagination";
 import { EmptyState } from "../_components/EmptyState";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { MovementFilters } from "./_components/MovementFilters";
@@ -34,12 +36,10 @@ export default async function InventoryHistoryPage({
   ];
   const movementTypes = rawMovementTypes.filter((type) => validTypes.includes(type));
   const normalizedFilters = Object.fromEntries(Object.entries(filters).map(([key, value]) => [key, Array.isArray(value) ? value.join(",") : value]));
-  let items;
   let warehouses;
   let movements;
   try {
-    [items, warehouses, movements] = await Promise.all([
-      getInventoryItems({ isActive: true }),
+    [warehouses, movements] = await Promise.all([
       getWarehouses(),
       getInventoryMovementHistory({
         inventoryItemId: typeof filters.inventoryItemId === "string" && filters.inventoryItemId ? filters.inventoryItemId : undefined,
@@ -48,6 +48,7 @@ export default async function InventoryHistoryPage({
         movementTypes: movementTypes as never,
         dateFrom: typeof filters.dateFrom === "string" && filters.dateFrom ? filters.dateFrom : undefined,
         dateTo: typeof filters.dateTo === "string" && filters.dateTo ? filters.dateTo : undefined,
+        page: parsePage(filters.page),
         pageSize: 50
       })
     ]);
@@ -65,7 +66,7 @@ export default async function InventoryHistoryPage({
         <p className="text-sm font-semibold text-secondary">Traceability Ledger</p>
         <h1 className="text-3xl font-bold">Inventory Movement History</h1>
       </div>
-      <MovementFilters items={items} warehouses={warehouses} defaultValues={normalizedFilters} />
+      <MovementFilters warehouses={warehouses} defaultValues={normalizedFilters} />
       {movements.items.length === 0 ? (
         <EmptyState title="No movements found" />
       ) : (
@@ -98,6 +99,14 @@ export default async function InventoryHistoryPage({
           </Table>
         </div>
       )}
+      <Pagination
+        pathname={`/${locale}/inventory/history`}
+        page={movements.page}
+        totalPages={movements.totalPages}
+        totalItems={movements.total}
+        searchParams={filters}
+        itemLabel="movements"
+      />
     </section>
   );
 }

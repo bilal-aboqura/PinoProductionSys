@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/shared/Pagination";
 import { UserTable } from "@/features/users/components/UserTable";
 import { getUserList } from "@/features/users/queries";
+import { parsePage } from "@/lib/pagination";
 
 export default async function UsersPage({
   params,
@@ -15,7 +17,7 @@ export default async function UsersPage({
   const search = await searchParams;
 
   const t = await getTranslations("users");
-  const result = await getUserList({ search: search.q, page: Number(search.page ?? 1) });
+  const result = await getUserList({ search: search.q, page: parsePage(search.page) });
 
   return (
     <section className="logical-container py-8">
@@ -26,6 +28,16 @@ export default async function UsersPage({
         </Link>
       </div>
       <UserTable users={result.users} locale={locale} />
+      <div className="mt-4">
+        <Pagination
+          pathname={`/${locale}/admin/users`}
+          page={result.page}
+          totalPages={result.totalPages}
+          totalItems={result.total}
+          searchParams={search}
+          itemLabel="users"
+        />
+      </div>
     </section>
   );
 }

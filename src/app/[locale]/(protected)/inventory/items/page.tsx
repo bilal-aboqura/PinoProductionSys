@@ -1,20 +1,33 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getInventoryCategories, getInventoryItems } from "@/features/inventory/queries";
+import { getInventoryCategories, getInventoryItemList } from "@/features/inventory/queries";
 import { getServerSession } from "@/lib/auth";
+import { parsePage } from "@/lib/pagination";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { EmptyState } from "../_components/EmptyState";
 import { ItemForm } from "./_components/ItemForm";
 
-export default async function InventoryItemsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function InventoryItemsPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ search?: string; page?: string }>;
+}) {
   const { locale } = await params;
-  let items;
+  const query = await searchParams;
+  let itemPage;
   let categories;
   let session;
   try {
-    [items, categories, session] = await Promise.all([getInventoryItems({}), getInventoryCategories(), getServerSession()]);
+    [itemPage, categories, session] = await Promise.all([
+      getInventoryItemList({ search: query.search, page: parsePage(query.page), pageSize: 25 }),
+      getInventoryCategories(),
+      getServerSession()
+    ]);
   } catch (error) {
     if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
       return <AccessDenied locale={locale} />;
@@ -35,8 +48,17 @@ export default async function InventoryItemsPage({ params }: { params: Promise<{
           <Button variant="secondary">Warehouses</Button>
         </a>
       </div>
+      <form className="flex flex-wrap gap-2 rounded-md border bg-white p-4">
+        <input
+          className="min-w-64 flex-1 rounded-md border px-3 py-2 text-sm"
+          name="search"
+          defaultValue={query.search}
+          placeholder="Search code or item name"
+        />
+        <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">Search</button>
+      </form>
       <ItemForm categories={categories} canManage={canManage} />
-      {items.length === 0 ? (
+      {itemPage.items.length === 0 ? (
         <EmptyState title="No inventory items yet" />
       ) : (
         <div className="overflow-x-auto rounded-md border bg-white">
@@ -55,7 +77,7 @@ export default async function InventoryItemsPage({ params }: { params: Promise<{
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
+              {itemPage.items.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-semibold">{item.code}</TableCell>
                   <TableCell>{item.nameEn}</TableCell>
@@ -76,6 +98,14 @@ export default async function InventoryItemsPage({ params }: { params: Promise<{
           </Table>
         </div>
       )}
+      <Pagination
+        pathname={`/${locale}/inventory/items`}
+        page={itemPage.page}
+        totalPages={itemPage.totalPages}
+        totalItems={itemPage.total}
+        searchParams={query}
+        itemLabel="items"
+      />
     </section>
   );
 }

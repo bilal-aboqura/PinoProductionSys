@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowUpDown, Download, ExternalLink, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Pagination } from "@/components/shared/Pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReportColumn, ReportFilters, ReportRow, ReportType } from "@/features/reports/types";
 
@@ -15,7 +16,8 @@ export function ReportTable({
   totalCount,
   page,
   totalPages,
-  filters = {}
+  filters = {},
+  showPagination = true
 }: {
   locale: string;
   reportType: ReportType;
@@ -25,6 +27,7 @@ export function ReportTable({
   page: number;
   totalPages: number;
   filters?: ReportFilters;
+  showPagination?: boolean;
 }) {
   const [sortKey, setSortKey] = useState(columns[0]?.key ?? "");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -107,8 +110,32 @@ export function ReportTable({
           </TableBody>
         </Table>
       </div>
+      {showPagination ? <div className="border-t p-4">
+        <Pagination
+          pathname={`/${locale}/reports/${reportPath(reportType)}`}
+          page={page}
+          totalPages={totalPages}
+          totalItems={totalCount}
+          searchParams={{
+            ...filters,
+            startDate: filters.startDate?.slice(0, 10),
+            endDate: filters.endDate?.slice(0, 10)
+          }}
+          itemLabel="rows"
+        />
+      </div> : null}
     </div>
   );
+}
+
+function reportPath(reportType: ReportType) {
+  if (reportType.startsWith("PRODUCTION")) return "production";
+  if (reportType.startsWith("INVENTORY") || reportType === "LOW_STOCK") return "inventory";
+  if (reportType.includes("BATCH") || reportType === "ACTIVE_BATCHES" || reportType === "EXPIRED_BATCHES" || reportType === "NEAR_EXPIRY") return "batches";
+  if (reportType.startsWith("WASTE")) return "waste";
+  if (reportType.startsWith("WAREHOUSE")) return "warehouse";
+  if (reportType.startsWith("STAFF")) return "staff";
+  return "audit";
 }
 
 function labelForReport(reportType: ReportType) {

@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { getPrintHistory, getPrintQueue, canReprintLabels } from "@/features/printing/queries";
 import { getServerSession } from "@/lib/auth";
+import { parsePage } from "@/lib/pagination";
 import { ReprintDialog } from "./components/ReprintDialog";
 
 export default async function PrintingPage({
@@ -18,7 +20,7 @@ export default async function PrintingPage({
     const session = await getServerSession();
     const [queue, history] = await Promise.all([
       getPrintQueue(),
-      getPrintHistory({ search: filters.search, status: filters.status, pageSize: 25 })
+      getPrintHistory({ search: filters.search, status: filters.status, page: parsePage(filters.page), pageSize: 25 })
     ]);
     const canReprint = canReprintLabels(session.user.permissions);
 
@@ -118,6 +120,16 @@ export default async function PrintingPage({
               </div>
             ))}
             {history.history.length === 0 ? <p className="text-sm text-secondary">No print history matches the current filters.</p> : null}
+          </div>
+          <div className="mt-4">
+            <Pagination
+              pathname={`/${locale}/printing`}
+              page={history.page}
+              totalPages={history.totalPages}
+              totalItems={history.totalCount}
+              searchParams={filters}
+              itemLabel="history entries"
+            />
           </div>
         </div>
       </section>

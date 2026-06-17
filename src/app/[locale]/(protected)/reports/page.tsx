@@ -60,7 +60,7 @@ export default async function ReportsPage({ params }: { params: Promise<{ locale
         </nav>
 
         <div className="mt-6">
-          <ReportTable locale={locale} reportType="PRODUCTION_SUMMARY" rows={production.rows} columns={production.columns} totalCount={production.totalCount} page={production.page} totalPages={production.totalPages} />
+          <ReportTable locale={locale} reportType="PRODUCTION_SUMMARY" rows={production.rows} columns={production.columns} totalCount={production.totalCount} page={production.page} totalPages={production.totalPages} showPagination={false} />
         </div>
       </section>
     );

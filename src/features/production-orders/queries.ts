@@ -1,5 +1,6 @@
 import { Prisma, type ProductionOrderStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
+import { paginationInput, totalPages } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { PRODUCTION_EVIDENCE_BUCKET, getSupabaseAdminClient } from "@/lib/supabase-admin";
 import {
@@ -88,8 +89,8 @@ function orderByFor(sort?: ProductionOrderSortKey): Prisma.ProductionOrderOrderB
 
 export async function getProductionOrderList(
   filters: ListFilters = {},
-  pagination: { cursor?: string; pageSize?: number } = {}
-): Promise<{ items: ProductionOrderListItemDto[]; total: number; nextCursor?: string }> {
+  pagination: { page?: number; pageSize?: number } = {}
+): Promise<{ items: ProductionOrderListItemDto[]; total: number; page: number; pageSize: number; totalPages: number }> {
   const session = await getServerSession();
   assertCanView(session.user.permissions);
 
@@ -103,20 +104,37 @@ export async function getProductionOrderList(
   if (filters.fromDate || filters.toDate) andFilters.push({ createdAt: { gte: filters.fromDate, lte: filters.toDate } });
 
   const where: Prisma.ProductionOrderWhereInput = andFilters.length ? { AND: andFilters } : {};
-  const pageSize = Math.min(Math.max(pagination.pageSize ?? 25, 1), 100);
-  const items = await prisma.productionOrder.findMany({
-    where,
-    orderBy: orderByFor(filters.sort),
-    take: pageSize + 1,
-    ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
-  });
-  const total = await prisma.productionOrder.count({ where });
-  const page = items.slice(0, pageSize);
-  const names = await displayNames(page.map((item) => item.assignedToId));
+  const { page, pageSize, skip, take } = paginationInput(pagination.page, pagination.pageSize);
+  const [items, total] = await Promise.all([
+    prisma.productionOrder.findMany({
+      where,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        version: true,
+        recipeNameSnapshot: true,
+        yieldUnit: true,
+        targetQuantity: true,
+        producedQuantity: true,
+        assignedToId: true,
+        createdAt: true,
+        startedAt: true,
+        completedAt: true
+      },
+      orderBy: orderByFor(filters.sort),
+      skip,
+      take
+    }),
+    prisma.productionOrder.count({ where })
+  ]);
+  const names = await displayNames(items.map((item) => item.assignedToId));
   return {
-    items: page.map((item) => toListItem(item, names)),
+    items: items.map((item) => toListItem(item, names)),
     total,
-    nextCursor: items.length > pageSize ? items[pageSize].id : undefined
+    page,
+    pageSize,
+    totalPages: totalPages(total, pageSize)
   };
 }
 

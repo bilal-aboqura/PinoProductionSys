@@ -1,16 +1,24 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
 import { OrderListTable } from "@/components/production-orders/OrderListTable";
 import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getProductionOrderList } from "@/features/production-orders/queries";
+import { parsePage } from "@/lib/pagination";
 
-export default async function ProductionPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function ProductionPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { locale } = await params;
-  let orders = [];
+  const query = await searchParams;
+  let result;
   try {
-    const result = await getProductionOrderList({}, { pageSize: 50 });
-    orders = result.items;
+    result = await getProductionOrderList({}, { page: parsePage(query.page), pageSize: 50 });
   } catch (error) {
     if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
       return <AccessDenied locale={locale} />;
@@ -34,7 +42,17 @@ export default async function ProductionPage({ params }: { params: Promise<{ loc
           </Link>
         </div>
       </div>
-      <OrderListTable orders={orders} locale={locale} />
+      <OrderListTable orders={result.items} locale={locale} />
+      <div className="mt-4">
+        <Pagination
+          pathname={`/${locale}/production`}
+          page={result.page}
+          totalPages={result.totalPages}
+          totalItems={result.total}
+          searchParams={query}
+          itemLabel="orders"
+        />
+      </div>
     </section>
   );
 }

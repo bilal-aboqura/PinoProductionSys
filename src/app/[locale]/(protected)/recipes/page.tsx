@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/shared/Pagination";
 import { RecipeListTable } from "@/components/recipes/RecipeListTable";
 import { listRecipeCategories, listRecipes } from "@/features/recipes/actions";
+import { parsePage } from "@/lib/pagination";
 
-export default async function RecipesPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function RecipesPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ search?: string; categoryId?: string; status?: string; page?: string }>;
+}) {
   const { locale } = await params;
-  const [recipesResult, categoriesResult] = await Promise.all([listRecipes(), listRecipeCategories()]);
+  const query = await searchParams;
+  const status = query.status === "DRAFT" || query.status === "ACTIVE" || query.status === "ARCHIVED" ? query.status : undefined;
+  const [recipesResult, categoriesResult] = await Promise.all([
+    listRecipes({ search: query.search, categoryId: query.categoryId, status }, { page: parsePage(query.page), pageSize: 25 }),
+    listRecipeCategories()
+  ]);
   const recipes = recipesResult.success ? recipesResult.data.items : [];
   const categories = categoriesResult.success ? categoriesResult.data : [];
 
@@ -25,7 +38,19 @@ export default async function RecipesPage({ params }: { params: Promise<{ locale
           </Link>
         </div>
       </div>
-      <RecipeListTable recipes={recipes} categories={categories} locale={locale} />
+      <RecipeListTable recipes={recipes} categories={categories} locale={locale} defaultFilters={query} />
+      {recipesResult.success ? (
+        <div className="mt-4">
+          <Pagination
+            pathname={`/${locale}/recipes`}
+            page={recipesResult.data.page}
+            totalPages={recipesResult.data.totalPages}
+            totalItems={recipesResult.data.total}
+            searchParams={query}
+            itemLabel="recipes"
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

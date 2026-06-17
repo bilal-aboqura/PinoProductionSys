@@ -1,6 +1,7 @@
 import { Prisma, type PrintJobStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { paginationInput, totalPages } from "@/lib/pagination";
 import type { PrintHistoryDto, PrintJobDto, PrintPayload, PrinterDto, PrintTemplateDto } from "./types";
 import { printHistoryFilterSchema } from "./validation";
 
@@ -133,12 +134,11 @@ export async function getPrintHistory(filters: {
   status?: string;
   startDate?: string;
   endDate?: string;
-} = {}): Promise<{ history: PrintHistoryDto[]; totalPages: number; totalCount: number }> {
+} = {}): Promise<{ history: PrintHistoryDto[]; page: number; pageSize: number; totalPages: number; totalCount: number }> {
   const session = await getServerSession();
   requirePrintingView(session.user.permissions);
   const parsed = printHistoryFilterSchema.parse(filters);
-  const page = parsed.page ?? 1;
-  const pageSize = parsed.pageSize ?? 25;
+  const { page, pageSize, skip, take } = paginationInput(parsed.page, parsed.pageSize);
   const search = parsed.search?.trim();
   const where: Prisma.PrintHistoryWhereInput = {
     ...(parsed.status ? { status: parsed.status } : {}),
@@ -160,8 +160,8 @@ export async function getPrintHistory(filters: {
       where,
       include: { printJob: true },
       orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize
+      skip,
+      take
     }),
     prisma.printHistory.count({ where })
   ]);
@@ -180,7 +180,9 @@ export async function getPrintHistory(filters: {
         targetId: item.printJob.targetId
       }
     })),
-    totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
+    page,
+    pageSize,
+    totalPages: totalPages(totalCount, pageSize),
     totalCount
   };
 }

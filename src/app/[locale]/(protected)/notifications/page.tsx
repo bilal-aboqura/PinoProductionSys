@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { AccessDenied } from "@/components/shared/AccessDenied";
-import { getServerSession } from "@/lib/auth";
-import { getNotificationHistory } from "@/features/notifications/queries";
 import type { NotificationCategory } from "@prisma/client";
+import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
+import { getNotificationHistory } from "@/features/notifications/queries";
+import { getServerSession } from "@/lib/auth";
+import { parsePage } from "@/lib/pagination";
 import { NotificationHistoryClient } from "./NotificationHistoryClient";
 
 const categories = ["PRODUCTION", "INVENTORY", "BATCH", "WAREHOUSE", "SYSTEM"] as const;
@@ -20,8 +22,7 @@ export default async function NotificationsPage({
     const session = await getServerSession();
     const category = categories.includes(query.category as NotificationCategory) ? (query.category as NotificationCategory) : undefined;
     const status = query.status === "read" || query.status === "unread" ? query.status : "all";
-    const page = Number(query.page ?? 1);
-    const history = await getNotificationHistory(session.user.id, { category, status, page });
+    const history = await getNotificationHistory(session.user.id, { category, status, page: parsePage(query.page) });
 
     return (
       <section className="logical-container py-8">
@@ -40,11 +41,7 @@ export default async function NotificationsPage({
             Category
             <select name="category" defaultValue={category ?? ""} className="h-10 rounded-md border px-3 text-sm">
               <option value="">All</option>
-              {categories.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
+              {categories.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label className="grid gap-1 text-sm font-semibold text-secondary">
@@ -55,31 +52,21 @@ export default async function NotificationsPage({
               <option value="read">Read</option>
             </select>
           </label>
-          <button className="h-10 rounded-md bg-primary px-4 text-sm font-bold text-white" type="submit">
-            Apply
-          </button>
+          <button className="h-10 rounded-md bg-primary px-4 text-sm font-bold text-white" type="submit">Apply</button>
         </form>
 
         <div className="mt-6">
           <NotificationHistoryClient locale={locale} notifications={history.rows} />
         </div>
-
-        <div className="mt-4 flex items-center justify-between text-sm text-muted">
-          <span>
-            Page {history.page} of {history.totalPages} · {history.totalCount} notifications
-          </span>
-          <div className="flex gap-2">
-            {history.page > 1 ? (
-              <Link className="rounded-md border bg-white px-3 py-2 font-semibold text-secondary" href={`/${locale}/notifications?page=${history.page - 1}`}>
-                Previous
-              </Link>
-            ) : null}
-            {history.page < history.totalPages ? (
-              <Link className="rounded-md border bg-white px-3 py-2 font-semibold text-secondary" href={`/${locale}/notifications?page=${history.page + 1}`}>
-                Next
-              </Link>
-            ) : null}
-          </div>
+        <div className="mt-4">
+          <Pagination
+            pathname={`/${locale}/notifications`}
+            page={history.page}
+            totalPages={history.totalPages}
+            totalItems={history.totalCount}
+            searchParams={query}
+            itemLabel="notifications"
+          />
         </div>
       </section>
     );

@@ -1,11 +1,9 @@
-import type { InventoryItemDto, WarehouseDto } from "@/features/inventory/types";
+import type { WarehouseDto } from "@/features/inventory/types";
 
 export function MovementFilters({
-  items,
   warehouses,
   defaultValues = {}
 }: {
-  items: InventoryItemDto[];
   warehouses: WarehouseDto[];
   defaultValues?: Record<string, string | undefined>;
 }) {
@@ -17,12 +15,6 @@ export function MovementFilters({
         placeholder="Search item"
         defaultValue={defaultValues.itemSearch}
       />
-      <select className="rounded-md border px-3 py-2 text-sm" name="inventoryItemId" defaultValue={defaultValues.inventoryItemId ?? ""}>
-        <option value="">All items</option>
-        {items.map((item) => (
-          <option key={item.id} value={item.id}>{item.code} - {item.nameEn}</option>
-        ))}
-      </select>
       <select className="rounded-md border px-3 py-2 text-sm" name="warehouseId" defaultValue={defaultValues.warehouseId ?? ""}>
         <option value="">All warehouses</option>
         {warehouses.map((warehouse) => (

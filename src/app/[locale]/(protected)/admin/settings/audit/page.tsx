@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { canViewSettings, getSettingsAuditLogs } from "@/features/settings/queries";
 import { getServerSession } from "@/lib/auth";
+import { parsePage } from "@/lib/pagination";
 
 function JsonBlock({ value }: { value: unknown }) {
   if (!value || value === null) return <span className="text-secondary">-</span>;
@@ -20,7 +22,7 @@ export default async function SettingsAuditPage({
   const session = await getServerSession();
   if (!canViewSettings(session.user.permissions)) return <AccessDenied locale={locale} />;
   const filters = await searchParams;
-  const page = Number(filters.page ?? 1);
+  const page = parsePage(filters.page);
   const result = await getSettingsAuditLogs({ page, action: filters.action as never });
 
   return (
@@ -55,9 +57,14 @@ export default async function SettingsAuditPage({
           </TableBody>
         </Table>
       </div>
-      <p className="text-sm font-semibold text-secondary">
-        Page {page} of {result.totalPages} - {result.totalCount} entries
-      </p>
+      <Pagination
+        pathname={`/${locale}/admin/settings/audit`}
+        page={page}
+        totalPages={result.totalPages}
+        totalItems={result.totalCount}
+        searchParams={filters}
+        itemLabel="entries"
+      />
     </section>
   );
 }

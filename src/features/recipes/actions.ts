@@ -10,6 +10,7 @@ import type { ActionResult } from "@/lib/types/action-result";
 import { getServerSession } from "@/lib/auth";
 import { MANAGE_RECIPE_CATEGORIES, MANAGE_RECIPE_SCOPE, VIEW_VERSION_HISTORY, requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { paginationInput, totalPages } from "@/lib/pagination";
 import type {
   ActiveOrderSummary,
   RecipeAssignmentDto,
@@ -412,10 +413,10 @@ export async function listRecipes(
     productionLineId?: string;
     sort?: RecipeSortKey;
   } = {},
-  pagination: { cursor?: string; pageSize?: number } = {}
-): Promise<ActionResult<{ items: RecipeListItemDto[]; nextCursor?: string; total: number }>> {
+  pagination: { page?: number; pageSize?: number } = {}
+): Promise<ActionResult<{ items: RecipeListItemDto[]; total: number; page: number; pageSize: number; totalPages: number }>> {
   try {
-    const pageSize = Math.min(Math.max(pagination.pageSize ?? 25, 1), 100);
+    const { page, pageSize, skip, take } = paginationInput(pagination.page, pagination.pageSize);
     const andFilters: Prisma.RecipeWhereInput[] = [];
 
     if (filters.search?.trim()) {
@@ -444,21 +445,18 @@ export async function listRecipes(
               ? { category: { nameEn: "asc" } }
               : { updatedAt: "desc" };
 
-    const items = await prisma.recipe.findMany({
-      where,
-      include: { category: true },
-      orderBy,
-      take: pageSize + 1,
-      ...(pagination.cursor ? { cursor: { id: pagination.cursor }, skip: 1 } : {})
-    });
-
-    const page = items.slice(0, pageSize);
+    const [items, total] = await Promise.all([
+      prisma.recipe.findMany({ where, include: { category: true }, orderBy, skip, take }),
+      prisma.recipe.count({ where })
+    ]);
     return {
       success: true,
       data: {
-        items: page.map(toListItem),
-        nextCursor: items.length > pageSize ? items[pageSize].id : undefined,
-        total: page.length
+        items: items.map(toListItem),
+        total,
+        page,
+        pageSize,
+        totalPages: totalPages(total, pageSize)
       }
     };
   } catch (error) {

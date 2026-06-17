@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { AuditLogTable } from "@/features/audit/components/AuditLogTable";
 import { getAuditLogs } from "@/features/audit/actions";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
+import { parsePage } from "@/lib/pagination";
 
 export default async function AuditPage({
   params,
@@ -26,7 +28,7 @@ export default async function AuditPage({
     targetUsername: search.username,
     fromDate: search.from ? new Date(search.from) : undefined,
     toDate: search.to ? new Date(search.to) : undefined,
-    page: Number(search.page ?? 1)
+    page: parsePage(search.page)
   });
 
   return (
@@ -41,6 +43,16 @@ export default async function AuditPage({
         </button>
       </form>
       <AuditLogTable logs={result.data.logs} locale={locale} />
+      <div className="mt-4">
+        <Pagination
+          pathname={`/${locale}/admin/audit`}
+          page={result.data.page}
+          totalPages={result.data.totalPages}
+          totalItems={result.data.total}
+          searchParams={search}
+          itemLabel="audit entries"
+        />
+      </div>
     </section>
   );
 }

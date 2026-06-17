@@ -1,4 +1,5 @@
 import { db } from "@/server/db";
+import { paginationInput, totalPages } from "@/lib/pagination";
 import type { UserSummary } from "./types";
 
 export const userSummaryInclude = {
@@ -41,8 +42,7 @@ export async function getUserList(filters?: {
   pageSize?: number;
   sort?: "displayName" | "createdAt" | "lastLoginAt";
 }) {
-  const page = Math.max(1, filters?.page ?? 1);
-  const pageSize = Math.min(100, Math.max(1, filters?.pageSize ?? 20));
+  const { page, pageSize, skip, take } = paginationInput(filters?.page, filters?.pageSize ?? 20);
   const search = filters?.search?.trim();
 
   const where = {
@@ -59,27 +59,30 @@ export async function getUserList(filters?: {
     ...(filters?.roleId ? { userRoles: { some: { roleId: filters.roleId } } } : {})
   };
 
-  const users = await db.user.findMany({
-    where,
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      displayName: true,
-      isActive: true,
-      mustChangePassword: true,
-      languagePreference: true,
-      createdAt: true,
-      lastLoginAt: true,
-      userRoles: {
-        include: { role: true },
-        take: 1
-      }
-    },
-    orderBy: { [filters?.sort ?? "createdAt"]: "desc" },
-    skip: (page - 1) * pageSize,
-    take: pageSize
-  });
+  const [users, total] = await Promise.all([
+    db.user.findMany({
+      where,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        displayName: true,
+        isActive: true,
+        mustChangePassword: true,
+        languagePreference: true,
+        createdAt: true,
+        lastLoginAt: true,
+        userRoles: {
+          select: { role: { select: { id: true, name: true, displayName: true } } },
+          take: 1
+        }
+      },
+      orderBy: { [filters?.sort ?? "createdAt"]: "desc" },
+      skip,
+      take
+    }),
+    db.user.count({ where })
+  ]);
 
   return {
     users: users.map((user) => {
@@ -103,9 +106,10 @@ export async function getUserList(filters?: {
         lastLoginAt: user.lastLoginAt?.toISOString() ?? null
       };
     }),
-    total: users.length,
+    total,
     page,
-    totalPages: 1
+    pageSize,
+    totalPages: totalPages(total, pageSize)
   };
 }
 

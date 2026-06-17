@@ -224,8 +224,10 @@ async function getProductionReport(filters: ReportFilters, page?: number, limit?
     ...(filters.recipeId ? { recipeId: filters.recipeId } : {}),
     ...(search ? { OR: [{ orderNumber: { contains: search, mode: "insensitive" } }, { recipeNameSnapshot: { contains: search, mode: "insensitive" } }] } : {})
   };
-  const orders = await prisma.productionOrder.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: pageSize });
-  const total = await prisma.productionOrder.count({ where });
+  const [orders, total] = await Promise.all([
+    prisma.productionOrder.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: pageSize }),
+    prisma.productionOrder.count({ where })
+  ]);
   return {
     rows: orders.map((order) => ({
       id: order.id,
@@ -259,14 +261,16 @@ async function getInventoryReport(reportType: ReportType, filters: ReportFilters
         }
       : {})
   };
-  const balances = await prisma.inventoryBalance.findMany({
-    where,
-    include: { inventoryItem: true, warehouse: true },
-    orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
-    skip,
-    take: pageSize
-  });
-  const total = await prisma.inventoryBalance.count({ where });
+  const [balances, total] = await Promise.all([
+    prisma.inventoryBalance.findMany({
+      where,
+      include: { inventoryItem: true, warehouse: true },
+      orderBy: [{ inventoryItem: { code: "asc" } }, { warehouse: { code: "asc" } }],
+      skip,
+      take: pageSize
+    }),
+    prisma.inventoryBalance.count({ where })
+  ]);
   const rows = balances
     .map((balance) => {
       const isLow = new Prisma.Decimal(balance.currentQuantity).lt(balance.inventoryItem.minStockLevel);
@@ -297,14 +301,16 @@ async function getBatchReport(reportType: ReportType, filters: ReportFilters, pa
     ...(reportType === "NEAR_EXPIRY" ? { status: "ACTIVE", expiryDate: { gte: now, lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) } } : {}),
     ...(filters.search ? { batchNumber: { contains: filters.search, mode: "insensitive" } } : {})
   };
-  const batches = await prisma.productionBatch.findMany({
-    where,
-    include: { recipe: true, warehouse: true },
-    orderBy: { expiryDate: "asc" },
-    skip,
-    take: pageSize
-  });
-  const total = await prisma.productionBatch.count({ where });
+  const [batches, total] = await Promise.all([
+    prisma.productionBatch.findMany({
+      where,
+      include: { recipe: true, warehouse: true },
+      orderBy: { expiryDate: "asc" },
+      skip,
+      take: pageSize
+    }),
+    prisma.productionBatch.count({ where })
+  ]);
   return {
     rows: batches.map((batch) => ({
       id: batch.id,
@@ -329,14 +335,16 @@ async function getWasteReport(filters: ReportFilters, page?: number, limit?: num
     ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
     ...(filters.status ? { reason: filters.status as Prisma.InventoryWasteRecordWhereInput["reason"] } : {})
   };
-  const records = await prisma.inventoryWasteRecord.findMany({
-    where,
-    include: { inventoryItem: true, warehouse: true },
-    orderBy: { timestamp: "desc" },
-    skip,
-    take: pageSize
-  });
-  const total = await prisma.inventoryWasteRecord.count({ where });
+  const [records, total] = await Promise.all([
+    prisma.inventoryWasteRecord.findMany({
+      where,
+      include: { inventoryItem: true, warehouse: true },
+      orderBy: { timestamp: "desc" },
+      skip,
+      take: pageSize
+    }),
+    prisma.inventoryWasteRecord.count({ where })
+  ]);
   return {
     rows: records.map((record) => ({
       id: record.id,
@@ -355,35 +363,47 @@ async function getWasteReport(filters: ReportFilters, page?: number, limit?: num
 
 async function getStaffReport(filters: ReportFilters, page?: number, limit?: number): Promise<ReportDataResult> {
   const { page: safePage, pageSize, skip } = pageInput(page, limit);
-  const users = await prisma.user.findMany({
-    where: { ...(filters.userId ? { id: filters.userId } : {}), ...(filters.search ? { displayName: { contains: filters.search, mode: "insensitive" } } : {}) },
-    orderBy: { displayName: "asc" },
-    skip,
-    take: pageSize
+  const userWhere: Prisma.UserWhereInput = {
+    ...(filters.userId ? { id: filters.userId } : {}),
+    ...(filters.search ? { displayName: { contains: filters.search, mode: "insensitive" } } : {})
+  };
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({ where: userWhere, select: { id: true, displayName: true }, orderBy: { displayName: "asc" }, skip, take: pageSize }),
+    prisma.user.count({ where: userWhere })
+  ]);
+  const userIds = users.map((user) => user.id);
+  const [completed, cancelled, waste] = await Promise.all([
+    prisma.productionOrder.groupBy({
+      by: ["completedById"],
+      where: { completedById: { in: userIds }, status: "COMPLETED", ...filterDateRange(filters, "completedAt") },
+      _count: { _all: true },
+      _avg: { durationSeconds: true }
+    }),
+    prisma.productionOrder.groupBy({
+      by: ["cancelledById"],
+      where: { cancelledById: { in: userIds }, status: "CANCELLED", ...filterDateRange(filters, "createdAt") },
+      _count: { _all: true }
+    }),
+    prisma.inventoryWasteRecord.groupBy({
+      by: ["userId"],
+      where: { userId: { in: userIds }, ...filterDateRange(filters, "timestamp") },
+      _count: { _all: true }
+    })
+  ]);
+  const completedByUser = new Map(completed.map((row) => [row.completedById, row]));
+  const cancelledByUser = new Map(cancelled.map((row) => [row.cancelledById, row._count._all]));
+  const wasteByUser = new Map(waste.map((row) => [row.userId, row._count._all]));
+  const rows = users.map((user) => {
+    const completion = completedByUser.get(user.id);
+    return {
+      id: user.id,
+      staffName: user.displayName,
+      ordersCompleted: completion?._count._all ?? 0,
+      ordersCancelled: cancelledByUser.get(user.id) ?? 0,
+      avgCompletionMinutes: Math.round((completion?._avg.durationSeconds ?? 0) / 60),
+      wasteEvents: wasteByUser.get(user.id) ?? 0
+    };
   });
-  const rows = [];
-  for (const user of users) {
-      const ordersCompleted = await prisma.productionOrder.count({ where: { completedById: user.id, status: "COMPLETED", ...filterDateRange(filters, "completedAt") } });
-      const ordersCancelled = await prisma.productionOrder.count({ where: { cancelledById: user.id, status: "CANCELLED", ...filterDateRange(filters, "createdAt") } });
-      const completedOrders = await prisma.productionOrder.findMany({
-        where: { completedById: user.id, status: "COMPLETED", completedAt: { not: null } },
-        select: { durationSeconds: true },
-        take: 200
-      });
-      const wasteEvents = await prisma.inventoryWasteRecord.count({ where: { userId: user.id, ...filterDateRange(filters, "timestamp") } });
-      const avgSeconds = completedOrders.length
-        ? completedOrders.reduce((sum, order) => sum + (order.durationSeconds ?? 0), 0) / completedOrders.length
-        : 0;
-      rows.push({
-        id: user.id,
-        staffName: user.displayName,
-        ordersCompleted,
-        ordersCancelled,
-        avgCompletionMinutes: Math.round(avgSeconds / 60),
-        wasteEvents
-      });
-  }
-  const total = await prisma.user.count({ where: filters.userId ? { id: filters.userId } : {} });
   return { rows, totalCount: total, page: safePage, totalPages: Math.max(1, Math.ceil(total / pageSize)), columns: columnsForReport("STAFF_SUMMARY") };
 }
 
@@ -394,8 +414,10 @@ async function getAuditReport(filters: ReportFilters, page?: number, limit?: num
     ...(filters.userId ? { actorId: filters.userId } : {}),
     ...(filters.search ? { OR: [{ actorName: { contains: filters.search, mode: "insensitive" } }, { targetName: { contains: filters.search, mode: "insensitive" } }] } : {})
   };
-  const logs = await prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: pageSize });
-  const total = await prisma.auditLog.count({ where });
+  const [logs, total] = await Promise.all([
+    prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip, take: pageSize }),
+    prisma.auditLog.count({ where })
+  ]);
   return {
     rows: logs.map((log) => ({
       id: log.id,

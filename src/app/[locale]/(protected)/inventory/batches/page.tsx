@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { getWarehouses } from "@/features/inventory/queries";
 import { batchStatusOptions, getBatchList } from "@/features/batches/queries";
+import { parsePage } from "@/lib/pagination";
 import { ExpiryAlerts } from "./_components/ExpiryAlerts";
 
 export default async function BatchesPage({
@@ -21,7 +23,7 @@ export default async function BatchesPage({
       status: batchStatusOptions().includes(query.status as never) ? (query.status as never) : undefined,
       warehouseId: query.warehouseId,
       sort: ["newest", "expiry", "status", "batchNumber"].includes(query.sort ?? "") ? (query.sort as never) : undefined,
-      page: Number(query.page ?? 1),
+      page: parsePage(query.page),
       pageSize: 25
     });
   } catch (error) {
@@ -116,6 +118,14 @@ export default async function BatchesPage({
           </tbody>
         </table>
       </div>
+      <Pagination
+        pathname={`/${locale}/inventory/batches`}
+        page={batches.page}
+        totalPages={batches.totalPages}
+        totalItems={batches.total}
+        searchParams={query}
+        itemLabel="batches"
+      />
     </section>
   );
 }

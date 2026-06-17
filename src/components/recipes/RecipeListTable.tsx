@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,51 +11,37 @@ import type { RecipeCategoryDto, RecipeListItemDto } from "@/features/recipes/ty
 export function RecipeListTable({
   recipes,
   categories,
-  locale
+  locale,
+  defaultFilters = {}
 }: {
   recipes: RecipeListItemDto[];
   categories: RecipeCategoryDto[];
   locale: string;
+  defaultFilters?: { search?: string; categoryId?: string; status?: string };
 }) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const [category, setCategory] = useState("");
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return recipes.filter((recipe) => {
-      const matchesQuery =
-        !needle ||
-        recipe.nameAr.toLowerCase().includes(needle) ||
-        recipe.nameEn.toLowerCase().includes(needle) ||
-        recipe.code.toLowerCase().includes(needle);
-      const matchesStatus = !status || recipe.status === status;
-      const matchesCategory = !category || recipe.categoryNameEn === category || recipe.categoryNameAr === category;
-      return matchesQuery && matchesStatus && matchesCategory;
-    });
-  }, [category, query, recipes, status]);
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Input className="max-w-sm" placeholder="Search recipes" value={query} onChange={(event) => setQuery(event.target.value)} />
-        <select className="h-10 rounded-md border bg-white px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+      <form className="flex flex-wrap items-center gap-3">
+        <Input className="max-w-sm" name="search" placeholder="Search recipes" defaultValue={defaultFilters.search} />
+        <select className="h-10 rounded-md border bg-white px-3 text-sm" name="status" defaultValue={defaultFilters.status ?? ""}>
           <option value="">All statuses</option>
           <option value="DRAFT">Draft</option>
           <option value="ACTIVE">Active</option>
           <option value="ARCHIVED">Archived</option>
         </select>
-        <select className="h-10 rounded-md border bg-white px-3 text-sm" value={category} onChange={(event) => setCategory(event.target.value)}>
+        <select className="h-10 rounded-md border bg-white px-3 text-sm" name="categoryId" defaultValue={defaultFilters.categoryId ?? ""}>
           <option value="">All categories</option>
           {categories.map((item) => (
-            <option key={item.id} value={item.nameEn}>
+            <option key={item.id} value={item.id}>
               {item.nameEn}
             </option>
           ))}
         </select>
+        <Button type="submit" variant="secondary">Apply</Button>
         <Link className="ms-auto" href={`/${locale}/recipes/new`}>
           <Button>New Recipe</Button>
         </Link>
-      </div>
+      </form>
       <div className="overflow-x-auto rounded-md border bg-surface">
         <Table>
           <TableHeader>
@@ -73,7 +58,7 @@ export function RecipeListTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.map((recipe) => (
+            {recipes.map((recipe) => (
               <TableRow key={recipe.id} title={`Storage: ${recipe.storageMethod}`}>
                 <TableCell className="font-mono text-xs">{recipe.code}</TableCell>
                 <TableCell>
@@ -106,4 +91,3 @@ export function RecipeListTable({
     </div>
   );
 }
-

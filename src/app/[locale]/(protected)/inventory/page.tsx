@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { Pagination } from "@/components/shared/Pagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getInventoryBalances, getWarehouses } from "@/features/inventory/queries";
+import { parsePage } from "@/lib/pagination";
 import { DiscrepancyReport } from "./_components/DiscrepancyReport";
 import { StockFilters } from "./_components/StockFilters";
 import { StockLevelsTable } from "./_components/StockLevelsTable";
@@ -25,6 +27,7 @@ export default async function InventoryPage({
       itemType: filters.itemType === "RAW_MATERIAL" || filters.itemType === "FINISHED_PRODUCT" ? filters.itemType : undefined,
       lowStockOnly: filters.lowStockOnly === "1",
       needsReconciliationOnly: filters.needsReconciliationOnly === "1",
+      page: parsePage(filters.page),
       pageSize: 50
     });
     const lowStockItems = balances.items.filter((item) => item.isLowStock);
@@ -91,6 +94,14 @@ export default async function InventoryPage({
         ) : null}
         <DiscrepancyReport balances={balances.items} />
         <StockLevelsTable balances={balances.items} search={filters.search} />
+        <Pagination
+          pathname={`/${locale}/inventory`}
+          page={balances.page}
+          totalPages={balances.totalPages}
+          totalItems={balances.total}
+          searchParams={filters}
+          itemLabel="balances"
+        />
       </section>
     );
   } catch (error) {

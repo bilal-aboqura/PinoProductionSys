@@ -1,6 +1,7 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
+import { parsePage } from "@/lib/pagination";
 import { getReportRows } from "@/features/reports/queries";
 import type { ReportFilters, ReportType } from "@/features/reports/types";
 import { ReportTable } from "./ReportTable";
@@ -22,7 +23,7 @@ export async function ReportPage({
     const session = await getServerSession();
     requirePermission(session, "reports:view");
     const filters = filtersFromSearch(searchParams);
-    const report = await getReportRows(reportType, filters, numberParam(searchParams?.page, 1), 50);
+    const report = await getReportRows(reportType, filters, parsePage(searchParams?.page), 50);
 
     return (
       <section className="logical-container py-8">
@@ -73,9 +74,4 @@ function filtersFromSearch(searchParams?: Record<string, string | string[] | und
 function stringParam(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value[0];
   return value || undefined;
-}
-
-function numberParam(value: string | string[] | undefined, fallback: number) {
-  const parsed = Number(stringParam(value));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
