@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Pagination } from "@/components/shared/Pagination";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Badge } from "@/components/ui/badge";
 import { getWarehouses } from "@/features/inventory/queries";
 import { batchStatusOptions, getBatchList } from "@/features/batches/queries";
@@ -51,7 +52,7 @@ export default async function BatchesPage({
       <ExpiryAlerts locale={locale} />
 
       <form className="grid gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-[1fr_auto_auto_auto]">
-        <input className="h-10 rounded-md border px-3 text-sm" name="search" placeholder="Search batch, product, or code" defaultValue={query.search ?? ""} />
+        <SearchCombobox name="search" source="batches" placeholder="Select batch, product, or code" defaultValue={query.search} />
         <select className="h-10 rounded-md border px-3 text-sm" name="status" defaultValue={query.status ?? ""}>
           <option value="">All statuses</option>
           {batchStatusOptions().map((status) => (

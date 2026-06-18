@@ -34,6 +34,7 @@ export function useKeyboardScanner({
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (typeof event.key !== "string") return;
       const now = Date.now();
       const target = event.target as HTMLElement | null;
       const isEditable = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;

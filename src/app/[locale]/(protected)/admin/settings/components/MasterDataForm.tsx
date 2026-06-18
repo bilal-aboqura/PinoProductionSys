@@ -43,14 +43,15 @@ export function MasterDataForm({
         className="grid gap-3 rounded-md border bg-white p-4 md:grid-cols-4"
         onSubmit={(event) => {
           event.preventDefault();
-          const formData = new FormData(event.currentTarget);
+          const form = event.currentTarget;
+          const formData = new FormData(form);
           const payload = Object.fromEntries(formData.entries());
           startTransition(async () => {
             const result = item
               ? await updateMasterEntity(entityType, item.id, payload)
               : await createMasterEntity(entityType, payload);
             setMessage(result.success ? (item ? "Saved." : "Created.") : result.error);
-            if (result.success && !item) event.currentTarget.reset();
+            if (result.success && !item && form.isConnected) form.reset();
           });
         }}
       >

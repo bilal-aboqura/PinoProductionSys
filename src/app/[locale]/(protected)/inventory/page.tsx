@@ -93,7 +93,7 @@ export default async function InventoryPage({
           </details>
         ) : null}
         <DiscrepancyReport balances={balances.items} />
-        <StockLevelsTable balances={balances.items} search={filters.search} />
+        <StockLevelsTable balances={balances.items} />
         <Pagination
           pathname={`/${locale}/inventory`}
           page={balances.page}

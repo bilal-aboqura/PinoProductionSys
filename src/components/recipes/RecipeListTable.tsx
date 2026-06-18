@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RecipeStatusBadge } from "@/components/recipes/RecipeStatusBadge";
 import type { RecipeCategoryDto, RecipeListItemDto } from "@/features/recipes/types";
@@ -22,7 +22,7 @@ export function RecipeListTable({
   return (
     <div className="space-y-4">
       <form className="flex flex-wrap items-center gap-3">
-        <Input className="max-w-sm" name="search" placeholder="Search recipes" defaultValue={defaultFilters.search} />
+        <SearchCombobox className="w-full max-w-sm" name="search" source="recipes" placeholder="Select recipe, code, or name" defaultValue={defaultFilters.search} />
         <select className="h-10 rounded-md border bg-white px-3 text-sm" name="status" defaultValue={defaultFilters.status ?? ""}>
           <option value="">All statuses</option>
           <option value="DRAFT">Draft</option>

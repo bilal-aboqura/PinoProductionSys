@@ -330,10 +330,22 @@ async function getBatchReport(reportType: ReportType, filters: ReportFilters, pa
 
 async function getWasteReport(filters: ReportFilters, page?: number, limit?: number): Promise<ReportDataResult> {
   const { page: safePage, pageSize, skip } = pageInput(page, limit);
+  const search = filters.search?.trim();
   const where: Prisma.InventoryWasteRecordWhereInput = {
     ...filterDateRange(filters, "timestamp"),
     ...(filters.warehouseId ? { warehouseId: filters.warehouseId } : {}),
-    ...(filters.status ? { reason: filters.status as Prisma.InventoryWasteRecordWhereInput["reason"] } : {})
+    ...(filters.status ? { reason: filters.status as Prisma.InventoryWasteRecordWhereInput["reason"] } : {}),
+    ...(search
+      ? {
+          inventoryItem: {
+            OR: [
+              { code: { contains: search, mode: "insensitive" } },
+              { nameEn: { contains: search, mode: "insensitive" } },
+              { nameAr: { contains: search, mode: "insensitive" } }
+            ]
+          }
+        }
+      : {})
   };
   const [records, total] = await Promise.all([
     prisma.inventoryWasteRecord.findMany({

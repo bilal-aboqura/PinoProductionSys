@@ -1,37 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, Plus, Search } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ProductionOrderListItemDto } from "@/features/production-orders/types";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 
-export function OrderListTable({ orders, locale }: { orders: ProductionOrderListItemDto[]; locale: string }) {
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return orders.filter((order) => {
-      const matchesQuery =
-        !needle ||
-        order.orderNumber.toLowerCase().includes(needle) ||
-        order.recipeName.toLowerCase().includes(needle) ||
-        (order.assignedToName ?? "").toLowerCase().includes(needle);
-      return matchesQuery && (!status || order.status === status);
-    });
-  }, [orders, query, status]);
-
+export function OrderListTable({ orders, locale, defaultFilters = {} }: { orders: ProductionOrderListItemDto[]; locale: string; defaultFilters?: { search?: string; status?: string } }) {
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-secondary" />
-          <Input className="pl-9" placeholder="Search orders" value={query} onChange={(event) => setQuery(event.target.value)} />
-        </div>
-        <select className="h-10 rounded-md border bg-white px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+      <form className="flex flex-wrap items-center gap-3">
+        <SearchCombobox className="w-full max-w-sm" name="search" source="production-orders" placeholder="Select order number or recipe" defaultValue={defaultFilters.search} />
+        <select className="h-10 rounded-md border bg-white px-3 text-sm" name="status" defaultValue={defaultFilters.status ?? ""}>
           <option value="">All statuses</option>
           <option value="PENDING_UNASSIGNED">Pending unassigned</option>
           <option value="PENDING">Pending</option>
@@ -39,13 +21,14 @@ export function OrderListTable({ orders, locale }: { orders: ProductionOrderList
           <option value="COMPLETED">Completed</option>
           <option value="CANCELLED">Cancelled</option>
         </select>
+        <Button type="submit" variant="secondary">Apply</Button>
         <Link className="ms-auto" href={`/${locale}/production/new`}>
           <Button>
             <Plus className="h-4 w-4" />
             New Order
           </Button>
         </Link>
-      </div>
+      </form>
       <div className="overflow-x-auto rounded-md border bg-surface">
         <Table>
           <TableHeader>
@@ -60,7 +43,7 @@ export function OrderListTable({ orders, locale }: { orders: ProductionOrderList
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.map((order) => (
+            {orders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-mono text-xs">{order.orderNumber}</TableCell>
                 <TableCell className="font-semibold">{order.recipeName}</TableCell>
@@ -79,7 +62,7 @@ export function OrderListTable({ orders, locale }: { orders: ProductionOrderList
                 </TableCell>
               </TableRow>
             ))}
-            {visible.length === 0 ? (
+            {orders.length === 0 ? (
               <TableRow>
                 <TableCell className="py-8 text-center text-secondary" colSpan={7}>
                   No production orders found.

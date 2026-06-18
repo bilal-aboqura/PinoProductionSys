@@ -9,6 +9,8 @@ import type { NotificationDTO } from "@/features/notifications/types";
 import { notificationAgeLabel, resolveNotificationHref } from "@/features/notifications/utils";
 import { NotificationToast } from "./NotificationToast";
 
+const EMPTY_NOTIFICATIONS: NotificationDTO[] = [];
+
 const fetcher = async <T,>(url: string): Promise<T> => {
   const response = await fetch(url, { credentials: "include" });
   if (!response.ok) throw new Error("Request failed");
@@ -21,7 +23,7 @@ export function NotificationBell({ locale }: { locale: string }) {
   const [, startTransition] = useTransition();
   const unread = useSWR<{ count: number }>("/api/notifications/unread", fetcher, { refreshInterval: 10000, revalidateOnFocus: true });
   const recent = useSWR<{ notifications: NotificationDTO[] }>("/api/notifications/recent", fetcher, { refreshInterval: 10000, revalidateOnFocus: true });
-  const notifications = recent.data?.notifications ?? [];
+  const notifications = Array.isArray(recent.data?.notifications) ? recent.data.notifications : EMPTY_NOTIFICATIONS;
   const count = unread.data?.count ?? 0;
 
   function refresh() {

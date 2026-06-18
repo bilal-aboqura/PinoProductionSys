@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { addIngredient, removeIngredient } from "@/features/recipes/actions";
 import type { RecipeIngredientDto } from "@/features/recipes/types";
 
@@ -61,7 +62,7 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
         ))}
       </div>
       <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
-        <Input name="inventoryItemId" placeholder="Inventory item ID" required />
+        <SearchCombobox name="inventoryItemId" source="inventory-item-ids" placeholder="Select inventory item" required />
         <Input name="quantity" type="number" step="0.001" placeholder="Qty" required />
         <Input name="unit" placeholder="Unit" required />
         <Input name="purpose" placeholder="Purpose" />
@@ -72,4 +73,3 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
     </section>
   );
 }
-

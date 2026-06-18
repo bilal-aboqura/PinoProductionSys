@@ -1,4 +1,5 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
 import { parsePage } from "@/lib/pagination";
@@ -31,7 +32,7 @@ export async function ReportPage({
           <h1 className="text-3xl font-bold">{title}</h1>
           <p className="mt-2 max-w-3xl text-sm text-muted">{description}</p>
         </div>
-        <ReportFiltersForm filters={filters} />
+        <ReportFiltersForm filters={filters} reportType={reportType} />
         <div className="mt-6">
           <ReportTable locale={locale} reportType={reportType} rows={report.rows} columns={report.columns} totalCount={report.totalCount} page={report.page} totalPages={report.totalPages} filters={filters} />
         </div>
@@ -45,10 +46,10 @@ export async function ReportPage({
   }
 }
 
-function ReportFiltersForm({ filters }: { filters: ReportFilters }) {
+function ReportFiltersForm({ filters, reportType }: { filters: ReportFilters; reportType: ReportType }) {
   return (
     <form className="grid gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-4">
-      <input className="h-10 rounded-md border px-3 text-sm" name="search" placeholder="Search" defaultValue={filters.search ?? ""} />
+      <SearchCombobox name="search" source={sourceForReport(reportType)} placeholder="Select a matching record" defaultValue={filters.search} />
       <input className="h-10 rounded-md border px-3 text-sm" name="startDate" type="date" defaultValue={filters.startDate?.slice(0, 10) ?? ""} />
       <input className="h-10 rounded-md border px-3 text-sm" name="endDate" type="date" defaultValue={filters.endDate?.slice(0, 10) ?? ""} />
       <button className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90" type="submit">
@@ -56,6 +57,13 @@ function ReportFiltersForm({ filters }: { filters: ReportFilters }) {
       </button>
     </form>
   );
+}
+
+function sourceForReport(reportType: ReportType) {
+  if (reportType.startsWith("PRODUCTION")) return "production-orders" as const;
+  if (reportType.includes("BATCH") || reportType === "ACTIVE_BATCHES" || reportType === "EXPIRED_BATCHES" || reportType === "NEAR_EXPIRY") return "batches" as const;
+  if (reportType.startsWith("STAFF") || reportType.startsWith("AUDIT")) return "users" as const;
+  return "inventory-items" as const;
 }
 
 function filtersFromSearch(searchParams?: Record<string, string | string[] | undefined>): ReportFilters {

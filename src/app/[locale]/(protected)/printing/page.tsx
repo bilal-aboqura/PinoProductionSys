@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Pagination } from "@/components/shared/Pagination";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Badge } from "@/components/ui/badge";
 import { getPrintHistory, getPrintQueue, canReprintLabels } from "@/features/printing/queries";
 import { getServerSession } from "@/lib/auth";
@@ -99,7 +100,7 @@ export default async function PrintingPage({
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-bold">History</h2>
             <form className="flex gap-2">
-              <input className="rounded-md border px-3 py-2 text-sm" name="search" defaultValue={filters.search} placeholder="Search actor, printer, target" />
+              <SearchCombobox className="min-w-72" name="search" source="printing" defaultValue={filters.search} placeholder="Select target, printer, or actor" />
               <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white">Search</button>
             </form>
           </div>

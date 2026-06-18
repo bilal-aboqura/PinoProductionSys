@@ -1,4 +1,5 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -37,7 +38,7 @@ export default async function BatchReportsPage({
         </div>
 
         <form className="grid gap-3 rounded-md border bg-white p-4 shadow-sm lg:grid-cols-[1fr_150px_150px_180px_150px_auto]">
-          <input className="h-10 rounded-md border px-3 text-sm" name="search" placeholder="Search batches" defaultValue={filters.search ?? ""} />
+          <SearchCombobox name="search" source="batches" placeholder="Select batch or product" defaultValue={filters.search} />
           <input className="h-10 rounded-md border px-3 text-sm" name="startDate" type="date" defaultValue={filters.startDate?.slice(0, 10) ?? ""} />
           <input className="h-10 rounded-md border px-3 text-sm" name="endDate" type="date" defaultValue={filters.endDate?.slice(0, 10) ?? ""} />
           <select className="h-10 rounded-md border bg-white px-3 text-sm" name="warehouseId" defaultValue={filters.warehouseId ?? ""}>
@@ -61,7 +62,7 @@ export default async function BatchReportsPage({
         </form>
 
         <form className="mt-3 grid gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-[1fr_auto]">
-          <input className="h-10 rounded-md border px-3 text-sm" name="batch" placeholder="Batch number" defaultValue={batch ?? ""} />
+          <SearchCombobox name="batch" source="batches" placeholder="Select batch number" defaultValue={batch} />
           <button className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90" type="submit">
             Search Batch
           </button>

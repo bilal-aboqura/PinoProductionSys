@@ -32,7 +32,8 @@ export function TransferForm({
       className="grid gap-3 rounded-md border bg-white p-4 md:grid-cols-5"
       onSubmit={(event) => {
         event.preventDefault();
-        const formData = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const formData = new FormData(form);
         startTransition(async () => {
           const result = await transferInventory({
             itemId: formData.get("itemId"),
@@ -42,7 +43,11 @@ export function TransferForm({
             notes: formData.get("notes")
           });
           setMessage(result.success ? "Transfer recorded." : result.error.message);
-          if (result.success) event.currentTarget.reset();
+          if (result.success && form.isConnected) {
+            form.reset();
+            setItemId("");
+            setSourceWhId("");
+          }
         });
       }}
     >

@@ -1,5 +1,6 @@
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Pagination } from "@/components/shared/Pagination";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,12 +50,7 @@ export default async function InventoryItemsPage({
         </a>
       </div>
       <form className="flex flex-wrap gap-2 rounded-md border bg-white p-4">
-        <input
-          className="min-w-64 flex-1 rounded-md border px-3 py-2 text-sm"
-          name="search"
-          defaultValue={query.search}
-          placeholder="Search code or item name"
-        />
+        <SearchCombobox className="min-w-64 flex-1" name="search" source="inventory-items" defaultValue={query.search} placeholder="Select item code or name" />
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">Search</button>
       </form>
       <ItemForm categories={categories} canManage={canManage} />

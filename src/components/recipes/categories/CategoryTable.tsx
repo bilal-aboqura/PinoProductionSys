@@ -4,26 +4,27 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Archive, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { archiveRecipeCategory } from "@/features/recipes/actions";
 import type { RecipeCategoryDto } from "@/features/recipes/types";
 
 export function CategoryTable({ categories, locale }: { categories: RecipeCategoryDto[]; locale: string }) {
-  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState("");
   const [pending, startTransition] = useTransition();
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     return categories
-      .filter((category) => !needle || category.nameAr.toLowerCase().includes(needle) || category.nameEn.toLowerCase().includes(needle))
+      .filter((category) => !selectedId || category.id === selectedId)
       .sort((a, b) => a.sortOrder - b.sortOrder || a.nameEn.localeCompare(b.nameEn));
-  }, [categories, query]);
+  }, [categories, selectedId]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Input className="max-w-sm" placeholder="Search categories" value={query} onChange={(event) => setQuery(event.target.value)} />
+        <select className="h-10 w-full max-w-sm rounded-md border bg-white px-3 text-sm" value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
+          <option value="">All categories</option>
+          {categories.map((category) => <option key={category.id} value={category.id}>{category.nameEn} / {category.nameAr}</option>)}
+        </select>
         <Link href={`/${locale}/recipes/categories/new`}>
           <Button>New Category</Button>
         </Link>
@@ -77,4 +78,3 @@ export function CategoryTable({ categories, locale }: { categories: RecipeCatego
     </div>
   );
 }
-

@@ -29,7 +29,8 @@ export function WarehouseForm({ warehouse, canManage }: { warehouse?: WarehouseD
             className="grid w-full gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-4"
             onSubmit={(event) => {
               event.preventDefault();
-              const formData = new FormData(event.currentTarget);
+              const form = event.currentTarget;
+              const formData = new FormData(form);
               startTransition(async () => {
                 const payload = {
                   code: formData.get("code"),
@@ -39,7 +40,7 @@ export function WarehouseForm({ warehouse, canManage }: { warehouse?: WarehouseD
                 const result = isEdit && warehouse ? await updateWarehouse(warehouse.id, payload) : await createWarehouse(payload);
                 setMessage(result.success ? (isEdit ? "Warehouse updated." : "Warehouse created.") : result.error.message);
                 if (result.success && isEdit) setOpen(false);
-                if (result.success && !isEdit) event.currentTarget.reset();
+                if (result.success && !isEdit && form.isConnected) form.reset();
               });
             }}
           >

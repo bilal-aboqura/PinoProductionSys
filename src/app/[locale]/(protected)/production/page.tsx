@@ -6,19 +6,23 @@ import { OrderListTable } from "@/components/production-orders/OrderListTable";
 import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getProductionOrderList } from "@/features/production-orders/queries";
 import { parsePage } from "@/lib/pagination";
+import type { ProductionOrderStatus } from "@prisma/client";
+
+const statuses: ProductionOrderStatus[] = ["PENDING_UNASSIGNED", "PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 
 export default async function ProductionPage({
   params,
   searchParams
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; status?: string }>;
 }) {
   const { locale } = await params;
   const query = await searchParams;
+  const status = statuses.includes(query.status as ProductionOrderStatus) ? (query.status as ProductionOrderStatus) : undefined;
   let result;
   try {
-    result = await getProductionOrderList({}, { page: parsePage(query.page), pageSize: 50 });
+    result = await getProductionOrderList({ search: query.search, status }, { page: parsePage(query.page), pageSize: 50 });
   } catch (error) {
     if (error instanceof Error && (error.message === "PERMISSION_DENIED" || error.message === "UNAUTHORIZED")) {
       return <AccessDenied locale={locale} />;
@@ -42,7 +46,7 @@ export default async function ProductionPage({
           </Link>
         </div>
       </div>
-      <OrderListTable orders={result.items} locale={locale} />
+      <OrderListTable orders={result.items} locale={locale} defaultFilters={query} />
       <div className="mt-4">
         <Pagination
           pathname={`/${locale}/production`}

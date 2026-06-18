@@ -2,13 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { BalanceDto } from "@/features/inventory/types";
 import { EmptyState } from "./EmptyState";
-import { StockSearchInput } from "./StockSearchInput";
 
-export function StockLevelsTable({ balances, search }: { balances: BalanceDto[]; search?: string }) {
+export function StockLevelsTable({ balances }: { balances: BalanceDto[] }) {
   if (balances.length === 0) {
     return (
       <div className="space-y-3">
-        <StockSearchInput initialValue={search} />
         <EmptyState title="No stock balances found" description="Create items and record adjustments to start building inventory." />
       </div>
     );
@@ -16,7 +14,6 @@ export function StockLevelsTable({ balances, search }: { balances: BalanceDto[];
 
   return (
     <div className="space-y-3">
-      <StockSearchInput initialValue={search} />
       <div className="overflow-x-auto rounded-md border bg-white">
         <Table>
           <TableHeader>

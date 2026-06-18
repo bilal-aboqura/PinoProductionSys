@@ -21,7 +21,8 @@ export function AdjustmentForm({ items, warehouses, balances }: { items: Invento
       className="grid gap-3 rounded-md border bg-white p-4 md:grid-cols-5"
       onSubmit={(event) => {
         event.preventDefault();
-        const formData = new FormData(event.currentTarget);
+        const form = event.currentTarget;
+        const formData = new FormData(form);
         startTransition(async () => {
           const result = await recordManualAdjustment({
             inventoryItemId: formData.get("inventoryItemId"),
@@ -37,7 +38,11 @@ export function AdjustmentForm({ items, warehouses, balances }: { items: Invento
                 ? "Adjustment blocked: would result in negative stock. Use a positive stock correction to reconcile the count first."
                 : result.error.message
           );
-          if (result.success) event.currentTarget.reset();
+          if (result.success && form.isConnected) {
+            form.reset();
+            setItemId("");
+            setWarehouseId("");
+          }
         });
       }}
     >

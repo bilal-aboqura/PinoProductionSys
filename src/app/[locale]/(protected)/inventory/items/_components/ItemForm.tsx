@@ -48,12 +48,13 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
             className="grid w-full gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-4"
             onSubmit={(event) => {
               event.preventDefault();
-              const payload = dataFromForm(event.currentTarget);
+              const form = event.currentTarget;
+              const payload = dataFromForm(form);
               startTransition(async () => {
                 const result = isEdit && item ? await updateInventoryItem(item.id, payload) : await createInventoryItem(payload);
                 setMessage(result.success ? (isEdit ? "Item updated." : "Item created.") : result.error.message);
                 if (result.success && isEdit) setOpen(false);
-                if (result.success && !isEdit) event.currentTarget.reset();
+                if (result.success && !isEdit && form.isConnected) form.reset();
               });
             }}
           >

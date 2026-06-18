@@ -1,4 +1,5 @@
 import type { WarehouseDto } from "@/features/inventory/types";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 
 export function MovementFilters({
   warehouses,
@@ -9,12 +10,7 @@ export function MovementFilters({
 }) {
   return (
     <form className="grid gap-3 rounded-md border bg-white p-4 md:grid-cols-5">
-      <input
-        className="rounded-md border px-3 py-2 text-sm"
-        name="itemSearch"
-        placeholder="Search item"
-        defaultValue={defaultValues.itemSearch}
-      />
+      <SearchCombobox name="itemSearch" source="inventory-items" placeholder="Select item" defaultValue={defaultValues.itemSearch} />
       <select className="rounded-md border px-3 py-2 text-sm" name="warehouseId" defaultValue={defaultValues.warehouseId ?? ""}>
         <option value="">All warehouses</option>
         {warehouses.map((warehouse) => (

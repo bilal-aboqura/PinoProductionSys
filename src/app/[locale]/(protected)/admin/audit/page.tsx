@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Pagination } from "@/components/shared/Pagination";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { AuditLogTable } from "@/features/audit/components/AuditLogTable";
 import { getAuditLogs } from "@/features/audit/actions";
 import { getServerSession } from "@/lib/auth";
@@ -35,7 +36,7 @@ export default async function AuditPage({
     <section className="logical-container py-8">
       <h1 className="mb-6 text-3xl font-bold">{t("title")}</h1>
       <form className="mb-4 grid gap-3 rounded-lg border bg-white p-4 md:grid-cols-4">
-        <input className="h-10 rounded-md border px-3 text-sm" name="username" placeholder={t("usernameSearch")} defaultValue={search.username} />
+        <SearchCombobox name="username" source="users" placeholder={t("usernameSearch")} defaultValue={search.username} />
         <input className="h-10 rounded-md border px-3 text-sm" name="from" type="date" defaultValue={search.from} aria-label={t("fromDate")} />
         <input className="h-10 rounded-md border px-3 text-sm" name="to" type="date" defaultValue={search.to} aria-label={t("toDate")} />
         <button className="h-10 rounded-md bg-primary px-4 text-sm font-semibold text-white" type="submit">

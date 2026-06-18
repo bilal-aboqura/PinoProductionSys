@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/shared/Pagination";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { UserTable } from "@/features/users/components/UserTable";
 import { getUserList } from "@/features/users/queries";
 import { parsePage } from "@/lib/pagination";
@@ -27,6 +28,10 @@ export default async function UsersPage({
           <Button>{t("addUser")}</Button>
         </Link>
       </div>
+      <form className="mb-4 flex flex-wrap gap-2 rounded-md border bg-white p-4">
+        <SearchCombobox className="min-w-64 flex-1" name="q" source="users" defaultValue={search.q} placeholder="Select user, username, or email" />
+        <Button type="submit" variant="secondary">Search</Button>
+      </form>
       <UserTable users={result.users} locale={locale} />
       <div className="mt-4">
         <Pagination

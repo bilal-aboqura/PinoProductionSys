@@ -1,14 +1,10 @@
 import type { WarehouseDto } from "@/features/inventory/types";
+import { SearchCombobox } from "@/components/shared/SearchCombobox";
 
 export function StockFilters({ warehouses, defaultValues = {} }: { warehouses: WarehouseDto[]; defaultValues?: Record<string, string | undefined> }) {
   return (
     <form className="grid gap-3 rounded-md border bg-white p-4 md:grid-cols-5">
-      <input
-        className="rounded-md border px-3 py-2 text-sm md:col-span-2"
-        name="search"
-        defaultValue={defaultValues.search}
-        placeholder="Search code or name"
-      />
+      <SearchCombobox className="md:col-span-2" name="search" source="inventory-items" defaultValue={defaultValues.search} placeholder="Select item code or name" />
       <select className="rounded-md border px-3 py-2 text-sm" name="warehouseId" defaultValue={defaultValues.warehouseId ?? ""}>
         <option value="">All warehouses</option>
         {warehouses.map((warehouse) => (
