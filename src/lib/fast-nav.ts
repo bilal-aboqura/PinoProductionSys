@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import type { PermissionCode } from "@/features/permissions/types";
 import { db } from "@/server/db";
@@ -26,10 +27,10 @@ function decodeNavUser(value: string): FastNavUser | null {
   }
 }
 
-export async function getFastNavUser() {
+export const getFastNavUser = cache(async () => {
   const value = (await cookies()).get(FAST_NAV_COOKIE)?.value;
   return value ? decodeNavUser(value) : null;
-}
+});
 
 export async function setFastNavUser(userId: string) {
   const user = await db.user.findUnique({

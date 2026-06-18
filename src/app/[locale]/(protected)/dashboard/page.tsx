@@ -1,18 +1,18 @@
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExpiryAlerts } from "@/app/[locale]/(protected)/inventory/batches/_components/ExpiryAlerts";
-import { getFastNavUser } from "@/lib/fast-nav";
+import { getServerSession } from "@/lib/auth";
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const user = await getFastNavUser();
+  const session = await getServerSession();
   const nav = await getTranslations("navigation");
-  const permissions = new Set(user?.permissions ?? []);
+  const permissions = new Set(session.user.permissions);
 
   return (
     <section className="logical-container py-8">
       <h1 className="text-3xl font-bold">{nav("dashboard")}</h1>
-      <p className="mt-2 text-secondary">{user?.roleDisplayName ?? user?.displayName}</p>
+      <p className="mt-2 text-secondary">{session.user.roleDisplayName ?? session.user.displayName}</p>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {permissions.has("production:view") ? (
           <Card>
