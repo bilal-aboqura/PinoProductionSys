@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProductionOrder } from "@/features/production-orders/actions";
 import type { AssignableStaffDto, CreatableRecipeVersionDto } from "@/features/production-orders/types";
+import type { WarehouseDto } from "@/features/inventory/types";
 
 export function CreateOrderForm({
   recipes,
   staff,
+  warehouses,
   locale
 }: {
   recipes: CreatableRecipeVersionDto[];
   staff: AssignableStaffDto[];
+  warehouses: WarehouseDto[];
   locale: string;
 }) {
   const router = useRouter();
@@ -23,6 +26,7 @@ export function CreateOrderForm({
   const [recipeVersionId, setRecipeVersionId] = useState(recipes[0]?.id ?? "");
   const [targetQuantity, setTargetQuantity] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
+  const [sourceWarehouseId, setSourceWarehouseId] = useState(warehouses[0]?.id ?? "");
   const [creationNotes, setCreationNotes] = useState("");
   const [message, setMessage] = useState("");
   const selected = useMemo(() => recipes.find((recipe) => recipe.id === recipeVersionId), [recipeVersionId, recipes]);
@@ -36,6 +40,7 @@ export function CreateOrderForm({
         startTransition(async () => {
           const result = await createProductionOrder({
             recipeVersionId,
+            sourceWarehouseId,
             targetQuantity: targetQuantity ? Number(targetQuantity) : undefined,
             assignedToId: assignedToId || null,
             creationNotes
@@ -69,6 +74,22 @@ export function CreateOrderForm({
         <Input id="quantity" min="0.001" step="0.001" type="number" value={targetQuantity} onChange={(event) => setTargetQuantity(event.target.value)} />
       </div>
       <div className="grid gap-2">
+        <Label htmlFor="sourceWarehouse">Ingredient source warehouse</Label>
+        <select
+          id="sourceWarehouse"
+          className="h-10 rounded-md border bg-white px-3 text-sm"
+          value={sourceWarehouseId}
+          onChange={(event) => setSourceWarehouseId(event.target.value)}
+          required
+        >
+          <option value="">Select warehouse</option>
+          {warehouses.map((warehouse) => (
+            <option key={warehouse.id} value={warehouse.id}>{warehouse.code} - {warehouse.name}</option>
+          ))}
+        </select>
+        <p className="text-xs text-secondary">Recipe ingredients are reserved here as soon as the order is created.</p>
+      </div>
+      <div className="grid gap-2">
         <Label htmlFor="assignee">Assignee</Label>
         <select
           id="assignee"
@@ -95,7 +116,7 @@ export function CreateOrderForm({
         />
       </div>
       {message ? <p className="text-sm font-semibold text-error">{message}</p> : null}
-      <Button type="submit" disabled={isPending || recipes.length === 0}>
+      <Button type="submit" disabled={isPending || recipes.length === 0 || !sourceWarehouseId}>
         <ClipboardPlus className="h-4 w-4" />
         {isPending ? "Creating..." : "Create Order"}
       </Button>

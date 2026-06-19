@@ -18,6 +18,8 @@
     "loginTitle": "تسجيل الدخول",
     "identifierLabel": "اسم المستخدم أو البريد الإلكتروني",
     "passwordLabel": "كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
     "loginButton": "دخول",
     "invalidCredentials": "اسم المستخدم أو البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "accountInactive": "هذا الحساب غير نشط.",

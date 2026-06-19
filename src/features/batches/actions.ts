@@ -117,8 +117,8 @@ async function adjustInventory(
 ) {
   const balance = await lockedBalance(tx, input.warehouseId, input.inventoryItemId);
   const currentQuantity = balance.currentQuantity.add(input.quantityDelta);
-  if (!input.allowNegative && currentQuantity.lt(0)) throw new Error("INSUFFICIENT_STOCK");
   const availableQuantity = currentQuantity.sub(balance.reservedQuantity);
+  if (!input.allowNegative && availableQuantity.lt(0)) throw new Error("INSUFFICIENT_STOCK");
   await tx.inventoryBalance.update({
     where: { id: balance.id },
     data: { currentQuantity, availableQuantity, needsReconciliation: currentQuantity.lt(0) || balance.needsReconciliation }

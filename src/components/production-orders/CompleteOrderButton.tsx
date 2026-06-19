@@ -14,16 +14,21 @@ export function CompleteOrderButton({
   version,
   targetQuantity,
   unit,
-  warehouses = []
+  warehouses = [],
+  sourceWarehouseId,
+  sourceWarehouseName
 }: {
   orderId: string;
   version: number;
   targetQuantity: string | null;
   unit: string;
   warehouses?: WarehouseDto[];
+  sourceWarehouseId: string | null;
+  sourceWarehouseName: string | null;
 }) {
   const [quantity, setQuantity] = useState("");
   const [storageWarehouseId, setStorageWarehouseId] = useState("");
+  const [legacySourceWarehouseId, setLegacySourceWarehouseId] = useState("");
   const [warnings, setWarnings] = useState<ProductionConsumptionWarning[]>([]);
   const [warningConfirmed, setWarningConfirmed] = useState(false);
   const [message, setMessage] = useState("");
@@ -37,7 +42,7 @@ export function CompleteOrderButton({
 
   const complete = () =>
     startTransition(async () => {
-      const result = await completeProductionOrder(orderId, Number(quantity), version, storageWarehouseId);
+      const result = await completeProductionOrder(orderId, Number(quantity), version, storageWarehouseId, sourceWarehouseId ?? legacySourceWarehouseId);
       setMessage(result.success ? `Order completed. Batch ${result.data.batchNumber} created.` : result.error);
       if (result.success) window.location.reload();
     });
@@ -48,8 +53,41 @@ export function CompleteOrderButton({
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <div className="grid gap-1">
           <label className="text-sm font-semibold text-secondary">Produced quantity ({unit})</label>
-          <Input className="w-48" min="0.001" step="0.001" type="number" value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+          <Input
+            className="w-48"
+            min="0.001"
+            step="0.001"
+            type="number"
+            value={quantity}
+            onChange={(event) => {
+              setQuantity(event.target.value);
+              setWarnings([]);
+              setWarningConfirmed(false);
+            }}
+          />
         </div>
+        {sourceWarehouseId ? (
+          <div className="grid gap-1">
+            <span className="text-sm font-semibold text-secondary">Ingredient source warehouse</span>
+            <span className="h-10 rounded-md border bg-background px-3 py-2 text-sm">{sourceWarehouseName}</span>
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            <label className="text-sm font-semibold text-secondary">Ingredient source warehouse</label>
+            <select
+              className="h-10 w-56 rounded-md border px-3 text-sm"
+              value={legacySourceWarehouseId}
+              onChange={(event) => {
+                setLegacySourceWarehouseId(event.target.value);
+                setWarnings([]);
+                setWarningConfirmed(false);
+              }}
+            >
+              <option value="">Select warehouse</option>
+              {warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.code} - {warehouse.name}</option>)}
+            </select>
+          </div>
+        )}
         {warehouses.length > 0 ? (
           <div className="grid gap-1">
             <label className="text-sm font-semibold text-secondary">Finished-product warehouse</label>
@@ -79,8 +117,13 @@ export function CompleteOrderButton({
                 setMessage("Select the finished-product warehouse before completing the order.");
                 return;
               }
-              if (warehouses.length > 0 && storageWarehouseId && !warningConfirmed) {
-                const preview = await previewProductionConsumptionWarnings(orderId, storageWarehouseId);
+              const consumptionWarehouseId = sourceWarehouseId ?? legacySourceWarehouseId;
+              if (!consumptionWarehouseId) {
+                setMessage("Select the ingredient source warehouse before completing the order.");
+                return;
+              }
+              if (!warningConfirmed) {
+                const preview = await previewProductionConsumptionWarnings(orderId, consumptionWarehouseId, Number(quantity));
                 if (!preview.success) {
                   setMessage(preview.error.message);
                   return;

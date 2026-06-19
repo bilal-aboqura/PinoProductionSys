@@ -55,6 +55,7 @@ model User {
   mustChangePassword     Boolean                 @default(false)
   isActive               Boolean                 @default(true)
   languagePreference     String                  @default("ar")
+  sidebarCollapsed       Boolean                 @default(false)
   lastLoginAt            DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -295,6 +296,8 @@ model ProductionOrder {
   targetQuantity           Decimal?                          @db.Decimal(10, 3)
   producedQuantity         Decimal?                          @db.Decimal(10, 3)
   creationNotes            String?
+  sourceWarehouseId        String?
+  sourceWarehouse          Warehouse?                        @relation("ProductionSourceWarehouse", fields: [sourceWarehouseId], references: [id])
   createdById              String
   assignedToId             String?
   claimedById              String?
@@ -316,6 +319,7 @@ model ProductionOrder {
   @@index([status])
   @@index([assignedToId])
   @@index([recipeVersionId])
+  @@index([sourceWarehouseId])
   @@index([createdAt])
   @@index([status, createdAt])
   @@map("production_orders")
@@ -512,6 +516,7 @@ model Warehouse {
   consumption       InventoryConsumptionLog[]
   outputs           InventoryOutputLog[]
   productionBatches ProductionBatch[]
+  productionSourceOrders ProductionOrder[] @relation("ProductionSourceWarehouse")
   batchContainers   BatchContainer[]
 
   @@map("warehouses")
@@ -965,12 +970,16 @@ model AuditLog {
   newValue      Json?
   ipAddress     String?
   userAgent     String?
+  quantityDelta Decimal?    @db.Decimal(10, 3)
+  sourceReference String?
+  isArchived    Boolean     @default(false)
   createdAt     DateTime    @default(now())
   actor         User        @relation("AuditActor", fields: [actorId], references: [id])
   target        User?       @relation("AuditTarget", fields: [targetId], references: [id])
 
   @@index([createdAt])
   @@index([action, createdAt])
+  @@index([isArchived, createdAt])
   @@map("audit_logs")
 }
 
@@ -1028,11 +1037,13 @@ model Notification {
   relatedEntityType String?
   relatedEntityId   String?
   createdAt         DateTime                @default(now())
+  isArchived        Boolean                 @default(false)
   recipients        NotificationRecipient[]
 
   @@index([category])
   @@index([severity])
   @@index([createdAt])
+  @@index([isArchived, createdAt])
   @@map("notifications")
 }
 

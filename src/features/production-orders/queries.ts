@@ -180,6 +180,7 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
       ...(canViewAll ? {} : { assignedToId: session.user.id })
     },
     include: {
+      sourceWarehouse: true,
       steps: {
         include: {
           photos: { orderBy: { uploadedAt: "asc" } },
@@ -249,6 +250,8 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     recipeId: order.recipeId,
     recipeVersionId: order.recipeVersionId,
     creationNotes: order.creationNotes,
+    sourceWarehouseId: order.sourceWarehouseId,
+    sourceWarehouseName: order.sourceWarehouse?.name ?? null,
     createdById: order.createdById,
     createdByName: names.get(order.createdById) ?? null,
     assignedToId: order.assignedToId,

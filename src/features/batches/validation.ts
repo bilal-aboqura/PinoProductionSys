@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const batchNumberPattern = /^B-\d{4}-\d{5}$/;
+// Supports generated IDs and externally imported/reporting IDs such as
+// B-2026-REPORTS-001 without allowing path separators or punctuation.
+export const batchNumberPattern = /^B-[A-Z0-9]+(?:-[A-Z0-9]+)+$/i;
 export const labelTemplates = ["SMALL", "STANDARD", "LARGE"] as const;
 export const batchStatuses = ["ACTIVE", "CONSUMED", "EXPIRED", "DISPOSED"] as const;
 export const disposalReasons = ["EXPIRED", "DAMAGED_GOODS", "QUALITY_ISSUE"] as const;
@@ -46,7 +48,7 @@ export const disposeBatchSchema = z.object({
 });
 
 export const traceabilitySchema = z.object({
-  batchNumber: z.string().regex(batchNumberPattern)
+  batchNumber: z.string().trim().min(4).max(100).regex(batchNumberPattern)
 });
 
 export function validateEvidenceFile(input: { type: string; size: number }) {

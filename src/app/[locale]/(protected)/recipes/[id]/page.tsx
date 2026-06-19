@@ -10,7 +10,8 @@ import { PublishButton } from "@/components/recipes/PublishButton";
 import { ArchiveDialog } from "@/components/recipes/ArchiveDialog";
 import { ScopeAssignmentPanel } from "@/components/recipes/ScopeAssignmentPanel";
 import { getRecipe, listRecipeCategories } from "@/features/recipes/actions";
-import { getFastNavUser } from "@/lib/fast-nav";
+import { getServerSession } from "@/lib/auth";
+import { resolvePermissions } from "@/features/permissions/lib/resolver";
 import { ARCHIVE_RECIPES, EDIT_RECIPES, MANAGE_RECIPE_SCOPE, PUBLISH_RECIPES, VIEW_VERSION_HISTORY } from "@/lib/permissions";
 
 export default async function RecipeDetailPage({
@@ -19,8 +20,8 @@ export default async function RecipeDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const user = await getFastNavUser();
-  const permissions = new Set(user?.permissions ?? []);
+  const session = await getServerSession();
+  const permissions = new Set(await resolvePermissions(session.user.id));
   const [recipeResult, categoriesResult] = await Promise.all([getRecipe(id), listRecipeCategories()]);
   if (!recipeResult.success) {
     if (recipeResult.code === "UNAUTHORIZED") return <AccessDenied locale={locale} />;
