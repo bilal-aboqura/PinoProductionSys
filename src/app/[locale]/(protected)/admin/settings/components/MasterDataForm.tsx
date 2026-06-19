@@ -56,24 +56,40 @@ export function MasterDataForm({
         }}
       >
         {needsCode(entityType) ? (
-          <input className="rounded-md border px-3 py-2 text-sm" name="code" defaultValue={item?.code ?? ""} placeholder="Code" required />
+          <label className="grid gap-1 text-sm font-semibold text-secondary">Code
+            <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="code" defaultValue={item?.code ?? ""} required />
+          </label>
         ) : null}
         {needsLocalizedNames(entityType) ? (
           <>
-            <input className="rounded-md border px-3 py-2 text-sm" name="nameEn" defaultValue={item?.nameEn ?? item?.name ?? ""} placeholder="Name English" required />
-            <input className="rounded-md border px-3 py-2 text-sm" name="nameAr" defaultValue={item?.nameAr ?? ""} placeholder="Name Arabic" required />
-            <input className="rounded-md border px-3 py-2 text-sm" name="description" defaultValue={item?.description ?? ""} placeholder="Description" />
+            <label className="grid gap-1 text-sm font-semibold text-secondary">English name
+              <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="nameEn" defaultValue={item?.nameEn ?? item?.name ?? ""} required />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-secondary">Arabic name
+              <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="nameAr" defaultValue={item?.nameAr ?? ""} required />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-secondary">Description
+              <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="description" defaultValue={item?.description ?? ""} />
+            </label>
           </>
         ) : (
-          <input className="rounded-md border px-3 py-2 text-sm" name="name" defaultValue={item?.name ?? ""} placeholder="Template name" required />
+          <label className="grid gap-1 text-sm font-semibold text-secondary">Template name
+            <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="name" defaultValue={item?.name ?? ""} required />
+          </label>
         )}
         {needsDimensions(entityType) ? (
-          <input className="rounded-md border px-3 py-2 text-sm" name="dimensions" defaultValue={item?.dimensions ?? ""} placeholder="Dimensions, e.g. 50x30mm" required />
+          <label className="grid gap-1 text-sm font-semibold text-secondary">Dimensions
+            <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="dimensions" defaultValue={item?.dimensions ?? ""} placeholder="e.g. 50x30mm" required />
+          </label>
         ) : null}
         {needsTemperature(entityType) ? (
           <>
-            <input className="rounded-md border px-3 py-2 text-sm" name="minTemperature" defaultValue={item?.minTemperature ?? ""} placeholder="Min temp" type="number" step="0.01" />
-            <input className="rounded-md border px-3 py-2 text-sm" name="maxTemperature" defaultValue={item?.maxTemperature ?? ""} placeholder="Max temp" type="number" step="0.01" />
+            <label className="grid gap-1 text-sm font-semibold text-secondary">Minimum temperature
+              <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="minTemperature" defaultValue={item?.minTemperature ?? ""} type="number" step="0.01" />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-secondary">Maximum temperature
+              <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="maxTemperature" defaultValue={item?.maxTemperature ?? ""} type="number" step="0.01" />
+            </label>
           </>
         ) : null}
         <input type="hidden" name="isActive" value="false" />

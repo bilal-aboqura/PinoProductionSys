@@ -45,7 +45,7 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
       {open ? (
         <div className={isEdit ? "fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4" : ""}>
           <form
-            className="grid w-full gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-4"
+            className={`grid w-full gap-3 rounded-md border bg-white p-4 shadow-sm md:grid-cols-4 ${isEdit ? "max-w-4xl" : ""}`}
             onSubmit={(event) => {
               event.preventDefault();
               const form = event.currentTarget;
