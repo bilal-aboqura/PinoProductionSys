@@ -295,6 +295,8 @@ model ProductionOrder {
   targetQuantity           Decimal?                          @db.Decimal(10, 3)
   producedQuantity         Decimal?                          @db.Decimal(10, 3)
   creationNotes            String?
+  sourceWarehouseId        String?
+  sourceWarehouse          Warehouse?                        @relation("ProductionSourceWarehouse", fields: [sourceWarehouseId], references: [id])
   createdById              String
   assignedToId             String?
   claimedById              String?
@@ -316,6 +318,7 @@ model ProductionOrder {
   @@index([status])
   @@index([assignedToId])
   @@index([recipeVersionId])
+  @@index([sourceWarehouseId])
   @@index([createdAt])
   @@index([status, createdAt])
   @@map("production_orders")
@@ -512,6 +515,7 @@ model Warehouse {
   consumption       InventoryConsumptionLog[]
   outputs           InventoryOutputLog[]
   productionBatches ProductionBatch[]
+  productionSourceOrders ProductionOrder[] @relation("ProductionSourceWarehouse")
   batchContainers   BatchContainer[]
 
   @@map("warehouses")

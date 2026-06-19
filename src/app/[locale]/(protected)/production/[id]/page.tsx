@@ -52,7 +52,15 @@ export default async function ProductionOrderDetailPage({ params }: { params: Pr
         {order.steps.length === 0 ? <div className="rounded-md border bg-white p-8 text-center text-secondary">No steps are attached to this order.</div> : null}
       </div>
       {order.status === "IN_PROGRESS" && allStepsComplete ? (
-        <CompleteOrderButton orderId={order.id} version={order.version} targetQuantity={order.targetQuantity} unit={order.yieldUnit} warehouses={warehouses} />
+        <CompleteOrderButton
+          orderId={order.id}
+          version={order.version}
+          targetQuantity={order.targetQuantity}
+          unit={order.yieldUnit}
+          warehouses={warehouses}
+          sourceWarehouseId={order.sourceWarehouseId}
+          sourceWarehouseName={order.sourceWarehouseName}
+        />
       ) : null}
       {order.status === "COMPLETED" ? <DownstreamActionsPanel orderId={order.id} actions={order.downstreamActions} /> : null}
       {order.status === "CANCELLED" ? (

@@ -11,7 +11,11 @@ import { generateOrderNumber } from "@/lib/production-orders/order-number";
 import { seedStepsFromSnapshot } from "@/lib/production-orders/step-seeder";
 import type { ActionResult } from "@/lib/types/action-result";
 import { createBatchForCompletedOrder } from "@/features/batches/actions";
-import { consumeInventoryForProduction } from "@/features/inventory/lib/production-consumption";
+import {
+  consumeInventoryForProduction,
+  releaseInventoryReservationForProduction,
+  reserveInventoryForProduction
+} from "@/features/inventory/lib/production-consumption";
 import { triggerProductionAlert } from "@/features/notifications/engine";
 import { writeProductionAuditLog } from "./lib/audit";
 import {
@@ -28,6 +32,7 @@ import { assertValidTransition } from "./lib/status";
 
 const createOrderSchema = z.object({
   recipeVersionId: z.string().min(1),
+  sourceWarehouseId: z.string().min(1),
   targetQuantity: z.coerce.number().positive().optional(),
   assignedToId: z.string().optional().nullable().or(z.literal("")),
   creationNotes: z.string().trim().max(2000).optional().nullable()
@@ -45,6 +50,9 @@ function validationError(details: string[]): ActionResult<never> {
 function unknownError(error: unknown): ActionResult<never> {
   if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "PERMISSION_DENIED")) {
     return { success: false, code: "UNAUTHORIZED", error: "You do not have permission to perform this action." };
+  }
+  if (error instanceof Error && error.message.startsWith("INSUFFICIENT_INVENTORY:")) {
+    return { success: false, code: "VALIDATION", error: `Insufficient available inventory for ${error.message.split(":")[1]}.` };
   }
   return { success: false, code: "INTERNAL", error: error instanceof Error ? error.message : "Unexpected error." };
 }
@@ -142,6 +150,8 @@ export async function createProductionOrder(input: unknown): Promise<ActionResul
     }
 
     const snapshot = recipeVersion.snapshot as RecipeSnapshot;
+    const sourceWarehouse = await prisma.warehouse.findFirst({ where: { id: parsed.data.sourceWarehouseId, isActive: true } });
+    if (!sourceWarehouse) return { success: false, code: "NOT_FOUND", error: "Active source warehouse not found." };
     const order = await prisma.$transaction(async (tx) => {
       const orderNumber = await generateOrderNumber(tx);
       const status: ProductionOrderStatus = assignedToId ? "PENDING" : "PENDING_UNASSIGNED";
@@ -154,12 +164,14 @@ export async function createProductionOrder(input: unknown): Promise<ActionResul
           recipeNameSnapshot: snapshot.nameEn || snapshot.nameAr,
           yieldUnit: snapshot.yieldUnit,
           targetQuantity: decimal(parsed.data.targetQuantity),
+          sourceWarehouseId: parsed.data.sourceWarehouseId,
           creationNotes: parsed.data.creationNotes || null,
           createdById: session.user.id,
           assignedToId
         }
       });
       await seedStepsFromSnapshot(tx, created.id, snapshot);
+      await reserveInventoryForProduction(created.id, parsed.data.sourceWarehouseId, tx);
       await writeHistory(tx, { orderId: created.id, fromStatus: null, toStatus: status, actorId: session.user.id });
       await writeProductionAuditLog(tx, {
         action: "PRODUCTION_ORDER_CREATED",
@@ -431,7 +443,8 @@ export async function completeProductionOrder(
   orderId: string,
   producedQuantity: number,
   version: number,
-  warehouseId?: string
+  warehouseId?: string,
+  sourceWarehouseId?: string
 ): Promise<ActionResult<{ newVersion: number; batchNumber: string }>> {
   try {
     const session = await getServerSession();
@@ -448,6 +461,8 @@ export async function completeProductionOrder(
       if (order.status !== "IN_PROGRESS") return { kind: "invalid" as const, message: "Only in-progress orders can be completed." };
       const incomplete = await tx.productionOrderStep.count({ where: { orderId, isCompleted: false } });
       if (incomplete > 0) return { kind: "invalid" as const, message: "All steps must be completed before completing the order." };
+      const consumptionWarehouseId = order.sourceWarehouseId ?? sourceWarehouseId;
+      if (!consumptionWarehouseId) return { kind: "invalid" as const, message: "An ingredient source warehouse is required." };
       assertValidTransition(order.status, "COMPLETED");
       const completedAt = new Date();
       const durationSeconds = order.startedAt ? Math.max(0, Math.round((completedAt.getTime() - order.startedAt.getTime()) / 1000)) : null;
@@ -472,7 +487,18 @@ export async function completeProductionOrder(
         prevValue: order,
         newValue: updated
       });
-      await consumeInventoryForProduction(orderId, warehouseId, session.user.id, tx);
+      await consumeInventoryForProduction(orderId, consumptionWarehouseId, session.user.id, tx);
+      await tx.productionOrderDownstreamAction.upsert({
+        where: { orderId_actionType: { orderId, actionType: "INVENTORY_CONSUMPTION" } },
+        update: { triggeredById: session.user.id },
+        create: {
+          orderId,
+          actionType: "INVENTORY_CONSUMPTION",
+          referenceId: `IC-${order.orderNumber}`,
+          triggeredById: session.user.id,
+          payload: { sourceWarehouseId: consumptionWarehouseId }
+        }
+      });
       const batch = await createBatchForCompletedOrder(tx, {
         productionOrderId: orderId,
         warehouseId,
@@ -487,6 +513,7 @@ export async function completeProductionOrder(
     if (result.kind === "forbidden") return { success: false, code: "UNAUTHORIZED", error: "You are not assigned to this order." };
     if (result.kind === "invalid") return { success: false, code: "VALIDATION", error: result.message };
     productionPaths();
+    revalidatePath("/[locale]/inventory", "page");
     revalidatePath("/[locale]/inventory/batches", "page");
     await runProductionAlertCheck(orderId);
     return { success: true, data: { newVersion: result.newVersion, batchNumber: result.batchNumber } };
@@ -519,6 +546,9 @@ export async function cancelProductionOrder(orderId: string, cancellationReason:
           version: { increment: 1 }
         }
       });
+      if (order.sourceWarehouseId) {
+        await releaseInventoryReservationForProduction(orderId, order.sourceWarehouseId, tx);
+      }
       await writeHistory(tx, { orderId, fromStatus: order.status, toStatus: "CANCELLED", actorId: session.user.id, reason });
       await writeProductionAuditLog(tx, {
         action: "PRODUCTION_ORDER_CANCELLED",
@@ -535,6 +565,7 @@ export async function cancelProductionOrder(orderId: string, cancellationReason:
     if (result.kind === "conflict") return { success: false, code: "CONFLICT", error: "This order was modified by another user." };
     if (result.kind === "invalid") return { success: false, code: "VALIDATION", error: result.message };
     productionPaths();
+    revalidatePath("/[locale]/inventory", "page");
     return { success: true, data: { newVersion: result.newVersion } };
   } catch (error) {
     return unknownError(error);

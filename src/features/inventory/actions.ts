@@ -135,8 +135,8 @@ async function updateBalance(tx: Prisma.TransactionClient, warehouseId: string, 
   const balance = await lockedBalance(tx, warehouseId, inventoryItemId);
   const quantityDelta = new Prisma.Decimal(delta);
   const currentQuantity = balance.currentQuantity.add(quantityDelta);
-  if (!allowNegative && currentQuantity.lt(0)) return { ok: false as const, balance };
   const availableQuantity = currentQuantity.sub(balance.reservedQuantity);
+  if (!allowNegative && availableQuantity.lt(0)) return { ok: false as const, balance };
   const updated = await tx.inventoryBalance.update({
     where: { id: balance.id },
     data: { currentQuantity, availableQuantity, needsReconciliation: currentQuantity.lt(0) || balance.needsReconciliation }
@@ -448,7 +448,14 @@ export async function completeProductionOrderInventory(input: unknown): Promise<
       .safeParse(input);
     if (!parsed.success) return validationFailure(parsed.error);
     const warnings = await prisma.$transaction(async (tx) => {
-      const sourceWarehouseId = parsed.data.sourceWarehouseId ?? parsed.data.outputWarehouseId;
+      const order = await tx.productionOrder.findUnique({
+        where: { id: parsed.data.productionOrderId },
+        select: { status: true, sourceWarehouseId: true, _count: { select: { inventoryConsumptionLogs: true, inventoryOutputLogs: true } } }
+      });
+      if (!order) throw new Error("NOT_FOUND");
+      if (order.status !== "COMPLETED") throw new Error("ORDER_NOT_COMPLETED");
+      if (order._count.inventoryConsumptionLogs > 0 || order._count.inventoryOutputLogs > 0) throw new Error("INVENTORY_ALREADY_POSTED");
+      const sourceWarehouseId = order.sourceWarehouseId ?? parsed.data.sourceWarehouseId ?? parsed.data.outputWarehouseId;
       await assertUserWarehouseAccess(session.user.id, sourceWarehouseId);
       await assertUserWarehouseAccess(session.user.id, parsed.data.outputWarehouseId);
       const warningPayload = await getProductionConsumptionWarnings(parsed.data.productionOrderId, sourceWarehouseId, tx);
@@ -468,13 +475,16 @@ export async function completeProductionOrderInventory(input: unknown): Promise<
     await runInventoryAlertCheck(parsed.data.itemId);
     return ok({ warnings });
   } catch (error) {
+    if (error instanceof Error && error.message === "ORDER_NOT_COMPLETED") return fail("VALIDATION", "The production order must be completed first.");
+    if (error instanceof Error && error.message === "INVENTORY_ALREADY_POSTED") return fail("VALIDATION", "Inventory was already posted for this production order.");
     return unknownError(error);
   }
 }
 
 export async function previewProductionConsumptionWarnings(
   productionOrderId: string,
-  sourceWarehouseId: string
+  sourceWarehouseId: string,
+  producedQuantity?: number
 ): Promise<ActionResult<{ warnings: ProductionConsumptionWarning[] }>> {
   try {
     const session = await getServerSession();
@@ -491,7 +501,7 @@ export async function previewProductionConsumptionWarnings(
       requireInventoryPermission(session, "inventory:view");
       await assertUserWarehouseAccess(session.user.id, sourceWarehouseId);
     }
-    const warnings = await prisma.$transaction((tx) => getProductionConsumptionWarnings(productionOrderId, sourceWarehouseId, tx));
+    const warnings = await prisma.$transaction((tx) => getProductionConsumptionWarnings(productionOrderId, sourceWarehouseId, tx, producedQuantity));
     return ok({ warnings });
   } catch (error) {
     return unknownError(error);

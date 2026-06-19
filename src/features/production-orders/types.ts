@@ -74,6 +74,8 @@ export type ProductionOrderDetailDto = ProductionOrderListItemDto & {
   recipeId: string;
   recipeVersionId: string;
   creationNotes: string | null;
+  sourceWarehouseId: string | null;
+  sourceWarehouseName: string | null;
   createdById: string;
   createdByName: string | null;
   assignedToId: string | null;

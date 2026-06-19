@@ -145,6 +145,7 @@ export async function getInventoryBalance(warehouseId: string, itemId: string) {
 
 function toBalanceDto(balance: Prisma.InventoryBalanceGetPayload<{ include: { inventoryItem: { include: { category: true } }; warehouse: true } }>): BalanceDto {
   const current = new Prisma.Decimal(balance.currentQuantity);
+  const available = new Prisma.Decimal(balance.availableQuantity);
   const minimum = new Prisma.Decimal(balance.inventoryItem.minStockLevel);
   return {
     id: balance.id,
@@ -163,7 +164,7 @@ function toBalanceDto(balance: Prisma.InventoryBalanceGetPayload<{ include: { in
     minStockLevel: decimalToString(balance.inventoryItem.minStockLevel),
     unit: balance.inventoryItem.unit,
     needsReconciliation: balance.needsReconciliation,
-    isLowStock: current.lt(minimum),
+    isLowStock: available.lt(minimum),
     isNegativeStock: current.lt(0)
   };
 }
