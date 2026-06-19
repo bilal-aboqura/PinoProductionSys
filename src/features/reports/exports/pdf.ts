@@ -1,5 +1,8 @@
 import PDFDocument from "pdfkit";
+import path from "node:path";
 import type { ReportColumn, ReportFilters, ReportRow, ReportType } from "../types";
+
+const cairoFontPath = path.join(process.cwd(), "public", "fonts", "Cairo-Regular.ttf");
 
 export async function generatePdfReport(input: {
   reportType: ReportType;
@@ -10,6 +13,8 @@ export async function generatePdfReport(input: {
 }) {
   const doc = new PDFDocument({ margin: 36, size: "A4", bufferPages: true });
   const chunks: Buffer[] = [];
+
+  doc.registerFont("Cairo", cairoFontPath).font("Cairo");
 
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
   const done = new Promise<Buffer>((resolve) => {
@@ -70,6 +75,6 @@ function renderFooters(doc: PDFKit.PDFDocument) {
   const range = doc.bufferedPageRange();
   for (let index = range.start; index < range.start + range.count; index += 1) {
     doc.switchToPage(index);
-    doc.fontSize(8).fillColor("#665936").text(`Page ${index + 1} of ${range.count}`, 36, 806, { align: "center", width: 523 });
+    doc.fontSize(8).fillColor("#665936").text(`Page ${index + 1} of ${range.count}`, 36, 790, { align: "center", width: 523, lineBreak: false });
   }
 }

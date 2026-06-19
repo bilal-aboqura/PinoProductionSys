@@ -40,9 +40,9 @@ export function ProtectedShell({
   if (!user) return null;
 
   return (
-    <>
+    <div className="min-h-screen">
       <AppNav locale={locale} user={user} />
-      <main>{children}</main>
-    </>
+      <main className="min-w-0 lg:ps-72">{children}</main>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
 import { generateExcelReport } from "@/features/reports/exports/excel";
@@ -50,8 +51,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     if (error instanceof SyntaxError) return NextResponse.json({ error: "Invalid filters JSON" }, { status: 400 });
+    if (error instanceof ZodError) return NextResponse.json({ error: "Invalid report export request", details: error.issues }, { status: 400 });
     if (error instanceof Error && error.message === "UNAUTHORIZED") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (error instanceof Error && error.message === "PERMISSION_DENIED") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    return NextResponse.json({ error: "Invalid report export request" }, { status: 400 });
+    console.error("Report export failed", error);
+    return NextResponse.json({ error: "Report export failed" }, { status: 500 });
   }
 }

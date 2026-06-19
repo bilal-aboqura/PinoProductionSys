@@ -130,14 +130,25 @@
     }
   },
   "navigation": {
+    "mainMenu": "Main navigation",
+    "openMenu": "Open navigation",
+    "closeMenu": "Close navigation",
     "dashboard": "Dashboard",
     "production": "Production",
     "inventory": "Inventory",
+    "catalog": "Item Catalog",
+    "warehouses": "Warehouses",
+    "history": "Inventory History",
+    "batches": "Batches",
+    "recipes": "Recipes",
     "reports": "Reports",
+    "printing": "Printing",
     "admin": "Admin",
     "users": "Users",
     "roles": "Roles",
     "audit": "Audit Log",
+    "alertRules": "Alert Rules",
+    "settings": "Settings",
     "system": "System"
   },
   "errors": {
