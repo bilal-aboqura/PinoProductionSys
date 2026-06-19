@@ -1,4 +1,7 @@
+import { redirect } from "next/navigation";
 import { ProtectedShell } from "@/components/layout/ProtectedShell";
+import { getServerSession } from "@/lib/auth";
+import type { FastNavUser } from "@/lib/fast-nav";
 
 export default async function ProtectedLayout({
   children,
@@ -8,6 +11,20 @@ export default async function ProtectedLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  let session;
+  try {
+    session = await getServerSession();
+  } catch {
+    redirect(`/${locale}/login`);
+  }
 
-  return <ProtectedShell locale={locale}>{children}</ProtectedShell>;
+  const user: FastNavUser = {
+    id: session.user.id,
+    displayName: session.user.displayName,
+    role: session.user.role,
+    roleDisplayName: session.user.roleDisplayName,
+    permissions: session.user.permissions
+  };
+
+  return <ProtectedShell locale={locale} user={user}>{children}</ProtectedShell>;
 }
