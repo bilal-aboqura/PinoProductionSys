@@ -498,7 +498,7 @@ export async function cancelProductionOrder(orderId: string, cancellationReason:
     const session = await getServerSession();
     requireProductionPermission(session.user.permissions, CANCEL_PRODUCTION_ORDERS);
     const reason = cancellationReason.trim();
-    if (reason.length < 10) return validationError(["Cancellation reason must be at least 10 characters."]);
+    if (!reason) return validationError(["Cancellation reason is required."]);
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.productionOrder.findUnique({ where: { id: orderId } });
       if (!order) return { kind: "missing" as const };

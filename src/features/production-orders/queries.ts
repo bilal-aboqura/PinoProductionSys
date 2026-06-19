@@ -4,6 +4,7 @@ import { paginationInput, totalPages } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
 import { PRODUCTION_EVIDENCE_BUCKET, getSupabaseAdminClient } from "@/lib/supabase-admin";
 import {
+  CANCEL_PRODUCTION_ORDERS,
   CREATE_PRODUCTION_ORDERS,
   VIEW_ALL_PRODUCTION_ORDERS,
   VIEW_PRODUCTION_ORDERS,
@@ -258,6 +259,7 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     cancelledAt: order.cancelledAt?.toISOString() ?? null,
     durationSeconds: order.durationSeconds,
     canExecute: order.assignedToId === session.user.id,
+    canCancel: hasProductionOrderPermission(session.user.permissions, CANCEL_PRODUCTION_ORDERS),
     canViewAll,
     steps,
     statusHistory,

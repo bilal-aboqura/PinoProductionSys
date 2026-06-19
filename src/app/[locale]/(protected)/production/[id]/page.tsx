@@ -28,7 +28,7 @@ export default async function ProductionOrderDetailPage({ params }: { params: Pr
   const warehouses = await getWarehouses().catch(() => []);
   const firstIncomplete = order.steps.find((step) => !step.isCompleted)?.id;
   const allStepsComplete = order.steps.length > 0 && order.steps.every((step) => step.isCompleted);
-  const canCancel = ["PENDING_UNASSIGNED", "PENDING", "IN_PROGRESS"].includes(order.status);
+  const canCancel = order.canCancel && ["PENDING_UNASSIGNED", "PENDING", "IN_PROGRESS"].includes(order.status);
 
   return (
     <section className="logical-container space-y-6 py-8">

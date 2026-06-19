@@ -84,6 +84,7 @@ export type ProductionOrderDetailDto = ProductionOrderListItemDto & {
   cancelledAt: string | null;
   durationSeconds: number | null;
   canExecute: boolean;
+  canCancel: boolean;
   canViewAll: boolean;
   steps: ProductionOrderStepDto[];
   statusHistory: ProductionOrderStatusHistoryDto[];

@@ -24,7 +24,7 @@ export function CancelOrderDialog({ orderId, version }: { orderId: string; versi
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <Button
           variant="danger"
-          disabled={isPending || reason.trim().length < 10}
+          disabled={isPending || reason.trim().length === 0}
           onClick={() =>
             startTransition(async () => {
               const result = await cancelProductionOrder(orderId, reason, version);

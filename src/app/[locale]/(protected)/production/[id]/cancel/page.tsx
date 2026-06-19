@@ -10,6 +10,7 @@ export default async function CancelProductionOrderPage({ params }: { params: Pr
   try {
     const order = await getProductionOrderDetail(id);
     if (!order) notFound();
+    if (!order.canCancel) return <AccessDenied locale={locale} />;
     return (
       <section className="logical-container space-y-6 py-8">
         <Link className="text-sm font-semibold text-primary" href={`/${locale}/production/${id}`}>
