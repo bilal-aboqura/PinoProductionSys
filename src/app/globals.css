@@ -44,6 +44,16 @@ textarea {
   margin-inline: auto;
 }
 
+@media (max-width: 1023px) {
+  html[dir="ltr"] .app-sidebar[data-open="false"] {
+    transform: translateX(-100%);
+  }
+
+  html[dir="rtl"] .app-sidebar[data-open="false"] {
+    transform: translateX(100%);
+  }
+}
+
 .label-print-root {
   display: grid;
   gap: 12px;

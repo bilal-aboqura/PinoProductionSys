@@ -82,7 +82,7 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
       </header>
 
       {open ? <button className="fixed inset-0 z-40 bg-black/35 lg:hidden" type="button" aria-label={navigation("closeMenu")} onClick={() => setOpen(false)} /> : null}
-      <aside className={`fixed inset-y-0 start-0 z-50 w-72 flex-col border-e bg-white shadow-lg transition-transform duration-200 lg:flex lg:translate-x-0 lg:shadow-none ${open ? "flex translate-x-0" : "hidden ltr:-translate-x-full rtl:translate-x-full"}`}>
+      <aside className="app-sidebar fixed inset-y-0 start-0 z-50 flex w-72 flex-col border-e bg-white shadow-lg transition-transform duration-200 lg:shadow-none" data-open={open}>
         <div className="flex h-20 items-center justify-between border-b px-5">
           <Link href={`/${locale}/dashboard`} className="text-lg font-bold text-primary">{common("appName")}</Link>
           <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-secondary hover:bg-accent/45 lg:hidden" onClick={() => setOpen(false)} aria-label={navigation("closeMenu")}>
