@@ -11,13 +11,16 @@ export function nextBatchNumberFromExisting(year: number, existingBatchNumber?: 
 export async function generateBatchNumber(tx: BatchSequenceTx, date = new Date()) {
   const year = date.getUTCFullYear();
   const prefix = `B-${year}-`;
+  // Serialize number allocation per year, including when no batch row exists yet.
+  await tx.$queryRaw<Array<{ lock: string }>>`
+    SELECT pg_advisory_xact_lock(1346981447, ${year})::text AS lock
+  `;
   const rows = await tx.$queryRaw<Array<{ batchNumber: string }>>`
     SELECT "batchNumber"
     FROM "production_batches"
     WHERE "batchNumber" LIKE ${`${prefix}%`}
     ORDER BY "batchNumber" DESC
     LIMIT 1
-    FOR UPDATE
   `;
   return nextBatchNumberFromExisting(year, rows[0]?.batchNumber);
 }
