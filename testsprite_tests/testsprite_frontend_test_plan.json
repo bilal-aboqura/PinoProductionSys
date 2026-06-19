@@ -1,0 +1,782 @@
+[
+  {
+    "id": "TC001",
+    "title": "Scan a code in inventory to open the matching record",
+    "description": "This verifies that a scanner input in inventory automatically opens the matching batch or product record.",
+    "category": "Scanner-Based Lookup",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /inventory"
+      },
+      {
+        "type": "action",
+        "description": "Focus the lookup field"
+      },
+      {
+        "type": "action",
+        "description": "Scan a valid batch or product code into the focused field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the matching record opens automatically"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify traceability data for the record is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Print a thermal label from an active record",
+    "description": "This verifies that a user can open an active batch or product, preview a thermal label, and reach the browser print dialog with the correct label layout.",
+    "category": "Thermal Label Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open an active batch or product record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print a label"
+      },
+      {
+        "type": "action",
+        "description": "Select a thermal label size"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the browser print dialog is shown with a QR-enabled thermal label layout"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Scan a QR code in production to load batch traceability",
+    "description": "This verifies that scanning a printed QR code in production opens the corresponding batch information for traceability.",
+    "category": "Scanner-Based Lookup",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /production"
+      },
+      {
+        "type": "action",
+        "description": "Focus the lookup field"
+      },
+      {
+        "type": "action",
+        "description": "Scan a valid QR code into the focused field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the corresponding batch information loads"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify traceability details are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Reprint a batch label with a reason and capture audit history",
+    "description": "This verifies that printing the same batch label twice requires a reprint reason and records both print events in history.",
+    "category": "Thermal Label Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open an active batch record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print a label"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print the label again"
+      },
+      {
+        "type": "action",
+        "description": "Enter a reprint reason"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the print history shows an initial print and a reprint"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reprint includes an operator and timestamp record"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Mark a second label print as a reprint",
+    "description": "This verifies that printing the same batch label twice records the later action as a reprint after a reason is selected.",
+    "category": "Print Audit and Reprint Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a batch record from the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Print the batch label"
+      },
+      {
+        "type": "action",
+        "description": "Print the batch label again"
+      },
+      {
+        "type": "action",
+        "description": "Select a reprint reason"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the second print action is recorded as a reprint"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit history shows both the initial print and the reprint"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Scan a batch or product from inventory and open its record",
+    "description": "This verifies that scanning a valid code from inventory opens the matching record and loads traceability details.",
+    "category": "Thermal Label Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /inventory"
+      },
+      {
+        "type": "action",
+        "description": "Use the keyboard-emulation scanner to scan a valid batch or product QR or barcode"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the matching record opens"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify traceability data is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Print a completed production order as a clean document",
+    "description": "This verifies that a completed production order can be previewed and sent to print in a standard document layout without web controls.",
+    "category": "Operational Document Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /production"
+      },
+      {
+        "type": "action",
+        "description": "Open a completed production order"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print the order sheet"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the browser print dialog is shown for a standard document layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify interactive web controls are absent from the print preview"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Open a scanned record from the dashboard workflow",
+    "description": "This verifies that a user can navigate from the dashboard, open a record, and begin the print workflow from the same session.",
+    "category": "Print Audit and Reprint Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a batch record from the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the print action for the batch"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the print workflow is available for the selected record"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected batch record remains in context"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Change the default label size and use it for the next label",
+    "description": "This verifies that an administrator can update the default label template and that subsequent label printing uses the new size.",
+    "category": "Label Template Configuration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/users"
+      },
+      {
+        "type": "action",
+        "description": "Open the label template settings"
+      },
+      {
+        "type": "action",
+        "description": "Select a new default label size"
+      },
+      {
+        "type": "action",
+        "description": "Save the configuration"
+      },
+      {
+        "type": "action",
+        "description": "Open an active batch or product record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print a label"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the label preview uses the updated default template size"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify QR-enabled label content is still present"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "View a batch label print history",
+    "description": "This verifies that a user can open a batch record and review prior print actions with the expected audit details.",
+    "category": "Print Audit and Reprint Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a batch record from the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the print history view for the batch"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify prior print actions are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the print history includes who printed, when it was printed, the target record, and the print type"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Print a recipe as a formatted operational document",
+    "description": "This verifies that a recipe can be opened, previewed, and printed in a clean document layout suitable for offline use.",
+    "category": "Operational Document Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /recipes"
+      },
+      {
+        "type": "action",
+        "description": "Open a recipe record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print the recipe"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a clean print-friendly document preview is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify interactive web controls are absent from the preview"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Record the print timestamp and operator for each label print",
+    "description": "This verifies that each label print is captured in the audit history with its timestamp and operator identity.",
+    "category": "Print Audit and Reprint Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a batch record from the dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Print the batch label"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the print history entry is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the print history entry includes the operator and timestamp"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Print an inventory summary in a standard paper layout",
+    "description": "This verifies that an inventory summary can be opened and printed as a standard operational document.",
+    "category": "Operational Document Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /inventory"
+      },
+      {
+        "type": "action",
+        "description": "Open a stock summary view"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print the summary"
+      },
+      {
+        "type": "action",
+        "description": "Submit the print job"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the browser print dialog is shown for a standard paper document"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the summary is presented in a print-friendly layout"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC014",
+    "title": "Update QR error correction settings and generate a label",
+    "description": "This verifies that an administrator can change QR configuration and later generate a label using the updated settings.",
+    "category": "Label Template Configuration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/users"
+      },
+      {
+        "type": "action",
+        "description": "Open the QR code settings"
+      },
+      {
+        "type": "action",
+        "description": "Adjust the error correction level"
+      },
+      {
+        "type": "action",
+        "description": "Save the configuration"
+      },
+      {
+        "type": "action",
+        "description": "Open an active batch or product record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print a label"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the label preview reflects the updated QR configuration"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the label preview remains printable"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Block printing for a draft batch",
+    "description": "This verifies that a draft batch cannot be printed and the unavailable state is shown instead of a printable label.",
+    "category": "Thermal Label Printing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a draft batch record"
+      },
+      {
+        "type": "action",
+        "description": "Choose to print a label"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a printing unavailable state is shown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no label preview is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC016",
+    "title": "Ignore invalid scanner input without opening a record",
+    "description": "This verifies that malformed scanner input does not open a record and the user remains on the lookup screen.",
+    "category": "Scanner-Based Lookup",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /inventory"
+      },
+      {
+        "type": "action",
+        "description": "Focus the lookup field"
+      },
+      {
+        "type": "action",
+        "description": "Scan an invalid code into the focused field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no matching record opens"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the lookup screen remains available"
+      }
+    ],
+    "priority": "Low"
+  }
+]

@@ -17,3 +17,5 @@ Thumbs.db
 *.tsbuildinfo
 .vscode/
 .idea/
+
+testsprite_tests\tmp\config.json

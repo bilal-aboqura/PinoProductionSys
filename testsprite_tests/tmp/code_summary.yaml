@@ -1,0 +1,59 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Next.js
+  - Tailwind CSS
+  - React
+routes:
+  - path: /login
+    file: src/app/[locale]/(auth)/login/page.tsx
+    auth_required: false
+    description: User login page
+  - path: /dashboard
+    file: src/app/[locale]/(protected)/dashboard/page.tsx
+    auth_required: true
+    description: Dashboard page
+  - path: /admin/users
+    file: src/app/[locale]/(protected)/admin/users/page.tsx
+    auth_required: true
+    description: Admin users page
+  - path: /inventory
+    file: src/app/[locale]/(protected)/inventory/page.tsx
+    auth_required: true
+    description: Inventory page
+  - path: /production
+    file: src/app/[locale]/(protected)/production/page.tsx
+    auth_required: true
+    description: Production page
+  - path: /recipes
+    file: src/app/[locale]/(protected)/recipes/page.tsx
+    auth_required: true
+    description: Recipes page
+features:
+  - name: User Login
+    description: Login with email and password credentials
+    files:
+      - src/app/[locale]/(auth)/login/page.tsx
+    entry_route: /login
+    user_interactions:
+      - Fill email input field
+      - Fill password input field
+      - Click Login button to submit
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/callback/credentials
+    auth_required: false
+  - name: Dashboard
+    description: View overall metrics and recent notifications
+    files:
+      - src/app/[locale]/(protected)/dashboard/page.tsx
+    entry_route: /dashboard
+    user_interactions:
+      - View metrics
+      - View recent notifications
+    api_calls:
+      - method: GET
+        endpoint: /api/notifications/recent
+    auth_required: true
+known_limitations: []
