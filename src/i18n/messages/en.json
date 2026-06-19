@@ -18,6 +18,8 @@
     "loginTitle": "Sign in",
     "identifierLabel": "Username or email",
     "passwordLabel": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "loginButton": "Sign in",
     "invalidCredentials": "Invalid username, email, or password.",
     "accountInactive": "This account is inactive.",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { login } from "@/features/auth/actions";
@@ -13,6 +14,7 @@ export function LoginForm() {
   const locale = useLocale();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -47,7 +49,25 @@ export function LoginForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{t("passwordLabel")}</Label>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <div className="relative">
+          <Input
+            className="pe-11"
+            id="password"
+            name="password"
+            type={passwordVisible ? "text" : "password"}
+            autoComplete="current-password"
+            required
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 end-0 inline-flex w-11 items-center justify-center rounded-e-md text-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label={passwordVisible ? t("hidePassword") : t("showPassword")}
+            aria-pressed={passwordVisible}
+            onClick={() => setPasswordVisible((visible) => !visible)}
+          >
+            {passwordVisible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+          </button>
+        </div>
       </div>
       {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
       <Button className="w-full" type="submit" disabled={pending}>
