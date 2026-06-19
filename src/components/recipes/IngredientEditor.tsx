@@ -42,7 +42,7 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
       <div className="space-y-2">
         {ingredients.map((ingredient) => (
           <div key={ingredient.id} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
-            <div className="font-semibold">{ingredient.inventoryItemId}</div>
+            <div className="font-semibold">{ingredient.inventoryItemNameEn || ingredient.inventoryItemNameAr}</div>
             <div>{ingredient.quantity}</div>
             <div>{ingredient.unit}</div>
             <div className="text-secondary">{ingredient.purpose}</div>

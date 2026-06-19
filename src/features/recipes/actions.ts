@@ -123,6 +123,7 @@ function toCategoryDto(category: {
 function toIngredientDto(ingredient: {
   id: string;
   inventoryItemId: string;
+  inventoryItem: { nameAr: string; nameEn: string };
   quantity: Prisma.Decimal;
   unit: string;
   purpose: string | null;
@@ -131,6 +132,8 @@ function toIngredientDto(ingredient: {
   return {
     id: ingredient.id,
     inventoryItemId: ingredient.inventoryItemId,
+    inventoryItemNameAr: ingredient.inventoryItem.nameAr,
+    inventoryItemNameEn: ingredient.inventoryItem.nameEn,
     quantity: ingredient.quantity.toString(),
     unit: ingredient.unit,
     purpose: ingredient.purpose,
@@ -372,7 +375,7 @@ export async function getRecipe(id: string): Promise<ActionResult<RecipeDetailDt
       where: { id },
       include: {
         category: true,
-        ingredients: { orderBy: { sortOrder: "asc" } },
+        ingredients: { include: { inventoryItem: true }, orderBy: { sortOrder: "asc" } },
         steps: { orderBy: { stepNumber: "asc" } },
         assignments: { orderBy: { assignedAt: "asc" } }
       }
