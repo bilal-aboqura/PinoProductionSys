@@ -45,7 +45,7 @@ export async function buildRecipeSnapshot(recipeId: string): Promise<RecipeSnaps
     where: { id: recipeId },
     include: {
       category: true,
-      ingredients: { orderBy: { sortOrder: "asc" } },
+      ingredients: { include: { inventoryItem: true }, orderBy: { sortOrder: "asc" } },
       steps: { orderBy: { stepNumber: "asc" } }
     }
   });
@@ -70,8 +70,8 @@ export async function buildRecipeSnapshot(recipeId: string): Promise<RecipeSnaps
     ingredients: recipe.ingredients.map((ingredient) => ({
       id: ingredient.id,
       inventoryItemId: ingredient.inventoryItemId,
-      inventoryItemNameAr: ingredient.inventoryItemId,
-      inventoryItemNameEn: ingredient.inventoryItemId,
+      inventoryItemNameAr: ingredient.inventoryItem.nameAr,
+      inventoryItemNameEn: ingredient.inventoryItem.nameEn,
       quantity: ingredient.quantity.toString(),
       unit: ingredient.unit,
       purpose: ingredient.purpose,

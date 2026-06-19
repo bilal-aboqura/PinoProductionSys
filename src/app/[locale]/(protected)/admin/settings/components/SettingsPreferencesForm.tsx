@@ -71,32 +71,47 @@ export function SettingsPreferencesForm({ locale, settings, canManage }: { local
         }}
       >
         <h2 className="md:col-span-2 font-bold">Operational Preferences</h2>
-        <input className="rounded-md border px-3 py-2 text-sm" name="companyName" defaultValue={String(general.companyName ?? "")} placeholder="Company name" disabled={!canManage} required />
-        <input className="rounded-md border px-3 py-2 text-sm" name="companyLogoUrl" defaultValue={String(general.companyLogoUrl ?? "")} placeholder="Logo URL" disabled={!canManage} />
-        <input className="rounded-md border px-3 py-2 text-sm" name="timeZone" defaultValue={String(general.timeZone ?? "Africa/Cairo")} placeholder="Time zone" disabled={!canManage} required />
-        <select className="rounded-md border px-3 py-2 text-sm" name="dateFormat" defaultValue={String(general.dateFormat ?? "YYYY-MM-DD")} disabled={!canManage}>
-          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-        </select>
-        <select className="rounded-md border px-3 py-2 text-sm" name="defaultLanguage" defaultValue={String(general.defaultLanguage ?? "ar")} disabled={!canManage}>
-          <option value="ar">Arabic</option>
-          <option value="en">English</option>
-        </select>
-        <select className="rounded-md border px-3 py-2 text-sm" name="qrEnabled" defaultValue={String(qr.qrEnabled ?? true)} disabled={!canManage}>
-          <option value="true">QR enabled</option>
-          <option value="false">QR disabled</option>
-        </select>
-        <input className="rounded-md border px-3 py-2 text-sm" name="qrSize" defaultValue={String(qr.qrSize ?? 150)} placeholder="QR size" type="number" min="64" max="512" disabled={!canManage} />
-        <select className="rounded-md border px-3 py-2 text-sm" name="errorCorrectionLevel" defaultValue={String(qr.errorCorrectionLevel ?? "M")} disabled={!canManage}>
-          <option value="L">Low</option>
-          <option value="M">Medium</option>
-          <option value="Q">Quartile</option>
-          <option value="H">High</option>
-        </select>
-        <input className="rounded-md border px-3 py-2 text-sm" name="lowStockThresholdPercent" defaultValue={String(thresholds.lowStockThresholdPercent ?? 10)} placeholder="Low stock threshold %" type="number" min="0" max="100" disabled={!canManage} />
-        <input className="rounded-md border px-3 py-2 text-sm" name="nearExpiryThresholdDays" defaultValue={String(thresholds.nearExpiryThresholdDays ?? 7)} placeholder="Near expiry days" type="number" min="1" disabled={!canManage} />
-        <input className="rounded-md border px-3 py-2 text-sm" name="productionDelayThresholdMinutes" defaultValue={String(thresholds.productionDelayThresholdMinutes ?? 30)} placeholder="Production delay minutes" type="number" min="1" disabled={!canManage} />
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Company name
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="companyName" defaultValue={String(general.companyName ?? "")} disabled={!canManage} required />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Company logo URL
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="companyLogoUrl" defaultValue={String(general.companyLogoUrl ?? "")} placeholder="https://..." disabled={!canManage} />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Time zone
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="timeZone" defaultValue={String(general.timeZone ?? "Africa/Cairo")} disabled={!canManage} required />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Date format
+          <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="dateFormat" defaultValue={String(general.dateFormat ?? "YYYY-MM-DD")} disabled={!canManage}>
+            <option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Default language
+          <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="defaultLanguage" defaultValue={String(general.defaultLanguage ?? "ar")} disabled={!canManage}>
+            <option value="ar">Arabic</option><option value="en">English</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">QR codes
+          <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="qrEnabled" defaultValue={String(qr.qrEnabled ?? true)} disabled={!canManage}>
+            <option value="true">Enabled</option><option value="false">Disabled</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">QR size (px)
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="qrSize" defaultValue={String(qr.qrSize ?? 150)} type="number" min="64" max="512" disabled={!canManage} />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">QR error correction
+          <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="errorCorrectionLevel" defaultValue={String(qr.errorCorrectionLevel ?? "M")} disabled={!canManage}>
+            <option value="L">Low</option><option value="M">Medium</option><option value="Q">Quartile</option><option value="H">High</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Low-stock threshold (%)
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="lowStockThresholdPercent" defaultValue={String(thresholds.lowStockThresholdPercent ?? 10)} type="number" min="0" max="100" disabled={!canManage} />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Near-expiry threshold (days)
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="nearExpiryThresholdDays" defaultValue={String(thresholds.nearExpiryThresholdDays ?? 7)} type="number" min="1" disabled={!canManage} />
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">Production-delay threshold (minutes)
+          <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="productionDelayThresholdMinutes" defaultValue={String(thresholds.productionDelayThresholdMinutes ?? 30)} type="number" min="1" disabled={!canManage} />
+        </label>
         <div className="flex flex-wrap items-center gap-3 md:col-span-2">
           <Button type="submit" disabled={!canManage || isPending}>
             <Save className="h-4 w-4" />

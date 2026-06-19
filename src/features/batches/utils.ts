@@ -3,7 +3,8 @@ import { Prisma, type ShelfLifeUnit } from "@prisma/client";
 type BatchSequenceTx = Pick<Prisma.TransactionClient, "$queryRaw">;
 
 export function nextBatchNumberFromExisting(year: number, existingBatchNumber?: string | null) {
-  const lastSequence = existingBatchNumber ? Number(existingBatchNumber.slice(-5)) : 0;
+  const match = existingBatchNumber?.match(new RegExp(`^B-${year}-(\\d{5})$`));
+  const lastSequence = match ? Number(match[1]) : 0;
   const nextSequence = lastSequence + 1;
   return `B-${year}-${String(nextSequence).padStart(5, "0")}`;
 }
@@ -11,13 +12,17 @@ export function nextBatchNumberFromExisting(year: number, existingBatchNumber?: 
 export async function generateBatchNumber(tx: BatchSequenceTx, date = new Date()) {
   const year = date.getUTCFullYear();
   const prefix = `B-${year}-`;
+  const pattern = `^${prefix}[0-9]{5}$`;
+  // Serialize number allocation per year, including when no batch row exists yet.
+  await tx.$queryRaw<Array<{ lock: string }>>`
+    SELECT pg_advisory_xact_lock(1346981447, CAST(${year} AS integer))::text AS lock
+  `;
   const rows = await tx.$queryRaw<Array<{ batchNumber: string }>>`
     SELECT "batchNumber"
     FROM "production_batches"
-    WHERE "batchNumber" LIKE ${`${prefix}%`}
-    ORDER BY "batchNumber" DESC
+    WHERE "batchNumber" ~ ${pattern}
+    ORDER BY RIGHT("batchNumber", 5)::integer DESC
     LIMIT 1
-    FOR UPDATE
   `;
   return nextBatchNumberFromExisting(year, rows[0]?.batchNumber);
 }

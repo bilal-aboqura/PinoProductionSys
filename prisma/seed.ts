@@ -83,6 +83,7 @@ const rolePermissions: Record<string, string[]> = {
     "production-orders:view",
     "production-orders:claim",
     "production-orders:execute",
+    "production-orders:complete",
     "recipes:view",
     "printing:view",
     "printing:create",

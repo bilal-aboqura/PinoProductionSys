@@ -77,6 +77,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionCode[]> = {
     "production-orders:view",
     "production-orders:claim",
     "production-orders:execute",
+    "production-orders:complete",
     "recipes:view",
     "printing:view",
     "printing:create",

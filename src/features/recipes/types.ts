@@ -13,6 +13,8 @@ export type RecipeCategoryDto = {
 export type RecipeIngredientDto = {
   id: string;
   inventoryItemId: string;
+  inventoryItemNameAr: string;
+  inventoryItemNameEn: string;
   quantity: string;
   unit: string;
   purpose: string | null;

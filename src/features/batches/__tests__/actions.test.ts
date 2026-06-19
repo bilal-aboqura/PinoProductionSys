@@ -5,6 +5,7 @@ describe("batch creation rules", () => {
   it("generates a zero-padded yearly batch sequence", () => {
     expect(nextBatchNumberFromExisting(2026, null)).toBe("B-2026-00001");
     expect(nextBatchNumberFromExisting(2026, "B-2026-00041")).toBe("B-2026-00042");
+    expect(nextBatchNumberFromExisting(2026, "B-2026-REPORTS-001")).toBe("B-2026-00001");
   });
 
   it("calculates expiry dates from recipe shelf-life units", () => {

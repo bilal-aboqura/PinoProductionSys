@@ -11,6 +11,7 @@ import { generateOrderNumber } from "@/lib/production-orders/order-number";
 import { seedStepsFromSnapshot } from "@/lib/production-orders/step-seeder";
 import type { ActionResult } from "@/lib/types/action-result";
 import { createBatchForCompletedOrder } from "@/features/batches/actions";
+import { consumeInventoryForProduction } from "@/features/inventory/lib/production-consumption";
 import { triggerProductionAlert } from "@/features/notifications/engine";
 import { writeProductionAuditLog } from "./lib/audit";
 import {
@@ -471,6 +472,7 @@ export async function completeProductionOrder(
         prevValue: order,
         newValue: updated
       });
+      await consumeInventoryForProduction(orderId, warehouseId, session.user.id, tx);
       const batch = await createBatchForCompletedOrder(tx, {
         productionOrderId: orderId,
         warehouseId,
@@ -498,7 +500,7 @@ export async function cancelProductionOrder(orderId: string, cancellationReason:
     const session = await getServerSession();
     requireProductionPermission(session.user.permissions, CANCEL_PRODUCTION_ORDERS);
     const reason = cancellationReason.trim();
-    if (reason.length < 10) return validationError(["Cancellation reason must be at least 10 characters."]);
+    if (!reason) return validationError(["Cancellation reason is required."]);
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.productionOrder.findUnique({ where: { id: orderId } });
       if (!order) return { kind: "missing" as const };

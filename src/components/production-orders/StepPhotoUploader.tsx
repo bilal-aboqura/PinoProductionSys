@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import Image from "next/image";
 import { Camera } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { ProductionOrderStepPhotoDto } from "@/features/production-orders/types";
 
 export function StepPhotoUploader({
@@ -15,7 +15,14 @@ export function StepPhotoUploader({
   photos: ProductionOrderStepPhotoDto[];
 }) {
   const [message, setMessage] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   return (
     <div className="space-y-2">
@@ -29,6 +36,10 @@ export function StepPhotoUploader({
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (!file) return;
+            setPreviewUrl((current) => {
+              if (current) URL.revokeObjectURL(current);
+              return URL.createObjectURL(file);
+            });
             setMessage("");
             startTransition(async () => {
               const formData = new FormData();
@@ -43,11 +54,21 @@ export function StepPhotoUploader({
       </label>
       {isPending ? <p className="text-sm text-secondary">Uploading...</p> : null}
       {message ? <p className="text-sm text-secondary">{message}</p> : null}
+      {previewUrl ? (
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Selected photo</p>
+          <Image className="h-28 w-28 rounded-md border object-cover" src={previewUrl} alt="Selected upload preview" width={112} height={112} unoptimized />
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {photos.map((photo) => (
-          <Button key={photo.id} className="h-8 px-2 text-xs" variant="ghost" title={photo.storagePath}>
-            Photo
-          </Button>
+          photo.url ? (
+            <a key={photo.id} href={photo.url} target="_blank" rel="noreferrer" title="Open uploaded photo">
+              <Image className="h-28 w-28 rounded-md border object-cover" src={photo.url} alt="Uploaded production evidence" width={112} height={112} unoptimized />
+            </a>
+          ) : (
+            <span key={photo.id} className="rounded-md border px-3 py-2 text-xs text-secondary">Photo unavailable</span>
+          )
         ))}
         {photos.length === 0 ? <p className="text-sm text-secondary">No photos uploaded yet.</p> : null}
       </div>
