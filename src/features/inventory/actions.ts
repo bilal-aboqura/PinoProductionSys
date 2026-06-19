@@ -18,6 +18,11 @@ import {
 } from "./validation";
 import { getInventoryCategories as queryInventoryCategories } from "./queries";
 import { checkInventoryAlerts } from "@/features/notifications/engine";
+import {
+  COMPLETE_PRODUCTION_ORDERS,
+  VIEW_ALL_PRODUCTION_ORDERS,
+  hasProductionOrderPermission
+} from "@/features/production-orders/lib/permissions";
 import type {
   ActionResult,
   AdjustmentResultDto,
@@ -473,8 +478,19 @@ export async function previewProductionConsumptionWarnings(
 ): Promise<ActionResult<{ warnings: ProductionConsumptionWarning[] }>> {
   try {
     const session = await getServerSession();
-    requireInventoryPermission(session, "inventory:view");
-    await assertUserWarehouseAccess(session.user.id, sourceWarehouseId);
+    const canCompleteProduction = hasProductionOrderPermission(session.user.permissions, COMPLETE_PRODUCTION_ORDERS);
+    if (canCompleteProduction) {
+      const order = await prisma.productionOrder.findUnique({
+        where: { id: productionOrderId },
+        select: { assignedToId: true }
+      });
+      if (!order) return fail("NOT_FOUND", "Production order not found.");
+      const canViewAll = hasProductionOrderPermission(session.user.permissions, VIEW_ALL_PRODUCTION_ORDERS);
+      if (order.assignedToId !== session.user.id && !canViewAll) throw new Error("FORBIDDEN");
+    } else {
+      requireInventoryPermission(session, "inventory:view");
+      await assertUserWarehouseAccess(session.user.id, sourceWarehouseId);
+    }
     const warnings = await prisma.$transaction((tx) => getProductionConsumptionWarnings(productionOrderId, sourceWarehouseId, tx));
     return ok({ warnings });
   } catch (error) {
