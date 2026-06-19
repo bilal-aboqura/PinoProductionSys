@@ -37,7 +37,7 @@ const legacyPermissionFallbacks: Partial<Record<ProductionOrderPermissionKey, st
   [ASSIGN_PRODUCTION_ORDERS]: ["production:approve"],
   [CLAIM_PRODUCTION_ORDERS]: ["production:execute"],
   [EXECUTE_PRODUCTION_ORDERS]: ["production:execute"],
-  [COMPLETE_PRODUCTION_ORDERS]: ["production:approve"],
+  [COMPLETE_PRODUCTION_ORDERS]: ["production:approve", "production:execute"],
   [CANCEL_PRODUCTION_ORDERS]: ["production:reject"]
 };
 
