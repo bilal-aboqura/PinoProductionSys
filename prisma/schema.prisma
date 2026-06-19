@@ -55,6 +55,7 @@ model User {
   mustChangePassword     Boolean                 @default(false)
   isActive               Boolean                 @default(true)
   languagePreference     String                  @default("ar")
+  sidebarCollapsed       Boolean                 @default(false)
   lastLoginAt            DateTime?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -969,12 +970,16 @@ model AuditLog {
   newValue      Json?
   ipAddress     String?
   userAgent     String?
+  quantityDelta Decimal?    @db.Decimal(10, 3)
+  sourceReference String?
+  isArchived    Boolean     @default(false)
   createdAt     DateTime    @default(now())
   actor         User        @relation("AuditActor", fields: [actorId], references: [id])
   target        User?       @relation("AuditTarget", fields: [targetId], references: [id])
 
   @@index([createdAt])
   @@index([action, createdAt])
+  @@index([isArchived, createdAt])
   @@map("audit_logs")
 }
 
@@ -1032,11 +1037,13 @@ model Notification {
   relatedEntityType String?
   relatedEntityId   String?
   createdAt         DateTime                @default(now())
+  isArchived        Boolean                 @default(false)
   recipients        NotificationRecipient[]
 
   @@index([category])
   @@index([severity])
   @@index([createdAt])
+  @@index([isArchived, createdAt])
   @@map("notifications")
 }
 
