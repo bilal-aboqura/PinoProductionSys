@@ -202,7 +202,7 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     ...order.downstreamActions.map((item) => item.triggeredById),
     ...order.steps.flatMap((step) => step.notes.map((note) => note.addedById))
   ]);
-  const steps: ProductionOrderStepDto[] = order.steps.map((step) => ({
+  const steps: ProductionOrderStepDto[] = await Promise.all(order.steps.map(async (step) => ({
     id: step.id,
     stepNumber: step.stepNumber,
     title: step.title,
@@ -217,13 +217,14 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     completedAt: step.completedAt?.toISOString() ?? null,
     confirmedQuantity: decimalToString(step.confirmedQuantity),
     confirmedUnit: step.confirmedUnit,
-    photos: step.photos.map((photo) => ({
+    photos: await Promise.all(step.photos.map(async (photo) => ({
       id: photo.id,
       storagePath: photo.storagePath,
+      url: await getStepPhotoUrl(photo.storagePath),
       mimeType: photo.mimeType,
       uploadedById: photo.uploadedById,
       uploadedAt: photo.uploadedAt.toISOString()
-    })),
+    }))),
     notes: step.notes.map((note) => ({
       id: note.id,
       content: note.content,
@@ -231,7 +232,7 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
       addedByName: names.get(note.addedById) ?? null,
       addedAt: note.addedAt.toISOString()
     }))
-  }));
+  })));
   const statusHistory: ProductionOrderStatusHistoryDto[] = order.statusHistory.map((item) => ({
     id: item.id,
     fromStatus: item.fromStatus,
