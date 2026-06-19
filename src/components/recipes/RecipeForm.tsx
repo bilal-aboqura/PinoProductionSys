@@ -29,10 +29,12 @@ type FormValues = z.infer<typeof schema>;
 
 export function RecipeForm({
   recipe,
-  categories
+  categories,
+  canEdit
 }: {
   recipe: RecipeDetailDto;
   categories: RecipeCategoryDto[];
+  canEdit: boolean;
 }) {
   const router = useRouter();
   const [version, setVersion] = useState(recipe.version);
@@ -82,6 +84,7 @@ export function RecipeForm({
           </Button>
         </div>
       ) : null}
+      <fieldset disabled={!canEdit} className="space-y-5 disabled:opacity-75">
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="grid gap-2 text-sm font-semibold">
           Arabic Name / الاسم العربي
@@ -158,10 +161,11 @@ export function RecipeForm({
         Production Notes
         <textarea className="min-h-24 rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30" {...form.register("productionNotes")} onBlur={form.handleSubmit(submit)} />
       </label>
+      </fieldset>
       {message ? <div className="rounded-md border border-accent bg-accent/30 px-3 py-2 text-sm text-secondary">{message}</div> : null}
-      <Button type="submit" disabled={pending}>
+      {canEdit ? <Button type="submit" disabled={pending}>
         Save Draft
-      </Button>
+      </Button> : null}
     </form>
   );
 }

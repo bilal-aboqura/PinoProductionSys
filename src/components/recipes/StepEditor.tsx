@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { addStep, deleteStep } from "@/features/recipes/actions";
 import type { RecipeStepDto } from "@/features/recipes/types";
 
-export function StepEditor({ recipeId, version, steps }: { recipeId: string; version: number; steps: RecipeStepDto[] }) {
+export function StepEditor({ recipeId, version, steps, canEdit }: { recipeId: string; version: number; steps: RecipeStepDto[]; canEdit: boolean }) {
   const router = useRouter();
   const [warning, setWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -40,7 +40,7 @@ export function StepEditor({ recipeId, version, steps }: { recipeId: string; ver
           <div key={step.id} className="rounded-md border bg-surface p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-semibold">{step.stepNumber}. {step.title}</h3>
-              <Button
+              {canEdit ? <Button
                 className="h-9 w-9 px-0"
                 type="button"
                 variant="ghost"
@@ -54,7 +54,7 @@ export function StepEditor({ recipeId, version, steps }: { recipeId: string; ver
                 })}
               >
                 <Trash2 className="h-4 w-4" />
-              </Button>
+              </Button> : null}
             </div>
             <p className="mt-2 text-sm text-secondary">{step.instructions}</p>
             <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
@@ -65,7 +65,7 @@ export function StepEditor({ recipeId, version, steps }: { recipeId: string; ver
           </div>
         ))}
       </div>
-      <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3">
+      {canEdit ? <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3">
         <Input name="title" placeholder="Step title" required />
         <textarea name="instructions" className="min-h-20 rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30" placeholder="Instructions" required />
         <div className="grid gap-2 md:grid-cols-3">
@@ -76,7 +76,7 @@ export function StepEditor({ recipeId, version, steps }: { recipeId: string; ver
         <Button type="submit" disabled={pending}>
           <Plus className="h-4 w-4" /> Add Step
         </Button>
-      </form>
+      </form> : null}
     </section>
   );
 }

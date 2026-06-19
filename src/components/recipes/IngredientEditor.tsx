@@ -9,7 +9,7 @@ import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { addIngredient, removeIngredient } from "@/features/recipes/actions";
 import type { RecipeIngredientDto } from "@/features/recipes/types";
 
-export function IngredientEditor({ recipeId, version, ingredients }: { recipeId: string; version: number; ingredients: RecipeIngredientDto[] }) {
+export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { recipeId: string; version: number; ingredients: RecipeIngredientDto[]; canEdit: boolean }) {
   const router = useRouter();
   const [warning, setWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -41,12 +41,12 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
       {warning ? <div className="rounded-md border border-warning/40 bg-warning/15 px-3 py-2 text-sm text-secondary">{warning}</div> : null}
       <div className="space-y-2">
         {ingredients.map((ingredient) => (
-          <div key={ingredient.id} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
+          <div key={ingredient.id} className={`grid gap-2 rounded-md border bg-surface p-3 ${canEdit ? "md:grid-cols-[1fr_120px_100px_1fr_44px]" : "md:grid-cols-[1fr_120px_100px_1fr]"}`}>
             <div className="font-semibold">{ingredient.inventoryItemNameEn || ingredient.inventoryItemNameAr}</div>
             <div>{ingredient.quantity}</div>
             <div>{ingredient.unit}</div>
             <div className="text-secondary">{ingredient.purpose}</div>
-            <Button
+            {canEdit ? <Button
               className="h-9 w-9 px-0"
               type="button"
               variant="ghost"
@@ -57,11 +57,11 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
               })}
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
+            </Button> : null}
           </div>
         ))}
       </div>
-      <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
+      {canEdit ? <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
         <SearchCombobox name="inventoryItemId" source="inventory-item-ids" placeholder="Select inventory item" required />
         <Input name="quantity" type="number" step="0.001" placeholder="Qty" required />
         <Input name="unit" placeholder="Unit" required />
@@ -69,7 +69,7 @@ export function IngredientEditor({ recipeId, version, ingredients }: { recipeId:
         <Button className="h-10 w-10 px-0" type="submit" disabled={pending}>
           <Plus className="h-4 w-4" />
         </Button>
-      </form>
+      </form> : null}
     </section>
   );
 }

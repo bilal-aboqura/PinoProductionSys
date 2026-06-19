@@ -11,7 +11,7 @@ import { ArchiveDialog } from "@/components/recipes/ArchiveDialog";
 import { ScopeAssignmentPanel } from "@/components/recipes/ScopeAssignmentPanel";
 import { getRecipe, listRecipeCategories } from "@/features/recipes/actions";
 import { getFastNavUser } from "@/lib/fast-nav";
-import { ARCHIVE_RECIPES, MANAGE_RECIPE_SCOPE, PUBLISH_RECIPES, VIEW_VERSION_HISTORY } from "@/lib/permissions";
+import { ARCHIVE_RECIPES, EDIT_RECIPES, MANAGE_RECIPE_SCOPE, PUBLISH_RECIPES, VIEW_VERSION_HISTORY } from "@/lib/permissions";
 
 export default async function RecipeDetailPage({
   params
@@ -28,6 +28,7 @@ export default async function RecipeDetailPage({
   }
   const recipe = recipeResult.data;
   const categories = categoriesResult.success ? categoriesResult.data : [];
+  const canEdit = permissions.has(EDIT_RECIPES);
 
   return (
     <section className="logical-container space-y-8 py-8">
@@ -57,11 +58,16 @@ export default async function RecipeDetailPage({
         </div>
       </div>
 
+      {!canEdit ? (
+        <div className="rounded-md border border-accent bg-accent/25 px-4 py-3 text-sm font-semibold text-secondary">
+          Read-only recipe. You can view the details but cannot edit them.
+        </div>
+      ) : null}
       <div className="rounded-md border bg-surface p-5">
-        <RecipeForm recipe={recipe} categories={categories} />
+        <RecipeForm recipe={recipe} categories={categories} canEdit={canEdit} />
       </div>
-      <IngredientEditor recipeId={recipe.id} version={recipe.version} ingredients={recipe.ingredients} />
-      <StepEditor recipeId={recipe.id} version={recipe.version} steps={recipe.steps} />
+      <IngredientEditor recipeId={recipe.id} version={recipe.version} ingredients={recipe.ingredients} canEdit={canEdit} />
+      <StepEditor recipeId={recipe.id} version={recipe.version} steps={recipe.steps} canEdit={canEdit} />
       {permissions.has(PUBLISH_RECIPES) ? <PublishButton recipeId={recipe.id} version={recipe.version} /> : null}
       {permissions.has(MANAGE_RECIPE_SCOPE) ? (
         <ScopeAssignmentPanel recipeId={recipe.id} assignments={recipe.assignments} />
