@@ -8,7 +8,16 @@ import { validateRecipeForPublish } from "@/lib/recipes/validate-publish";
 import { writeAuditLog } from "@/lib/recipes/audit";
 import type { ActionResult } from "@/lib/types/action-result";
 import { getServerSession } from "@/lib/auth";
-import { MANAGE_RECIPE_CATEGORIES, MANAGE_RECIPE_SCOPE, VIEW_VERSION_HISTORY, requirePermission } from "@/lib/permissions";
+import {
+  ARCHIVE_RECIPES,
+  CREATE_RECIPES,
+  EDIT_RECIPES,
+  MANAGE_RECIPE_CATEGORIES,
+  MANAGE_RECIPE_SCOPE,
+  PUBLISH_RECIPES,
+  VIEW_VERSION_HISTORY,
+  requirePermission
+} from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { paginationInput, totalPages } from "@/lib/pagination";
 import type {
@@ -97,7 +106,13 @@ function pathsToRevalidate() {
 
 async function sessionWithPermission(permission: Parameters<typeof requirePermission>[1]) {
   const session = await getServerSession();
-  requirePermission(session, permission);
+  const assigned = await prisma.userRole.count({
+    where: {
+      userId: session.user.id,
+      role: { rolePermissions: { some: { permission: { code: permission } } } }
+    }
+  });
+  if (assigned === 0) throw new Error("PERMISSION_DENIED");
   return session;
 }
 
@@ -280,7 +295,7 @@ export async function archiveRecipeCategory(id: string): Promise<ActionResult> {
 
 export async function createRecipe(input: unknown): Promise<ActionResult<{ id: string; code: string }>> {
   try {
-    const session = await getServerSession();
+    const session = await sessionWithPermission(CREATE_RECIPES);
     const parsed = recipeInputSchema.safeParse(input);
     if (!parsed.success) return validationError(parsed.error.issues.map((issue) => issue.message));
 
@@ -322,7 +337,7 @@ export async function createRecipe(input: unknown): Promise<ActionResult<{ id: s
 
 export async function saveDraft(id: string, input: unknown, version: number): Promise<ActionResult<{ newVersion: number }>> {
   try {
-    const session = await getServerSession();
+    const session = await sessionWithPermission(EDIT_RECIPES);
     const parsed = recipeInputSchema.safeParse(input);
     if (!parsed.success) return validationError(parsed.error.issues.map((issue) => issue.message));
 
@@ -469,7 +484,7 @@ export async function listRecipes(
 
 export async function publishRecipe(id: string, version: number): Promise<ActionResult<{ publishedVersion: number }>> {
   try {
-    const session = await getServerSession();
+    const session = await sessionWithPermission(PUBLISH_RECIPES);
     const recipe = await prisma.recipe.findUnique({ where: { id } });
     if (!recipe) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
     if (recipe.version !== version) return { success: false, code: "CONFLICT", error: "This recipe was modified by another user." };
@@ -530,6 +545,7 @@ async function mutateRecipeChild<T>(
   permissionAction: (tx: Prisma.TransactionClient, existing: { version: number }) => Promise<T>
 ): Promise<ActionResult<T & { newVersion: number }>> {
   try {
+    await sessionWithPermission(EDIT_RECIPES);
     const result = await prisma.$transaction(async (tx) => {
       const existing = await tx.recipe.findUnique({ where: { id: recipeId }, select: { version: true } });
       if (!existing) return { kind: "missing" as const };
@@ -725,7 +741,7 @@ export async function archiveRecipe(
   force = false
 ): Promise<ActionResult<{ archived: true } | { warning: true; affectedOrders: ActiveOrderSummary[] }>> {
   try {
-    const session = await getServerSession();
+    const session = await sessionWithPermission(ARCHIVE_RECIPES);
     const affectedOrders: ActiveOrderSummary[] = [];
     if (!force && affectedOrders.length > 0) return { success: true, data: { warning: true, affectedOrders } };
 
@@ -751,7 +767,7 @@ export async function archiveRecipe(
 
 export async function restoreRecipe(id: string): Promise<ActionResult> {
   try {
-    const session = await getServerSession();
+    const session = await sessionWithPermission(ARCHIVE_RECIPES);
     const existing = await prisma.recipe.findUnique({ where: { id } });
     if (!existing) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
     await prisma.$transaction(async (tx) => {

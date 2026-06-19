@@ -1,14 +1,15 @@
 import { getServerSession } from "@/lib/auth";
+import { db } from "@/server/db";
 import type { PermissionCode } from "@/features/permissions/types";
 
-/**
- * Resolves the current user's permissions from the JWT session.
- * Permissions are embedded in the signed token at login — no DB query needed.
- * `getServerSession` is wrapped in React `cache()` so this is free on repeated calls.
- *
- * @param _userId - Accepted for backwards-compatibility but unused; session is authoritative.
- */
-export async function resolvePermissions(_userId?: string): Promise<PermissionCode[]> {
-  const session = await getServerSession();
-  return session.user.permissions;
+/** Resolves permissions from current database role assignments to prevent stale-session authorization. */
+export async function resolvePermissions(userId?: string): Promise<PermissionCode[]> {
+  const resolvedUserId = userId ?? (await getServerSession()).user.id;
+  const assignments = await db.userRole.findMany({
+    where: { userId: resolvedUserId },
+    include: { role: { include: { rolePermissions: { include: { permission: true } } } } }
+  });
+  return Array.from(
+    new Set(assignments.flatMap((assignment) => assignment.role.rolePermissions.map((entry) => entry.permission.code as PermissionCode)))
+  );
 }
