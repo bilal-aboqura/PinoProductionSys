@@ -38,9 +38,6 @@ export function RecipeListTable({
           ))}
         </select>
         <Button type="submit" variant="secondary">Apply</Button>
-        <Link className="ms-auto" href={`/${locale}/recipes/new`}>
-          <Button>New Recipe</Button>
-        </Link>
       </form>
       <div className="overflow-x-auto rounded-md border bg-surface">
         <Table>

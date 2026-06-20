@@ -11,14 +11,15 @@ export async function generatePdfReport(input: {
   columns: ReportColumn[];
   exportedBy: string;
 }) {
-  const doc = new PDFDocument({ margin: 36, size: "A4", bufferPages: true });
+  // Supplying the font at construction time prevents PDFKit from loading its
+  // built-in Helvetica AFM file, which is not reliably bundled in production.
+  const doc = new PDFDocument({ margin: 36, size: "A4", bufferPages: true, font: cairoFontPath });
   const chunks: Buffer[] = [];
 
-  doc.registerFont("Cairo", cairoFontPath).font("Cairo");
-
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-  const done = new Promise<Buffer>((resolve) => {
+  const done = new Promise<Buffer>((resolve, reject) => {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
   });
 
   renderHeader(doc, input.reportType, input.exportedBy, input.filters);

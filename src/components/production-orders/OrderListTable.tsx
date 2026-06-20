@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, Plus } from "lucide-react";
+import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,12 +22,6 @@ export function OrderListTable({ orders, locale, defaultFilters = {} }: { orders
           <option value="CANCELLED">Cancelled</option>
         </select>
         <Button type="submit" variant="secondary">Apply</Button>
-        <Link className="ms-auto" href={`/${locale}/production/new`}>
-          <Button>
-            <Plus className="h-4 w-4" />
-            New Order
-          </Button>
-        </Link>
       </form>
       <div className="overflow-x-auto rounded-md border bg-surface">
         <Table>
