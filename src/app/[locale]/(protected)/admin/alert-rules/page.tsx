@@ -3,9 +3,14 @@ import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
 import { updateAlertRuleFromForm } from "@/features/notifications/actions";
 import { getAlertRules } from "@/features/notifications/queries";
+import { getTranslations } from "next-intl/server";
 
 export default async function AlertRulesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  const [t, common] = await Promise.all([
+    getTranslations({ locale, namespace: "workspace" }),
+    getTranslations({ locale, namespace: "common" })
+  ]);
   try {
     const session = await getServerSession();
     if (!session.user.permissions.includes("notifications:manage_rules")) {
@@ -16,8 +21,8 @@ export default async function AlertRulesPage({ params }: { params: Promise<{ loc
     return (
       <section className="logical-container py-8">
         <div>
-          <h1 className="text-3xl font-bold">Alert Rules</h1>
-          <p className="mt-2 max-w-3xl text-sm text-muted">Configure operational thresholds, severities, and enabled states for automatic notifications.</p>
+          <h1 className="text-3xl font-bold">{t("alertRules")}</h1>
+          <p className="mt-2 max-w-3xl text-sm text-muted">{t("alertRulesDescription")}</p>
         </div>
 
         <div className="mt-6 grid gap-4">
@@ -28,17 +33,17 @@ export default async function AlertRulesPage({ params }: { params: Promise<{ loc
                 <div>
                   <h2 className="text-lg font-bold">{rule.name}</h2>
                   <p className="mt-1 text-sm text-muted">
-                    {rule.category} · {rule.triggerType} · Roles: {rule.targetRoles.join(", ")}
+                    {rule.category} · {rule.triggerType} · {t("rolesLabel")}: {rule.targetRoles.join(", ")}
                   </p>
                 </div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-secondary">
                   <input name="isEnabled" type="checkbox" defaultChecked={rule.isEnabled} />
-                  Enabled
+                  {t("enabled")}
                 </label>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-[1fr_180px_auto]">
                 <label className="grid gap-1 text-sm font-semibold text-secondary">
-                  Parameters JSON
+                  {t("parametersJson")}
                   <textarea
                     name="parameters"
                     defaultValue={JSON.stringify(rule.parameters, null, 2)}
@@ -46,7 +51,7 @@ export default async function AlertRulesPage({ params }: { params: Promise<{ loc
                   />
                 </label>
                 <label className="grid content-start gap-1 text-sm font-semibold text-secondary">
-                  Severity
+                  {t("severity")}
                   <select name="severity" defaultValue={rule.severity} className="h-10 rounded-md border px-3 text-sm">
                     <option value="INFO">INFO</option>
                     <option value="WARNING">WARNING</option>
@@ -55,7 +60,7 @@ export default async function AlertRulesPage({ params }: { params: Promise<{ loc
                 </label>
                 <div className="flex items-end">
                   <button className="h-10 rounded-md bg-primary px-4 text-sm font-bold text-white" type="submit">
-                    Save
+                    {common("save")}
                   </button>
                 </div>
               </div>

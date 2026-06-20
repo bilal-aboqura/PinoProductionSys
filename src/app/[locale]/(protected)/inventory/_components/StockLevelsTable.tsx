@@ -2,12 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { BalanceDto } from "@/features/inventory/types";
 import { EmptyState } from "./EmptyState";
+import { useTranslations } from "next-intl";
 
 export function StockLevelsTable({ balances }: { balances: BalanceDto[] }) {
+  const t = useTranslations("workspace");
+  const common = useTranslations("common");
   if (balances.length === 0) {
     return (
       <div className="space-y-3">
-        <EmptyState title="No stock balances found" description="Create items and record adjustments to start building inventory." />
+        <EmptyState title={t("noStockBalances")} description={t("noStockBalancesDescription")} />
       </div>
     );
   }
@@ -18,13 +21,13 @@ export function StockLevelsTable({ balances }: { balances: BalanceDto[] }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>Arabic Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Warehouse</TableHead>
-              <TableHead className="text-right">Current</TableHead>
-              <TableHead className="text-right">Available</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("items")}</TableHead>
+              <TableHead>{t("arabicName")}</TableHead>
+              <TableHead>{t("category")}</TableHead>
+              <TableHead>{t("warehouse")}</TableHead>
+              <TableHead className="text-right">{t("current")}</TableHead>
+              <TableHead className="text-right">{t("available")}</TableHead>
+              <TableHead>{common("status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -48,10 +51,10 @@ export function StockLevelsTable({ balances }: { balances: BalanceDto[] }) {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
-                    {balance.isNegativeStock ? <Badge className="bg-error/15 text-error">Negative</Badge> : null}
-                    {balance.isLowStock ? <Badge className="bg-warning/15 text-secondary">Low stock</Badge> : null}
-                    {balance.needsReconciliation ? <Badge>Reconcile</Badge> : null}
-                    {!balance.isNegativeStock && !balance.isLowStock && !balance.needsReconciliation ? <Badge>Healthy</Badge> : null}
+                    {balance.isNegativeStock ? <Badge className="bg-error/15 text-error">{t("negative")}</Badge> : null}
+                    {balance.isLowStock ? <Badge className="bg-warning/15 text-secondary">{t("lowStock")}</Badge> : null}
+                    {balance.needsReconciliation ? <Badge>{t("reconcile")}</Badge> : null}
+                    {!balance.isNegativeStock && !balance.isLowStock && !balance.needsReconciliation ? <Badge>{t("healthy")}</Badge> : null}
                   </div>
                 </TableCell>
               </TableRow>

@@ -7,6 +7,7 @@ import { getPrintHistory, getPrintQueue, canReprintLabels } from "@/features/pri
 import { getServerSession } from "@/lib/auth";
 import { parsePage } from "@/lib/pagination";
 import { ReprintDialog } from "./components/ReprintDialog";
+import { getTranslations } from "next-intl/server";
 
 export default async function PrintingPage({
   params,
@@ -16,6 +17,10 @@ export default async function PrintingPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const { locale } = await params;
+  const [t, common] = await Promise.all([
+    getTranslations({ locale, namespace: "workspace" }),
+    getTranslations({ locale, namespace: "common" })
+  ]);
   const filters = await searchParams;
   try {
     const session = await getServerSession();
@@ -29,12 +34,12 @@ export default async function PrintingPage({
       <section className="logical-container space-y-6 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-secondary">Printing</p>
-            <h1 className="text-3xl font-bold">Queue & History</h1>
+            <p className="text-sm font-semibold text-secondary">{t("printing")}</p>
+            <h1 className="text-3xl font-bold">{t("queueAndHistory")}</h1>
           </div>
           {session.user.permissions.includes("printing:manage_printers") || session.user.permissions.includes("system:configure") ? (
             <Link className="rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-white" href={`/${locale}/admin/printers`}>
-              Printers
+              {t("printers")}
             </Link>
           ) : null}
         </div>
@@ -42,7 +47,7 @@ export default async function PrintingPage({
         <div className="grid gap-4 md:grid-cols-4">
           {(["PENDING", "PROCESSING", "COMPLETED", "FAILED"] as const).map((status) => (
             <div key={status} className="rounded-md border bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold uppercase text-secondary">{status}</div>
+              <div className="text-xs font-semibold uppercase text-secondary">{t(status.toLocaleLowerCase() as "pending" | "processing" | "completed" | "failed")}</div>
               <div className="mt-2 text-3xl font-bold">{queue.filter((job) => job.status === status).length}</div>
             </div>
           ))}
@@ -52,12 +57,12 @@ export default async function PrintingPage({
           <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-background text-left text-xs uppercase text-secondary">
               <tr>
-                <th className="px-4 py-3">Target</th>
-                <th className="px-4 py-3">Printer</th>
-                <th className="px-4 py-3">Template</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3">{t("target")}</th>
+                <th className="px-4 py-3">{t("printer")}</th>
+                <th className="px-4 py-3">{t("template")}</th>
+                <th className="px-4 py-3">{common("status")}</th>
+                <th className="px-4 py-3">{t("created")}</th>
+                <th className="px-4 py-3 text-right">{common("actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -88,7 +93,7 @@ export default async function PrintingPage({
               {queue.length === 0 ? (
                 <tr>
                   <td className="px-4 py-8 text-center text-secondary" colSpan={6}>
-                    No print jobs yet.
+                    {t("noActivePrintJobs")}
                   </td>
                 </tr>
               ) : null}
@@ -98,10 +103,10 @@ export default async function PrintingPage({
 
         <div className="rounded-md border bg-white p-5 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-bold">History</h2>
+            <h2 className="text-xl font-bold">{t("history")}</h2>
             <form className="flex gap-2">
-              <SearchCombobox className="min-w-72" name="search" source="printing" defaultValue={filters.search} placeholder="Select target, printer, or actor" />
-              <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white">Search</button>
+              <SearchCombobox className="min-w-72" name="search" source="printing" defaultValue={filters.search} placeholder={t("searchPrintHistory")} />
+              <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white">{common("search")}</button>
             </form>
           </div>
           <div className="grid gap-2">
@@ -120,7 +125,7 @@ export default async function PrintingPage({
                 {item.errorMessage ? <div className="md:col-span-3 text-error">{item.errorMessage}</div> : null}
               </div>
             ))}
-            {history.history.length === 0 ? <p className="text-sm text-secondary">No print history matches the current filters.</p> : null}
+            {history.history.length === 0 ? <p className="text-sm text-secondary">{t("noPrintHistory")}</p> : null}
           </div>
           <div className="mt-4">
             <Pagination
@@ -129,7 +134,7 @@ export default async function PrintingPage({
               totalPages={history.totalPages}
               totalItems={history.totalCount}
               searchParams={filters}
-              itemLabel="history entries"
+              itemLabel={t("history").toLocaleLowerCase(locale)}
             />
           </div>
         </div>

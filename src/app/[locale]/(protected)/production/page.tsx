@@ -7,6 +7,7 @@ import { PrintPageButton } from "@/features/printing/components/PrintPageButton"
 import { getProductionOrderList } from "@/features/production-orders/queries";
 import { parsePage } from "@/lib/pagination";
 import type { ProductionOrderStatus } from "@prisma/client";
+import { getTranslations } from "next-intl/server";
 
 const statuses: ProductionOrderStatus[] = ["PENDING_UNASSIGNED", "PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 
@@ -18,6 +19,7 @@ export default async function ProductionPage({
   searchParams: Promise<{ page?: string; search?: string; status?: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "workspace" });
   const query = await searchParams;
   const status = statuses.includes(query.status as ProductionOrderStatus) ? (query.status as ProductionOrderStatus) : undefined;
   let result;
@@ -33,16 +35,16 @@ export default async function ProductionPage({
     <section className="logical-container py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-secondary">Production</p>
-          <h1 className="text-3xl font-bold">Production Orders</h1>
+          <p className="text-sm font-semibold text-secondary">{t("production")}</p>
+          <h1 className="text-3xl font-bold">{t("productionOrders")}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PrintPageButton label="Print Summary" />
+          <PrintPageButton label={t("printSummary")} />
           <Link href={`/${locale}/production/queue`}>
-            <Button variant="secondary">Queue</Button>
+            <Button variant="secondary">{t("queue")}</Button>
           </Link>
           <Link href={`/${locale}/production/new`}>
-            <Button>New Order</Button>
+            <Button>{t("newOrder")}</Button>
           </Link>
         </div>
       </div>
@@ -54,7 +56,7 @@ export default async function ProductionPage({
           totalPages={result.totalPages}
           totalItems={result.total}
           searchParams={query}
-          itemLabel="orders"
+          itemLabel={t("productionOrders").toLocaleLowerCase(locale)}
         />
       </div>
     </section>

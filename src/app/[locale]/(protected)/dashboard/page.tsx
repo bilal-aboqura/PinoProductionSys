@@ -6,7 +6,10 @@ import { getServerSession } from "@/lib/auth";
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const session = await getServerSession();
-  const nav = await getTranslations("navigation");
+  const [nav, workspace] = await Promise.all([
+    getTranslations({ locale, namespace: "navigation" }),
+    getTranslations({ locale, namespace: "workspace" })
+  ]);
   const permissions = new Set(session.user.permissions);
 
   return (
@@ -19,7 +22,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <CardHeader>
               <CardTitle className="text-lg">{nav("production")}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted">Accessible</CardContent>
+            <CardContent className="text-sm text-muted">{workspace("accessible")}</CardContent>
           </Card>
         ) : null}
         {permissions.has("inventory:view") ? (
@@ -27,7 +30,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <CardHeader>
               <CardTitle className="text-lg">{nav("inventory")}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted">Accessible</CardContent>
+            <CardContent className="text-sm text-muted">{workspace("accessible")}</CardContent>
           </Card>
         ) : null}
         {permissions.has("reports:view") ? (
@@ -35,7 +38,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
             <CardHeader>
               <CardTitle className="text-lg">{nav("reports")}</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted">Accessible</CardContent>
+            <CardContent className="text-sm text-muted">{workspace("accessible")}</CardContent>
           </Card>
         ) : null}
       </div>

@@ -5,6 +5,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { isLocale, type Locale } from "@/i18n/routing";
 import "../globals.css";
+import { UiAutoTranslator } from "@/components/i18n/UiAutoTranslator";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -42,7 +43,8 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir} className={`${cairo.variable} ${inter.variable}`}>
       <body className={fontClass}>
-        <NextIntlClientProvider locale={locale as Locale} messages={messages}>
+        <NextIntlClientProvider key={locale} locale={locale as Locale} messages={messages}>
+          <UiAutoTranslator />
           {children}
         </NextIntlClientProvider>
       </body>

@@ -7,6 +7,7 @@ import { getWarehouses } from "@/features/inventory/queries";
 import { batchStatusOptions, getBatchList } from "@/features/batches/queries";
 import { parsePage } from "@/lib/pagination";
 import { ExpiryAlerts } from "./_components/ExpiryAlerts";
+import { getTranslations } from "next-intl/server";
 
 export default async function BatchesPage({
   params,
@@ -16,6 +17,7 @@ export default async function BatchesPage({
   searchParams: Promise<{ search?: string; status?: string; warehouseId?: string; sort?: string; page?: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "workspace" });
   const query = await searchParams;
   let batches;
   try {
@@ -39,12 +41,12 @@ export default async function BatchesPage({
     <section className="logical-container space-y-6 py-8">
       <div>
         <Link className="text-sm font-semibold text-primary" href={`/${locale}/inventory`}>
-          Back to inventory
+          {t("backToInventory")}
         </Link>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-normal">Batches</h1>
-            <p className="mt-1 text-sm text-secondary">Finished-product traceability, labels, expiry status, and disposal history.</p>
+            <h1 className="text-3xl font-bold tracking-normal">{t("batches")}</h1>
+            <p className="mt-1 text-sm text-secondary">{t("batchesDescription")}</p>
           </div>
         </div>
       </div>
@@ -125,7 +127,7 @@ export default async function BatchesPage({
         totalPages={batches.totalPages}
         totalItems={batches.total}
         searchParams={query}
-        itemLabel="batches"
+        itemLabel={t("batches").toLocaleLowerCase(locale)}
       />
     </section>
   );

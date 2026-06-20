@@ -6,9 +6,14 @@ import { getServerSession } from "@/lib/auth";
 import { EmptyState } from "../_components/EmptyState";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { WarehouseForm } from "./_components/WarehouseForm";
+import { getTranslations } from "next-intl/server";
 
 export default async function WarehousesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  const [t, common] = await Promise.all([
+    getTranslations({ locale, namespace: "workspace" }),
+    getTranslations({ locale, namespace: "common" })
+  ]);
   let warehouses;
   let session;
   try {
@@ -23,24 +28,24 @@ export default async function WarehousesPage({ params }: { params: Promise<{ loc
 
   return (
     <section className="logical-container space-y-6 py-8">
-      <InventoryBreadcrumb locale={locale} current="Warehouses" />
+      <InventoryBreadcrumb locale={locale} current={t("warehouses")} />
       <div>
-        <p className="text-sm font-semibold text-secondary">Warehouse Management</p>
-        <h1 className="text-3xl font-bold">Warehouses</h1>
+        <p className="text-sm font-semibold text-secondary">{t("warehouseManagement")}</p>
+        <h1 className="text-3xl font-bold">{t("warehouses")}</h1>
       </div>
       <WarehouseForm canManage={canManage} />
       {warehouses.length === 0 ? (
-        <EmptyState title="No warehouses yet" />
+        <EmptyState title={t("noWarehouses")} />
       ) : (
         <div className="overflow-x-auto rounded-md border bg-white">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                {canManage ? <TableHead>Actions</TableHead> : null}
+                <TableHead>{t("code")}</TableHead>
+                <TableHead>{t("name")}</TableHead>
+                <TableHead>{t("description")}</TableHead>
+                <TableHead>{common("status")}</TableHead>
+                {canManage ? <TableHead>{common("actions")}</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -49,7 +54,7 @@ export default async function WarehousesPage({ params }: { params: Promise<{ loc
                   <TableCell className="font-semibold">{warehouse.code}</TableCell>
                   <TableCell>{warehouse.name}</TableCell>
                   <TableCell>{warehouse.description}</TableCell>
-                  <TableCell>{warehouse.isActive ? <Badge>Active</Badge> : <Badge className="bg-muted/20">Inactive</Badge>}</TableCell>
+                  <TableCell>{warehouse.isActive ? <Badge>{common("active")}</Badge> : <Badge className="bg-muted/20">{common("inactive")}</Badge>}</TableCell>
                   {canManage ? (
                     <TableCell>
                       <WarehouseForm warehouse={warehouse} canManage={canManage} />

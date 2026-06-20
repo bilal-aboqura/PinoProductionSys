@@ -6,12 +6,14 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { saveSystemSetting } from "@/features/settings/actions";
 import type { SystemSettingDto } from "@/features/settings/types";
+import { useTranslations } from "next-intl";
 
 function findValue(settings: SystemSettingDto[], key: SystemSettingDto["key"]) {
   return settings.find((setting) => setting.key === key)?.value as Record<string, unknown> | undefined;
 }
 
 export function SettingsPreferencesForm({ locale, settings, canManage }: { locale: string; settings: SystemSettingDto[]; canManage: boolean }) {
+  const t = useTranslations("workspace");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const general = findValue(settings, "general_preferences") ?? {};
@@ -21,18 +23,18 @@ export function SettingsPreferencesForm({ locale, settings, canManage }: { local
   return (
     <section className="logical-container space-y-6 py-8">
       <div>
-        <p className="text-sm font-semibold text-secondary">Administration</p>
-        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-sm font-semibold text-secondary">{t("administration")}</p>
+        <h1 className="text-3xl font-bold">{t("settings")}</h1>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {[
-          ["Departments", "departments"],
-          ["Production Lines", "production-lines"],
-          ["Warehouses", "warehouses"],
-          ["Recipe Categories", "categories"],
-          ["Storage Conditions", "conditions"],
-          ["Waste Reasons", "waste-reasons"],
-          ["Audit Log", "audit"]
+          [t("departments"), "departments"],
+          [t("productionLines"), "production-lines"],
+          [t("warehouses"), "warehouses"],
+          [t("recipeCategories"), "categories"],
+          [t("storageConditions"), "conditions"],
+          [t("wasteReasons"), "waste-reasons"],
+          [t("auditLog"), "audit"]
         ].map(([label, href]) => (
           <Link key={href} className="rounded-md border bg-white px-4 py-3 text-sm font-semibold text-secondary hover:bg-accent/35" href={`/${locale}/admin/settings/${href}`}>
             {label}
@@ -66,56 +68,56 @@ export function SettingsPreferencesForm({ locale, settings, canManage }: { local
               })
             ]);
             const failed = results.find((result) => !result.success);
-            setMessage(failed?.error ?? "Settings saved.");
+            setMessage(failed?.error ?? t("settingsSaved"));
           });
         }}
       >
-        <h2 className="md:col-span-2 font-bold">Operational Preferences</h2>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Company name
+        <h2 className="md:col-span-2 font-bold">{t("operationalPreferences")}</h2>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("companyName")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="companyName" defaultValue={String(general.companyName ?? "")} disabled={!canManage} required />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Company logo URL
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("companyLogoUrl")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="companyLogoUrl" defaultValue={String(general.companyLogoUrl ?? "")} placeholder="https://..." disabled={!canManage} />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Time zone
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("timeZone")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="timeZone" defaultValue={String(general.timeZone ?? "Africa/Cairo")} disabled={!canManage} required />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Date format
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("dateFormat")}
           <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="dateFormat" defaultValue={String(general.dateFormat ?? "YYYY-MM-DD")} disabled={!canManage}>
             <option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Default language
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("defaultLanguage")}
           <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="defaultLanguage" defaultValue={String(general.defaultLanguage ?? "ar")} disabled={!canManage}>
-            <option value="ar">Arabic</option><option value="en">English</option>
+            <option value="ar">{t("arabic")}</option><option value="en">{t("english")}</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">QR codes
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("qrCodes")}
           <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="qrEnabled" defaultValue={String(qr.qrEnabled ?? true)} disabled={!canManage}>
-            <option value="true">Enabled</option><option value="false">Disabled</option>
+            <option value="true">{t("enabled")}</option><option value="false">{t("disabled")}</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">QR size (px)
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("qrSize")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="qrSize" defaultValue={String(qr.qrSize ?? 150)} type="number" min="64" max="512" disabled={!canManage} />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">QR error correction
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("qrErrorCorrection")}
           <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="errorCorrectionLevel" defaultValue={String(qr.errorCorrectionLevel ?? "M")} disabled={!canManage}>
-            <option value="L">Low</option><option value="M">Medium</option><option value="Q">Quartile</option><option value="H">High</option>
+            <option value="L">{t("low")}</option><option value="M">{t("medium")}</option><option value="Q">{t("quartile")}</option><option value="H">{t("high")}</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Low-stock threshold (%)
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("lowStockThreshold")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="lowStockThresholdPercent" defaultValue={String(thresholds.lowStockThresholdPercent ?? 10)} type="number" min="0" max="100" disabled={!canManage} />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Near-expiry threshold (days)
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("nearExpiryThreshold")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="nearExpiryThresholdDays" defaultValue={String(thresholds.nearExpiryThresholdDays ?? 7)} type="number" min="1" disabled={!canManage} />
         </label>
-        <label className="grid gap-1 text-sm font-semibold text-secondary">Production-delay threshold (minutes)
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("productionDelayThreshold")}
           <input className="rounded-md border px-3 py-2 font-normal text-foreground" name="productionDelayThresholdMinutes" defaultValue={String(thresholds.productionDelayThresholdMinutes ?? 30)} type="number" min="1" disabled={!canManage} />
         </label>
         <div className="flex flex-wrap items-center gap-3 md:col-span-2">
           <Button type="submit" disabled={!canManage || isPending}>
             <Save className="h-4 w-4" />
-            Save Preferences
+            {t("savePreferences")}
           </Button>
           {message ? <p className="text-sm font-semibold text-secondary">{message}</p> : null}
         </div>

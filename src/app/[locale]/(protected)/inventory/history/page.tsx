@@ -8,6 +8,7 @@ import { EmptyState } from "../_components/EmptyState";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { MovementFilters } from "./_components/MovementFilters";
 import { SourceLink } from "./_components/SourceLink";
+import { getTranslations } from "next-intl/server";
 
 export default async function InventoryHistoryPage({
   params,
@@ -17,6 +18,7 @@ export default async function InventoryHistoryPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "workspace" });
   const filters = await searchParams;
   const rawMovementTypes = Array.isArray(filters.movementTypes)
     ? filters.movementTypes
@@ -61,10 +63,10 @@ export default async function InventoryHistoryPage({
 
   return (
     <section className="logical-container space-y-6 py-8">
-      <InventoryBreadcrumb locale={locale} current="History" />
+      <InventoryBreadcrumb locale={locale} current={t("history")} />
       <div>
-        <p className="text-sm font-semibold text-secondary">Traceability Ledger</p>
-        <h1 className="text-3xl font-bold">Inventory Movement History</h1>
+        <p className="text-sm font-semibold text-secondary">{t("traceabilityLedger")}</p>
+        <h1 className="text-3xl font-bold">{t("inventoryMovementHistory")}</h1>
       </div>
       <MovementFilters warehouses={warehouses} defaultValues={normalizedFilters} />
       {movements.items.length === 0 ? (
@@ -105,7 +107,7 @@ export default async function InventoryHistoryPage({
         totalPages={movements.totalPages}
         totalItems={movements.total}
         searchParams={filters}
-        itemLabel="movements"
+        itemLabel={t("history").toLocaleLowerCase(locale)}
       />
     </section>
   );

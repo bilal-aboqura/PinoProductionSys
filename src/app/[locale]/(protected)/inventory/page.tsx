@@ -11,6 +11,7 @@ import { requirePermission } from "@/lib/permissions";
 import { DiscrepancyReport } from "./_components/DiscrepancyReport";
 import { StockFilters } from "./_components/StockFilters";
 import { StockLevelsTable } from "./_components/StockLevelsTable";
+import { getTranslations } from "next-intl/server";
 
 export default async function InventoryPage({
   params,
@@ -20,6 +21,7 @@ export default async function InventoryPage({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "workspace" });
   const filters = await searchParams;
   try {
     const session = await getServerSession();
@@ -42,38 +44,38 @@ export default async function InventoryPage({
       <section className="logical-container space-y-6 py-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-secondary">Inventory</p>
-            <h1 className="text-3xl font-bold">Stock Levels</h1>
+            <p className="text-sm font-semibold text-secondary">{t("inventory")}</p>
+            <h1 className="text-3xl font-bold">{t("stockLevels")}</h1>
           </div>
           <div className="flex flex-wrap gap-2">
-            <PrintPageButton label="Print Summary" />
+            <PrintPageButton label={t("printSummary")} />
             <Link href={`/${locale}/inventory/items`}>
-              <Button variant="secondary">Catalog</Button>
+              <Button variant="secondary">{t("catalog")}</Button>
             </Link>
             <Link href={`/${locale}/inventory/transfers`}>
-              <Button variant="secondary">Transfers</Button>
+              <Button variant="secondary">{t("transfers")}</Button>
             </Link>
             <Link href={`/${locale}/inventory/adjustments`}>
-              <Button>Adjust Stock</Button>
+              <Button>{t("adjustStock")}</Button>
             </Link>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Tracked Balances</CardTitle>
+              <CardTitle className="text-lg">{t("trackedBalances")}</CardTitle>
             </CardHeader>
             <CardContent className="text-3xl font-bold">{balances.total}</CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Low Stock</CardTitle>
+              <CardTitle className="text-lg">{t("lowStock")}</CardTitle>
             </CardHeader>
             <CardContent className="text-3xl font-bold text-warning">{lowStock}</CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Negative Stock</CardTitle>
+              <CardTitle className="text-lg">{t("negativeStock")}</CardTitle>
             </CardHeader>
             <CardContent className="text-3xl font-bold text-error">{negative}</CardContent>
           </Card>
@@ -82,14 +84,14 @@ export default async function InventoryPage({
         {lowStockItems.length > 0 ? (
           <details className="rounded-md border border-warning/40 bg-white p-4">
             <summary className="cursor-pointer text-lg font-bold">
-              Low-stock alerts <span className="rounded-sm bg-warning/15 px-2 py-1 text-sm text-secondary">{lowStockItems.length}</span>
+              {t("lowStockAlerts")} <span className="rounded-sm bg-warning/15 px-2 py-1 text-sm text-secondary">{lowStockItems.length}</span>
             </summary>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {lowStockItems.map((item) => (
                 <div key={item.id} className="rounded-md border bg-warning/10 p-3 text-sm">
                   <div className="font-semibold">{item.itemCode} - {item.nameEn}</div>
                   <div className="text-muted">
-                    {item.warehouseName}: {item.currentQuantity} {item.unit} below minimum {item.minStockLevel}
+                    {item.warehouseName}: {item.currentQuantity} {item.unit} {t("belowMinimum")} {item.minStockLevel}
                   </div>
                 </div>
               ))}
@@ -104,7 +106,7 @@ export default async function InventoryPage({
           totalPages={balances.totalPages}
           totalItems={balances.total}
           searchParams={filters}
-          itemLabel="balances"
+          itemLabel={t("trackedBalances").toLocaleLowerCase(locale)}
         />
       </section>
     );

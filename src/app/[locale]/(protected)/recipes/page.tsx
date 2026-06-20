@@ -7,6 +7,7 @@ import { parsePage } from "@/lib/pagination";
 import { getServerSession } from "@/lib/auth";
 import { CREATE_RECIPES, MANAGE_RECIPE_CATEGORIES } from "@/lib/permissions";
 import { resolvePermissions } from "@/features/permissions/lib/resolver";
+import { getTranslations } from "next-intl/server";
 
 export default async function RecipesPage({
   params,
@@ -16,6 +17,7 @@ export default async function RecipesPage({
   searchParams: Promise<{ search?: string; categoryId?: string; status?: string; page?: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "workspace" });
   const query = await searchParams;
   const session = await getServerSession();
   const permissions = new Set(await resolvePermissions(session.user.id));
@@ -31,18 +33,18 @@ export default async function RecipesPage({
     <section className="logical-container py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-secondary">Production / Recipes</p>
-          <h1 className="text-3xl font-bold">Recipes</h1>
+          <p className="text-sm font-semibold text-secondary">{t("recipesBreadcrumb")}</p>
+          <h1 className="text-3xl font-bold">{t("recipes")}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {permissions.has(MANAGE_RECIPE_CATEGORIES) ? (
             <Link href={`/${locale}/recipes/categories`}>
-              <Button variant="secondary">Categories</Button>
+              <Button variant="secondary">{t("categories")}</Button>
             </Link>
           ) : null}
           {permissions.has(CREATE_RECIPES) ? (
             <Link href={`/${locale}/recipes/new`}>
-              <Button>New Recipe</Button>
+              <Button>{t("newRecipe")}</Button>
             </Link>
           ) : null}
         </div>
@@ -56,7 +58,7 @@ export default async function RecipesPage({
             totalPages={recipesResult.data.totalPages}
             totalItems={recipesResult.data.total}
             searchParams={query}
-            itemLabel="recipes"
+            itemLabel={t("recipes").toLocaleLowerCase(locale)}
           />
         </div>
       ) : null}

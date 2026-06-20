@@ -7,6 +7,7 @@ import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RecipeStatusBadge } from "@/components/recipes/RecipeStatusBadge";
 import type { RecipeCategoryDto, RecipeListItemDto } from "@/features/recipes/types";
+import { useTranslations } from "next-intl";
 
 export function RecipeListTable({
   recipes,
@@ -19,39 +20,41 @@ export function RecipeListTable({
   locale: string;
   defaultFilters?: { search?: string; categoryId?: string; status?: string };
 }) {
+  const t = useTranslations("workspace");
+  const common = useTranslations("common");
   return (
     <div className="space-y-4">
       <form className="flex flex-wrap items-center gap-3">
-        <SearchCombobox className="w-full max-w-sm" name="search" source="recipes" placeholder="Select recipe, code, or name" defaultValue={defaultFilters.search} />
+        <SearchCombobox className="w-full max-w-sm" name="search" source="recipes" placeholder={t("selectRecipe")} defaultValue={defaultFilters.search} />
         <select className="h-10 rounded-md border bg-white px-3 text-sm" name="status" defaultValue={defaultFilters.status ?? ""}>
-          <option value="">All statuses</option>
-          <option value="DRAFT">Draft</option>
-          <option value="ACTIVE">Active</option>
-          <option value="ARCHIVED">Archived</option>
+          <option value="">{t("allStatuses")}</option>
+          <option value="DRAFT">{t("draft")}</option>
+          <option value="ACTIVE">{common("active")}</option>
+          <option value="ARCHIVED">{t("archived")}</option>
         </select>
         <select className="h-10 rounded-md border bg-white px-3 text-sm" name="categoryId" defaultValue={defaultFilters.categoryId ?? ""}>
-          <option value="">All categories</option>
+          <option value="">{t("allCategories")}</option>
           {categories.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.nameEn}
+              {locale === "ar" ? item.nameAr : item.nameEn}
             </option>
           ))}
         </select>
-        <Button type="submit" variant="secondary">Apply</Button>
+        <Button type="submit" variant="secondary">{t("apply")}</Button>
       </form>
       <div className="overflow-x-auto rounded-md border bg-surface">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Yield</TableHead>
-              <TableHead>Shelf Life</TableHead>
-              <TableHead>Published</TableHead>
-              <TableHead>Updated</TableHead>
-              <TableHead className="w-16">Open</TableHead>
+              <TableHead>{t("code")}</TableHead>
+              <TableHead>{t("name")}</TableHead>
+              <TableHead>{t("category")}</TableHead>
+              <TableHead>{common("status")}</TableHead>
+              <TableHead>{t("yield")}</TableHead>
+              <TableHead>{t("shelfLife")}</TableHead>
+              <TableHead>{t("published")}</TableHead>
+              <TableHead>{t("updated")}</TableHead>
+              <TableHead className="w-16">{t("open")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -60,10 +63,10 @@ export function RecipeListTable({
                 <TableCell className="font-mono text-xs">{recipe.code}</TableCell>
                 <TableCell>
                   <div className="font-cairo font-semibold">{recipe.nameAr}</div>
-                  <div className="font-inter text-sm text-secondary">{recipe.nameEn || "No English name"}</div>
+                  <div className="font-inter text-sm text-secondary">{recipe.nameEn || t("noEnglishName")}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-cairo">{recipe.categoryNameAr ?? "No category"}</div>
+                  <div className="font-cairo">{recipe.categoryNameAr ?? t("noCategory")}</div>
                   <div className="text-sm text-secondary">{recipe.categoryNameEn ?? ""}</div>
                 </TableCell>
                 <TableCell>
@@ -72,10 +75,10 @@ export function RecipeListTable({
                 <TableCell>{`${recipe.yieldQuantity} ${recipe.yieldUnit}`}</TableCell>
                 <TableCell>{`${recipe.shelfLifeValue} ${recipe.shelfLifeUnit}`}</TableCell>
                 <TableCell>v{recipe.publishedVersion}</TableCell>
-                <TableCell>{new Date(recipe.updatedAt).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(recipe.updatedAt).toLocaleDateString(locale)}</TableCell>
                 <TableCell>
                   <Link href={`/${locale}/recipes/${recipe.id}`}>
-                    <Button className="h-9 w-9 px-0" variant="ghost" title="Open">
+                    <Button className="h-9 w-9 px-0" variant="ghost" title={t("open")}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </Link>

@@ -10,6 +10,7 @@ import { parsePage } from "@/lib/pagination";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { EmptyState } from "../_components/EmptyState";
 import { ItemForm } from "./_components/ItemForm";
+import { getTranslations } from "next-intl/server";
 
 export default async function InventoryItemsPage({
   params,
@@ -19,6 +20,10 @@ export default async function InventoryItemsPage({
   searchParams: Promise<{ search?: string; page?: string }>;
 }) {
   const { locale } = await params;
+  const [t, common] = await Promise.all([
+    getTranslations({ locale, namespace: "workspace" }),
+    getTranslations({ locale, namespace: "common" })
+  ]);
   const query = await searchParams;
   let itemPage;
   let categories;
@@ -39,37 +44,37 @@ export default async function InventoryItemsPage({
 
   return (
     <section className="logical-container space-y-6 py-8">
-      <InventoryBreadcrumb locale={locale} current="Catalog" />
+      <InventoryBreadcrumb locale={locale} current={t("catalog")} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-secondary">Inventory Catalog</p>
-          <h1 className="text-3xl font-bold">Items</h1>
+          <p className="text-sm font-semibold text-secondary">{t("inventoryCatalog")}</p>
+          <h1 className="text-3xl font-bold">{t("items")}</h1>
         </div>
         <a href={`/${locale}/inventory/warehouses`}>
-          <Button variant="secondary">Warehouses</Button>
+          <Button variant="secondary">{t("warehouses")}</Button>
         </a>
       </div>
       <form className="flex flex-wrap gap-2 rounded-md border bg-white p-4">
-        <SearchCombobox className="min-w-64 flex-1" name="search" source="inventory-items" defaultValue={query.search} placeholder="Select item code or name" />
-        <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">Search</button>
+        <SearchCombobox className="min-w-64 flex-1" name="search" source="inventory-items" defaultValue={query.search} placeholder={t("selectItem")} />
+        <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">{common("search")}</button>
       </form>
       <ItemForm categories={categories} canManage={canManage} />
       {itemPage.items.length === 0 ? (
-        <EmptyState title="No inventory items yet" />
+        <EmptyState title={t("noInventoryItems")} />
       ) : (
         <div className="overflow-x-auto rounded-md border bg-white">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Arabic Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Min Stock</TableHead>
-                <TableHead>Status</TableHead>
-                {canManage ? <TableHead>Actions</TableHead> : null}
+                <TableHead>{t("code")}</TableHead>
+                <TableHead>{t("name")}</TableHead>
+                <TableHead>{t("arabicName")}</TableHead>
+                <TableHead>{t("type")}</TableHead>
+                <TableHead>{t("category")}</TableHead>
+                <TableHead>{t("unit")}</TableHead>
+                <TableHead>{t("minStock")}</TableHead>
+                <TableHead>{common("status")}</TableHead>
+                {canManage ? <TableHead>{common("actions")}</TableHead> : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -82,7 +87,7 @@ export default async function InventoryItemsPage({
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>
-                  <TableCell>{item.isActive ? <Badge>Active</Badge> : <Badge className="bg-muted/20">Inactive</Badge>}</TableCell>
+                  <TableCell>{item.isActive ? <Badge>{common("active")}</Badge> : <Badge className="bg-muted/20">{common("inactive")}</Badge>}</TableCell>
                   {canManage ? (
                     <TableCell>
                       <ItemForm categories={categories} item={item} canManage={canManage} />
@@ -100,7 +105,7 @@ export default async function InventoryItemsPage({
         totalPages={itemPage.totalPages}
         totalItems={itemPage.total}
         searchParams={query}
-        itemLabel="items"
+        itemLabel={t("items").toLocaleLowerCase(locale)}
       />
     </section>
   );
