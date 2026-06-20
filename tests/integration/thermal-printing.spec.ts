@@ -1,12 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 const appUrl = process.env.APP_URL;
+const printJobId = process.env.TEST_PRINT_JOB_ID;
 
 test.describe("thermal label printing", () => {
   test.skip(!appUrl, "Set APP_URL to run printing integration tests against a live app.");
+  test.skip(!printJobId, "Set TEST_PRINT_JOB_ID to an existing print job.");
 
   test("renders isolated thermal label pages without application chrome", async ({ page }) => {
-    await page.goto(`${appUrl}/en/printing/label/test-job`);
+    await page.goto(`${appUrl}/en/printing/label/${printJobId}`);
     await expect(page.locator(".thermal-label")).toBeVisible();
     await expect(page.locator("header")).toHaveCount(0);
     const size = await page.locator(".thermal-label").first().getAttribute("data-size");

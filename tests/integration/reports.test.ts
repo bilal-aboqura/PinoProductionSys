@@ -8,14 +8,18 @@ test.describe("reports analytics", () => {
   test("renders report filters and export links", async ({ page }) => {
     await page.goto(`${appUrl}/en/reports/production`);
     await expect(page.getByRole("heading", { name: "Production Reports" })).toBeVisible();
-    await page.getByPlaceholder("Search").fill("order");
+    await page.getByRole("combobox", { name: "Select a matching record" }).fill("order");
     await page.getByRole("button", { name: "Apply Filters" }).click();
     await expect(page.getByRole("link", { name: "Excel" })).toHaveAttribute("href", /format=excel/);
     await expect(page.getByRole("link", { name: "PDF" })).toHaveAttribute("href", /format=pdf/);
   });
 
-  test("protects reports when unauthenticated", async ({ page }) => {
-    await page.goto(`${appUrl}/en/reports/staff`);
-    await expect(page.locator("body")).toContainText(/403|login|access/i);
+  test.describe("unauthenticated access", () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
+
+    test("protects reports when unauthenticated", async ({ page }) => {
+      await page.goto(`${appUrl}/en/reports/staff`);
+      await expect(page).toHaveURL(/\/en\/login(?:\?|$)/);
+    });
   });
 });

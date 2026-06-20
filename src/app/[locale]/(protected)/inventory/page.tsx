@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintPageButton } from "@/features/printing/components/PrintPageButton";
 import { getInventoryBalances, getWarehouses } from "@/features/inventory/queries";
 import { parsePage } from "@/lib/pagination";
+import { getServerSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 import { DiscrepancyReport } from "./_components/DiscrepancyReport";
 import { StockFilters } from "./_components/StockFilters";
 import { StockLevelsTable } from "./_components/StockLevelsTable";
@@ -20,6 +22,8 @@ export default async function InventoryPage({
   const { locale } = await params;
   const filters = await searchParams;
   try {
+    const session = await getServerSession();
+    requirePermission(session, "inventory:view");
     const warehouses = await getWarehouses();
     const balances = await getInventoryBalances({
       warehouseId: filters.warehouseId || undefined,

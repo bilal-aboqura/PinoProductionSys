@@ -38,7 +38,8 @@ function printerName(job: { printer: { name: string } | null }) {
 
 export async function getPrinters(activeOnly = false): Promise<PrinterDto[]> {
   const session = await getServerSession();
-  if (!canManagePrinters(session.user.permissions) && !canCreatePrintJobs(session.user.permissions)) throw new Error("PERMISSION_DENIED");
+  const canRead = activeOnly ? canManagePrinters(session.user.permissions) || canCreatePrintJobs(session.user.permissions) : canManagePrinters(session.user.permissions);
+  if (!canRead) throw new Error("PERMISSION_DENIED");
   const printers = await prisma.printer.findMany({
     where: activeOnly ? { isActive: true } : {},
     orderBy: [{ isDefault: "desc" }, { isActive: "desc" }, { name: "asc" }]

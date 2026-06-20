@@ -1,4 +1,6 @@
 import { db } from "@/server/db";
+import { getServerSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 import { paginationInput, totalPages } from "@/lib/pagination";
 import type { UserSummary } from "./types";
 
@@ -11,6 +13,11 @@ export const userSummaryInclude = {
 } as const;
 
 type UserWithRelations = Awaited<ReturnType<typeof getUserById>>;
+
+async function requireUsersView() {
+  const session = await getServerSession();
+  requirePermission(session, "users:view");
+}
 
 export function toUserSummary(user: NonNullable<UserWithRelations>): UserSummary {
   const role = user.userRoles[0]?.role ?? null;
@@ -42,6 +49,7 @@ export async function getUserList(filters?: {
   pageSize?: number;
   sort?: "displayName" | "createdAt" | "lastLoginAt";
 }) {
+  await requireUsersView();
   const { page, pageSize, skip, take } = paginationInput(filters?.page, filters?.pageSize ?? 20);
   const search = filters?.search?.trim();
 
@@ -114,6 +122,7 @@ export async function getUserList(filters?: {
 }
 
 export async function getUserById(id: string) {
+  await requireUsersView();
   return db.user.findUnique({
     where: { id },
     include: userSummaryInclude
@@ -121,10 +130,12 @@ export async function getUserById(id: string) {
 }
 
 export async function getRoleOptions() {
+  await requireUsersView();
   return db.role.findMany({ orderBy: { displayName: "asc" } });
 }
 
 export async function getScopeOptions() {
+  await requireUsersView();
   const [departments, recipeCategories, productionLines, inventoryAreas] = await Promise.all([
     db.department.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
     db.recipeCategory.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),

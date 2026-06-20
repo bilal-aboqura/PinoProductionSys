@@ -8,8 +8,8 @@ test.describe("settings master data", () => {
   test("renders localized master data management screens", async ({ page }) => {
     await page.goto(`${appUrl}/en/admin/settings/departments`);
     await expect(page.getByRole("heading", { name: "Departments" })).toBeVisible();
-    await expect(page.getByText("Name English")).toBeVisible();
-    await expect(page.getByText("Name Arabic")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "English name" }).first()).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Arabic name" }).first()).toBeVisible();
   });
 
   test("exposes archive actions only to users with write permission", async ({ page }) => {

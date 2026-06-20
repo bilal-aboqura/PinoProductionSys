@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Pagination } from "@/components/shared/Pagination";
 import { SearchCombobox } from "@/components/shared/SearchCombobox";
 import { UserTable } from "@/features/users/components/UserTable";
 import { getUserList } from "@/features/users/queries";
 import { parsePage } from "@/lib/pagination";
+import { getServerSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/permissions";
 
 export default async function UsersPage({
   params,
@@ -16,6 +19,13 @@ export default async function UsersPage({
 }) {
   const { locale } = await params;
   const search = await searchParams;
+
+  try {
+    const session = await getServerSession();
+    requirePermission(session, "users:view");
+  } catch {
+    return <AccessDenied locale={locale} />;
+  }
 
   const t = await getTranslations("users");
   const result = await getUserList({ search: search.q, page: parsePage(search.page) });

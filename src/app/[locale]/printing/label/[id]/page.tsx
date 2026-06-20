@@ -1,15 +1,22 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import { PrintControls } from "@/features/printing/components/PrintControls";
 import { getPrintJob } from "@/features/printing/queries";
+import { getServerSession } from "@/lib/auth";
 import "./print.css";
 
 function formatDate(value?: string) {
   return value ? new Date(value).toLocaleDateString() : null;
 }
 
-export default async function LabelPrintPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function LabelPrintPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = await params;
+  try {
+    await getServerSession();
+  } catch {
+    redirect(`/${locale}/login`);
+  }
+
   const job = await getPrintJob(id);
   if (!job) notFound();
   const payload = job.payload;

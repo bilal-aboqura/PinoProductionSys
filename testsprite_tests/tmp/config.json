@@ -1,13 +1,14 @@
 {
   "status": "commited",
-  "type": "frontend",
+  "type": "backend",
   "scope": "codebase",
   "localEndpoint": "http://localhost:3000",
-  "loginUser": "admin",
-  "loginPassword": "PinoSys@12#34",
+  "backendAuthType": "basic token",
+  "backendUsername": "admin",
+  "backendPassword": "PinoSys@12#34",
   "executionArgs": {
     "projectName": "PinoProductionSys",
-    "projectPath": "f:\\CodingProjects\\PinoProductionSys",
+    "projectPath": "f:/CodingProjects/PinoProductionSys",
     "testIds": [],
     "additionalInstruction": "",
     "serverMode": "production",
@@ -15,5 +16,5 @@
       "API_KEY": "sk-user-CI_C9LLTVb17P3GSNs2LlpUW1ou1OAf_f4C6BTuhm-ZHV49MIH5tCAdr_dvzI-WuxODOMsohV5bKvKYxOQyIH6ae9nPVjftl3YZBKjDsEZ6OvU4YH0Xt8aEHFZZM9QrWDPI"
     }
   },
-  "serverPort": 50683
+  "serverPort": 56475
 }

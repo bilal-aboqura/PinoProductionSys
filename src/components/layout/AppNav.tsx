@@ -36,6 +36,7 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
   const common = useTranslations("common");
   const auth = useTranslations("auth");
   const [open, setOpen] = useState(false);
+  const [scannerReady, setScannerReady] = useState(false);
   const [, startTransition] = useTransition();
   const permissions = new Set(user.permissions);
 
@@ -49,6 +50,7 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
   }, [locale, router]);
 
   useKeyboardScanner({ onScan: handleScan });
+  useEffect(() => setScannerReady(true), []);
 
   const canViewProduction = permissions.has("production-orders:view") || permissions.has("production-orders:view_all") || permissions.has("production:view");
   const canViewPrinting = permissions.has("printing:view") || permissions.has("printing:create") || permissions.has("printing:reprint") || permissions.has("system:configure");
@@ -82,7 +84,7 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
       </header>
 
       {open ? <button className="fixed inset-0 z-40 bg-black/35 lg:hidden" type="button" aria-label={navigation("closeMenu")} onClick={() => setOpen(false)} /> : null}
-      <aside className="app-sidebar fixed inset-y-0 start-0 z-50 flex w-72 flex-col border-e bg-white shadow-lg transition-transform duration-200 lg:shadow-none" data-open={open}>
+      <aside className="app-sidebar fixed inset-y-0 start-0 z-50 flex w-72 flex-col border-e bg-white shadow-lg transition-transform duration-200 lg:shadow-none" data-open={open} data-scanner-ready={scannerReady}>
         <div className="flex h-20 items-center justify-between border-b px-5">
           <Link href={`/${locale}/dashboard`} className="text-lg font-bold text-primary">{common("appName")}</Link>
           <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-md text-secondary hover:bg-accent/45 lg:hidden" onClick={() => setOpen(false)} aria-label={navigation("closeMenu")}>

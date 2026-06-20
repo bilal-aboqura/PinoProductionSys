@@ -1,0 +1,12 @@
+[
+  {
+    "id": "TC001",
+    "title": "post api auth callback credentials with valid and invalid inputs",
+    "description": "Test the POST /api/auth/callback/credentials endpoint with valid email and password to ensure successful authentication and session creation, and with invalid credentials to verify proper error handling and denial of access."
+  },
+  {
+    "id": "TC002",
+    "title": "get api notifications recent with and without authentication",
+    "description": "Test the GET /api/notifications/recent endpoint with a valid authenticated session to verify retrieval of recent notifications and with no or invalid authentication to confirm access is denied and proper redirection or error response is returned."
+  }
+]

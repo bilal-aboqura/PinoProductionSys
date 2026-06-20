@@ -21,6 +21,7 @@ describe("notification query helpers", () => {
         severity: "WARNING",
         relatedEntityType: "InventoryItem",
         relatedEntityId: "item_1",
+        isArchived: false,
         createdAt
       }
     });
