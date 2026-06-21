@@ -39,6 +39,12 @@ export async function generateExcelReport(input: {
     sheet.addRow(input.columns.map((column) => row[column.key] ?? ""));
   });
 
+  input.columns.forEach((column, index) => {
+    if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(column.key)) sheet.getColumn(index + 1).numFmt = '#,##0.00 "EGP"';
+    if (["totalCalories", "caloriesPerUnit"].includes(column.key)) sheet.getColumn(index + 1).numFmt = '#,##0.00 "kcal"';
+    if (column.key === "margin") sheet.getColumn(index + 1).numFmt = '0.0000"%"';
+  });
+
   sheet.columns.forEach((column) => {
     let width = 14;
     column.eachCell?.((cell) => {

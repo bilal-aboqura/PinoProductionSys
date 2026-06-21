@@ -16,6 +16,8 @@ export const VIEW_PRINTING = "printing:view" as const;
 export const CREATE_PRINT_JOB = "printing:create" as const;
 export const REPRINT_LABEL = "printing:reprint" as const;
 export const MANAGE_PRINTERS = "printing:manage_printers" as const;
+export const MANAGE_INGREDIENT_REFERENCES = "inventory:manage" as const;
+export const VIEW_RECIPE_COSTING_REPORTS = "reports:view" as const;
 
 export type RecipePermissionKey =
   | typeof CREATE_RECIPES

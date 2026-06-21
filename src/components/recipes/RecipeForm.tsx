@@ -18,6 +18,11 @@ const schema = z.object({
   description: z.string().optional(),
   yieldQuantity: z.number().min(0),
   yieldUnit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]),
+  servingQuantity: z.number().positive().nullable().optional(),
+  servingUnit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]).nullable().optional(),
+  servingLabel: z.string().optional(),
+  currentSellingPrice: z.number().min(0).nullable().optional(),
+  currencyCode: z.string().length(3),
   shelfLifeValue: z.number().min(0),
   shelfLifeUnit: z.enum(["HOURS", "DAYS", "WEEKS", "MONTHS"]),
   storageMethod: z.enum(["REFRIGERATOR", "FREEZER", "ROOM_TEMPERATURE", "CUSTOM"]),
@@ -51,6 +56,11 @@ export function RecipeForm({
       description: recipe.description ?? "",
       yieldQuantity: Number(recipe.yieldQuantity),
       yieldUnit: recipe.yieldUnit,
+      servingQuantity: recipe.servingQuantity ? Number(recipe.servingQuantity) : null,
+      servingUnit: recipe.servingUnit,
+      servingLabel: recipe.servingLabel ?? "",
+      currentSellingPrice: recipe.currentSellingPrice ? Number(recipe.currentSellingPrice) : null,
+      currencyCode: recipe.currencyCode,
       shelfLifeValue: recipe.shelfLifeValue,
       shelfLifeUnit: recipe.shelfLifeUnit,
       storageMethod: recipe.storageMethod,
@@ -125,6 +135,25 @@ export function RecipeForm({
           </select>
         </label>
         <label className="grid gap-2 text-sm font-semibold">
+          Serving Quantity
+          <Input type="number" min="0.001" step="0.001" {...form.register("servingQuantity", { setValueAs: (value) => value === "" ? null : Number(value) })} onBlur={form.handleSubmit(submit)} />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">
+          Serving Unit
+          <select className="h-10 rounded-md border bg-white px-3 text-sm" {...form.register("servingUnit", { setValueAs: (value) => value || null })} onBlur={form.handleSubmit(submit)}>
+            <option value="">Not configured</option>
+            {["KG", "GRAM", "LITER", "MILLILITER", "PIECE"].map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">
+          Serving Label
+          <Input {...form.register("servingLabel")} placeholder="e.g. 2 cookies" onBlur={form.handleSubmit(submit)} />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">
+          Selling Price (EGP per yield unit)
+          <Input type="number" min="0" step="0.01" {...form.register("currentSellingPrice", { setValueAs: (value) => value === "" ? null : Number(value) })} onBlur={form.handleSubmit(submit)} />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold">
           Shelf Life
           <Input type="number" {...form.register("shelfLifeValue", { valueAsNumber: true })} onBlur={form.handleSubmit(submit)} />
         </label>
@@ -162,6 +191,15 @@ export function RecipeForm({
         <textarea className="min-h-24 rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30" {...form.register("productionNotes")} onBlur={form.handleSubmit(submit)} />
       </label>
       </fieldset>
+      <section className="grid gap-3 rounded-md border bg-accent/20 p-4 sm:grid-cols-2 lg:grid-cols-5" aria-label="Recipe calculation summary">
+        {recipe.calculations ? <>
+          <div><span className="block text-xs text-secondary">Total cost</span><strong>{recipe.calculations.totalCost} {recipe.calculations.currency}</strong></div>
+          <div><span className="block text-xs text-secondary">Total calories</span><strong>{recipe.calculations.totalCalories} kcal</strong></div>
+          <div><span className="block text-xs text-secondary">Cost / yield</span><strong>{recipe.calculations.costPerYieldUnit ?? "—"}</strong></div>
+          <div><span className="block text-xs text-secondary">Calories / yield</span><strong>{recipe.calculations.caloriesPerYieldUnit ?? "—"}</strong></div>
+          <div><span className="block text-xs text-secondary">Calories / serving</span><strong>{recipe.calculations.caloriesPerServing ?? "—"}</strong></div>
+        </> : <p className="text-sm text-secondary sm:col-span-2 lg:col-span-5">Add active ingredient reference profiles to calculate cost and nutrition.</p>}
+      </section>
       {message ? <div className="rounded-md border border-accent bg-accent/30 px-3 py-2 text-sm text-secondary">{message}</div> : null}
       {canEdit ? <Button type="submit" disabled={pending}>
         Save Draft

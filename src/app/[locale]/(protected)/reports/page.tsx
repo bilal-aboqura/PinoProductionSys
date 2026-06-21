@@ -53,7 +53,8 @@ export default async function ReportsPage({ params }: { params: Promise<{ locale
             [t("waste"), "waste"],
             [t("warehouse"), "warehouse"],
             [t("staff"), "staff"],
-            [t("scheduled"), "scheduled"]
+            [t("scheduled"), "scheduled"],
+            ["Recipe costing", "recipes"]
           ].map(([label, href]) => (
             <Link key={href} className="rounded-md border bg-white px-3 py-2 text-sm font-semibold text-secondary hover:bg-accent/35" href={`/${locale}/reports/${href}`}>
               {label}

@@ -73,6 +73,8 @@ export default async function InventoryItemsPage({
                 <TableHead>{t("category")}</TableHead>
                 <TableHead>{t("unit")}</TableHead>
                 <TableHead>{t("minStock")}</TableHead>
+                <TableHead>Cost / base</TableHead>
+                <TableHead>Calories / base</TableHead>
                 <TableHead>{common("status")}</TableHead>
                 {canManage ? <TableHead>{common("actions")}</TableHead> : null}
               </TableRow>
@@ -87,6 +89,8 @@ export default async function InventoryItemsPage({
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>
+                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} EGP / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
+                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCalories} kcal / ${item.currentReferenceProfile.calorieReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.isActive ? <Badge>{common("active")}</Badge> : <Badge className="bg-muted/20">{common("inactive")}</Badge>}</TableCell>
                   {canManage ? (
                     <TableCell>

@@ -184,6 +184,18 @@ const commonColumns: Record<string, ReportColumn[]> = {
 };
 
 export function columnsForReport(reportType: ReportType): ReportColumn[] {
+  if (reportType.startsWith("RECIPE")) return [
+    { key: "recipe", label: "Recipe" },
+    { key: "version", label: "Version", align: "right" },
+    { key: "totalCost", label: "Total Cost (EGP)", align: "right" },
+    { key: "totalCalories", label: "Total Calories", align: "right" },
+    { key: "costPerUnit", label: "Cost / Yield", align: "right" },
+    { key: "caloriesPerUnit", label: "Calories / Yield", align: "right" },
+    { key: "sellingPrice", label: "Selling Price", align: "right" },
+    { key: "profit", label: "Profit", align: "right" },
+    { key: "margin", label: "Margin %", align: "right" },
+    { key: "publishedAt", label: "Published" }
+  ];
   if (reportType.startsWith("INVENTORY") || reportType === "LOW_STOCK" || reportType.startsWith("WAREHOUSE")) return commonColumns.inventory;
   if (reportType.includes("BATCH") || reportType === "ACTIVE_BATCHES" || reportType === "EXPIRED_BATCHES" || reportType === "NEAR_EXPIRY" || reportType === "DISPOSED_BATCHES") {
     return commonColumns.batches;
@@ -203,6 +215,7 @@ export function columnsForReport(reportType: ReportType): ReportColumn[] {
 
 export async function getReportRows(reportType: ReportType, filters: ReportFilters = {}, page?: number, limit?: number): Promise<ReportDataResult> {
   await getServerSession();
+  if (reportType.startsWith("RECIPE")) return getRecipeCostingReport(reportType, filters, page, limit);
   if (reportType.startsWith("INVENTORY") || reportType === "LOW_STOCK" || reportType.startsWith("WAREHOUSE")) {
     return getInventoryReport(reportType, filters, page, limit);
   }
@@ -213,6 +226,44 @@ export async function getReportRows(reportType: ReportType, filters: ReportFilte
   if (reportType.startsWith("STAFF")) return getStaffReport(filters, page, limit);
   if (reportType.startsWith("AUDIT")) return getAuditReport(filters, page, limit);
   return getProductionReport(filters, page, limit);
+}
+
+async function getRecipeCostingReport(reportType: ReportType, filters: ReportFilters, page?: number, limit?: number): Promise<ReportDataResult> {
+  const { page: safePage, pageSize, skip } = pageInput(page, limit);
+  const search = filters.search?.trim();
+  const where: Prisma.RecipeVersionWhereInput = {
+    ...(filters.startDate || filters.endDate ? { publishedAt: { ...(filters.startDate ? { gte: new Date(filters.startDate) } : {}), ...(filters.endDate ? { lte: new Date(filters.endDate) } : {}) } } : {}),
+    ...(filters.categoryId ? { recipe: { categoryId: filters.categoryId } } : {}),
+    ...(search ? { recipe: { OR: [{ nameEn: { contains: search, mode: "insensitive" } }, { nameAr: { contains: search, mode: "insensitive" } }, { code: { contains: search, mode: "insensitive" } }] } } : {}),
+    ...(reportType === "RECIPE_PROFITABILITY" ? { sellingPriceSnapshot: { not: null } } : {})
+  };
+  const orderBy: Prisma.RecipeVersionOrderByWithRelationInput = reportType === "RECIPE_CALORIE_SUMMARY"
+    ? { totalCalories: "asc" }
+    : reportType === "RECIPE_PROFITABILITY" ? { profitMarginSnapshot: "asc" }
+      : reportType === "RECIPE_COST_TREND" ? { publishedAt: "asc" } : { totalCost: "desc" };
+  const [versions, total] = await Promise.all([
+    prisma.recipeVersion.findMany({ where, include: { recipe: true }, orderBy, skip, take: pageSize }),
+    prisma.recipeVersion.count({ where })
+  ]);
+  return {
+    rows: versions.map((version) => ({
+      id: version.id,
+      recipe: version.recipe.nameEn || version.recipe.nameAr,
+      version: version.versionNumber,
+      totalCost: version.totalCost.toFixed(2),
+      totalCalories: version.totalCalories.toFixed(2),
+      costPerUnit: version.costPerYieldUnit.toFixed(4),
+      caloriesPerUnit: version.caloriesPerYieldUnit.toFixed(4),
+      sellingPrice: version.sellingPriceSnapshot?.toFixed(2) ?? null,
+      profit: version.profitAmountSnapshot?.toFixed(2) ?? null,
+      margin: version.profitMarginSnapshot?.toFixed(4) ?? null,
+      publishedAt: version.publishedAt.toISOString()
+    })),
+    totalCount: total,
+    page: safePage,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    columns: columnsForReport(reportType)
+  };
 }
 
 async function getProductionReport(filters: ReportFilters, page?: number, limit?: number): Promise<ReportDataResult> {

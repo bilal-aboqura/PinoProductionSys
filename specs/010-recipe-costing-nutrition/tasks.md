@@ -21,9 +21,9 @@
 
 **Purpose**: Create the feature scaffolding and test entry points used across all stories.
 
-- [ ] T001 Create shared recipe costing helper scaffolds in `src/lib/recipes/calculations.ts` and `src/lib/recipes/reference-profiles.ts`
-- [ ] T002 [P] Create the recipe costing report page scaffold in `src/app/[locale]/(protected)/reports/recipes/page.tsx`
-- [ ] T003 [P] Create recipe costing test entry points in `src/lib/recipes/calculations.test.ts` and `tests/integration/recipe-costing.spec.ts`
+- [X] T001 Create shared recipe costing helper scaffolds in `src/lib/recipes/calculations.ts` and `src/lib/recipes/reference-profiles.ts`
+- [X] T002 [P] Create the recipe costing report page scaffold in `src/app/[locale]/(protected)/reports/recipes/page.tsx`
+- [X] T003 [P] Create recipe costing test entry points in `src/lib/recipes/calculations.test.ts` and `tests/integration/recipe-costing.spec.ts`
 
 ---
 
@@ -33,12 +33,12 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Update recipe costing schema fields and the new `IngredientReferenceProfile` model in `prisma/schema.prisma`
-- [ ] T005 Generate and review the Prisma migration for recipe costing schema changes in `prisma/migrations/`
-- [ ] T006 [P] Extend recipe snapshot and DTO contracts for costing, serving, and profitability fields in `src/lib/recipes/snapshot.ts` and `src/features/recipes/types.ts`
-- [ ] T007 [P] Add permission constants and guard helpers for ingredient reference management and recipe-costing reports in `src/lib/permissions.ts`
-- [ ] T008 Implement active reference profile resolution and normalized unit lookup helpers in `src/lib/recipes/reference-profiles.ts`
-- [ ] T009 [P] Extend inventory queries and DTOs to load current and historical ingredient reference profiles in `src/features/inventory/queries.ts` and `src/features/inventory/types.ts`
+- [X] T004 Update recipe costing schema fields and the new `IngredientReferenceProfile` model in `prisma/schema.prisma`
+- [X] T005 Generate and review the Prisma migration for recipe costing schema changes in `prisma/migrations/`
+- [X] T006 [P] Extend recipe snapshot and DTO contracts for costing, serving, and profitability fields in `src/lib/recipes/snapshot.ts` and `src/features/recipes/types.ts`
+- [X] T007 [P] Add permission constants and guard helpers for ingredient reference management and recipe-costing reports in `src/lib/permissions.ts`
+- [X] T008 Implement active reference profile resolution and normalized unit lookup helpers in `src/lib/recipes/reference-profiles.ts`
+- [X] T009 [P] Extend inventory queries and DTOs to load current and historical ingredient reference profiles in `src/features/inventory/queries.ts` and `src/features/inventory/types.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -52,17 +52,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Add unit tests for cost, calorie, yield, serving, and unit-conversion formulas in `src/lib/recipes/calculations.test.ts`
-- [ ] T011 [P] [US1] Add integration coverage for recipe calculation preview and validation boundaries in `tests/integration/recipe-costing.spec.ts`
+- [X] T010 [P] [US1] Add unit tests for cost, calorie, yield, serving, and unit-conversion formulas in `src/lib/recipes/calculations.test.ts`
+- [X] T011 [P] [US1] Add integration coverage for recipe calculation preview and validation boundaries in `tests/integration/recipe-costing.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement the core recipe calculation engine in `src/lib/recipes/calculations.ts`
-- [ ] T013 [US1] Extend recipe server actions with calculation preview, save-time recalculation, and duplication defaults in `src/features/recipes/actions.ts`
-- [ ] T014 [P] [US1] Extend recipe DTOs with line totals and calculated summary fields in `src/features/recipes/types.ts`
-- [ ] T015 [US1] Update ingredient line editing to display normalized line cost and calorie outputs in `src/components/recipes/IngredientEditor.tsx`
-- [ ] T016 [US1] Update the main recipe form to capture yield and serving inputs and render calculation summaries in `src/components/recipes/RecipeForm.tsx`
-- [ ] T017 [US1] Surface calculation summaries on recipe create and detail pages in `src/app/[locale]/(protected)/recipes/new/page.tsx` and `src/app/[locale]/(protected)/recipes/[id]/page.tsx`
+- [X] T012 [US1] Implement the core recipe calculation engine in `src/lib/recipes/calculations.ts`
+- [X] T013 [US1] Extend recipe server actions with calculation preview, save-time recalculation, and duplication defaults in `src/features/recipes/actions.ts`
+- [X] T014 [P] [US1] Extend recipe DTOs with line totals and calculated summary fields in `src/features/recipes/types.ts`
+- [X] T015 [US1] Update ingredient line editing to display normalized line cost and calorie outputs in `src/components/recipes/IngredientEditor.tsx`
+- [X] T016 [US1] Update the main recipe form to capture yield and serving inputs and render calculation summaries in `src/components/recipes/RecipeForm.tsx`
+- [X] T017 [US1] Surface calculation summaries on recipe create and detail pages in `src/app/[locale]/(protected)/recipes/new/page.tsx` and `src/app/[locale]/(protected)/recipes/[id]/page.tsx`
 
 **Checkpoint**: User Story 1 should now be fully functional and independently testable.
 
@@ -76,15 +76,15 @@
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Add unit tests for ingredient reference profile validation and effective-date selection in `src/features/inventory/__tests__/reference-profiles.test.ts`
-- [ ] T019 [P] [US2] Add integration coverage for ingredient cost and calorie reference management in `tests/integration/ingredient-reference-profiles.spec.ts`
+- [X] T018 [P] [US2] Add unit tests for ingredient reference profile validation and effective-date selection in `src/features/inventory/__tests__/reference-profiles.test.ts`
+- [X] T019 [P] [US2] Add integration coverage for ingredient cost and calorie reference management in `tests/integration/ingredient-reference-profiles.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Implement ingredient reference profile validation and write actions in `src/features/inventory/validation.ts` and `src/features/inventory/actions.ts`
-- [ ] T021 [P] [US2] Extend inventory item DTOs and query responses with current and historical reference profile data in `src/features/inventory/types.ts` and `src/features/inventory/queries.ts`
-- [ ] T022 [US2] Add cost, calorie, unit, and effective-date inputs to the inventory item form in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx`
-- [ ] T023 [US2] Display normalized reference values and profile history on the inventory items page in `src/app/[locale]/(protected)/inventory/items/page.tsx`
+- [X] T020 [US2] Implement ingredient reference profile validation and write actions in `src/features/inventory/validation.ts` and `src/features/inventory/actions.ts`
+- [X] T021 [P] [US2] Extend inventory item DTOs and query responses with current and historical reference profile data in `src/features/inventory/types.ts` and `src/features/inventory/queries.ts`
+- [X] T022 [US2] Add cost, calorie, unit, and effective-date inputs to the inventory item form in `src/app/[locale]/(protected)/inventory/items/_components/ItemForm.tsx`
+- [X] T023 [US2] Display normalized reference values and profile history on the inventory items page in `src/app/[locale]/(protected)/inventory/items/page.tsx`
 
 **Checkpoint**: User Story 2 should now be independently functional and provide the reference data needed by recipe calculations.
 
@@ -98,15 +98,15 @@
 
 ### Tests for User Story 3
 
-- [ ] T024 [P] [US3] Add unit tests for snapshot freezing and historical selling-price logic in `src/lib/recipes/snapshot.test.ts`
-- [ ] T025 [P] [US3] Add integration coverage for recipe version immutability and profitability history in `tests/integration/recipe-version-history.spec.ts`
+- [X] T024 [P] [US3] Add unit tests for snapshot freezing and historical selling-price logic in `src/lib/recipes/snapshot.test.ts`
+- [X] T025 [P] [US3] Add integration coverage for recipe version immutability and profitability history in `tests/integration/recipe-version-history.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Persist frozen calculation, serving, archive-safe, and selling-price snapshot values during recipe save and publish flows in `src/features/recipes/actions.ts`
-- [ ] T027 [US3] Expand recipe snapshot generation with line-level reference profile metadata and profitability fields in `src/lib/recipes/snapshot.ts`
-- [ ] T028 [P] [US3] Extend version history table rows with frozen cost, calorie, and profitability metadata in `src/components/recipes/VersionHistoryTable.tsx`
-- [ ] T029 [US3] Render frozen calculation data in recipe version pages `src/app/[locale]/(protected)/recipes/[id]/versions/page.tsx` and `src/app/[locale]/(protected)/recipes/[id]/versions/[v]/page.tsx`
+- [X] T026 [US3] Persist frozen calculation, serving, archive-safe, and selling-price snapshot values during recipe save and publish flows in `src/features/recipes/actions.ts`
+- [X] T027 [US3] Expand recipe snapshot generation with line-level reference profile metadata and profitability fields in `src/lib/recipes/snapshot.ts`
+- [X] T028 [P] [US3] Extend version history table rows with frozen cost, calorie, and profitability metadata in `src/components/recipes/VersionHistoryTable.tsx`
+- [X] T029 [US3] Render frozen calculation data in recipe version pages `src/app/[locale]/(protected)/recipes/[id]/versions/page.tsx` and `src/app/[locale]/(protected)/recipes/[id]/versions/[v]/page.tsx`
 
 **Checkpoint**: User Story 3 should now be independently functional and protect all historical recipe outputs.
 
@@ -120,16 +120,16 @@
 
 ### Tests for User Story 4
 
-- [ ] T030 [P] [US4] Add integration coverage for recipe cost reports and print payload enrichment in `tests/integration/recipe-costing-reports.spec.ts`
-- [ ] T031 [P] [US4] Add unit tests for recipe cost and nutrition report queries in `src/features/reports/queries.recipe-costing.test.ts`
+- [X] T030 [P] [US4] Add integration coverage for recipe cost reports and print payload enrichment in `tests/integration/recipe-costing-reports.spec.ts`
+- [X] T031 [P] [US4] Add unit tests for recipe cost and nutrition report queries in `src/features/reports/queries.recipe-costing.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T032 [US4] Extend print payload types and recipe or batch nutrition field mapping in `src/features/printing/types.ts` and `src/features/printing/actions.ts`
-- [ ] T033 [US4] Render nutrition and cost fields on isolated print label pages in `src/app/[locale]/printing/label/[id]/page.tsx`
-- [ ] T034 [US4] Add recipe cost and nutrition report types plus query builders in `src/features/reports/types.ts` and `src/features/reports/queries.ts`
-- [ ] T035 [US4] Build the recipe costing and nutrition reports page in `src/app/[locale]/(protected)/reports/recipes/page.tsx`
-- [ ] T036 [US4] Extend report export handling and dashboard navigation for recipe costing views in `src/app/api/reports/export/route.ts` and `src/app/[locale]/(protected)/reports/page.tsx`
+- [X] T032 [US4] Extend print payload types and recipe or batch nutrition field mapping in `src/features/printing/types.ts` and `src/features/printing/actions.ts`
+- [X] T033 [US4] Render nutrition and cost fields on isolated print label pages in `src/app/[locale]/printing/label/[id]/page.tsx`
+- [X] T034 [US4] Add recipe cost and nutrition report types plus query builders in `src/features/reports/types.ts` and `src/features/reports/queries.ts`
+- [X] T035 [US4] Build the recipe costing and nutrition reports page in `src/app/[locale]/(protected)/reports/recipes/page.tsx`
+- [X] T036 [US4] Extend report export handling and dashboard navigation for recipe costing views in `src/app/api/reports/export/route.ts` and `src/app/[locale]/(protected)/reports/page.tsx`
 
 **Checkpoint**: User Story 4 should now be independently functional for labels, print payloads, and recipe-focused reporting.
 
@@ -139,11 +139,11 @@
 
 **Purpose**: Finish permission coverage, export presentation, responsive behavior, and validation against the quickstart guide.
 
-- [ ] T037 [P] Add permission integration coverage for ingredient reference editing and recipe profitability visibility in `tests/integration/recipe-costing-permissions.spec.ts`
-- [ ] T038 Review responsive, empty, and error states for recipe costing UI surfaces in `src/components/recipes/RecipeForm.tsx`, `src/app/[locale]/(protected)/inventory/items/page.tsx`, and `src/app/[locale]/(protected)/reports/recipes/page.tsx`
-- [ ] T039 [P] Update currency and calorie export formatting for recipe costing reports in `src/features/reports/exports/excel.ts` and `src/features/reports/exports/pdf.ts`
-- [ ] T040 Run the end-to-end validation scenarios documented in `specs/010-recipe-costing-nutrition/quickstart.md`
-- [ ] T041 Run `npm run typecheck`, `npm run test`, and targeted Playwright recipe-costing scenarios via `package.json`
+- [X] T037 [P] Add permission integration coverage for ingredient reference editing and recipe profitability visibility in `tests/integration/recipe-costing-permissions.spec.ts`
+- [X] T038 Review responsive, empty, and error states for recipe costing UI surfaces in `src/components/recipes/RecipeForm.tsx`, `src/app/[locale]/(protected)/inventory/items/page.tsx`, and `src/app/[locale]/(protected)/reports/recipes/page.tsx`
+- [X] T039 [P] Update currency and calorie export formatting for recipe costing reports in `src/features/reports/exports/excel.ts` and `src/features/reports/exports/pdf.ts`
+- [X] T040 Run the end-to-end validation scenarios documented in `specs/010-recipe-costing-nutrition/quickstart.md`
+- [X] T041 Run `npm run typecheck`, `npm run test`, and targeted Playwright recipe-costing scenarios via `package.json`
 
 ---
 

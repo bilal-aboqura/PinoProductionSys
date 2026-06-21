@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma, type RecipeStatus, type ScopeType } from "@prisma/client";
 import { z } from "zod";
 import { buildRecipeSnapshot, type RecipeSnapshot } from "@/lib/recipes/snapshot";
+import { calculateRecipeById, serializeCalculation } from "@/lib/recipes/calculations";
 import { validateRecipeForPublish } from "@/lib/recipes/validate-publish";
 import { writeAuditLog } from "@/lib/recipes/audit";
 import type { ActionResult } from "@/lib/types/action-result";
@@ -50,6 +51,11 @@ const recipeInputSchema = z.object({
   description: z.string().trim().max(1000).optional().nullable(),
   yieldQuantity: z.coerce.number().min(0).optional(),
   yieldUnit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]).optional(),
+  servingQuantity: z.coerce.number().positive().optional().nullable(),
+  servingUnit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]).optional().nullable(),
+  servingLabel: z.string().trim().max(100).optional().nullable(),
+  currentSellingPrice: z.coerce.number().min(0).optional().nullable(),
+  currencyCode: z.string().trim().length(3).optional(),
   shelfLifeValue: z.coerce.number().int().min(0).optional(),
   shelfLifeUnit: z.enum(["HOURS", "DAYS", "WEEKS", "MONTHS"]).optional(),
   storageMethod: z.enum(["REFRIGERATOR", "FREEZER", "ROOM_TEMPERATURE", "CUSTOM"]).optional(),
@@ -310,6 +316,11 @@ export async function createRecipe(input: unknown): Promise<ActionResult<{ id: s
           description: parsed.data.description,
           yieldQuantity: parsed.data.yieldQuantity ?? 0,
           yieldUnit: parsed.data.yieldUnit ?? "KG",
+          servingQuantity: parsed.data.servingQuantity,
+          servingUnit: parsed.data.servingUnit,
+          servingLabel: parsed.data.servingLabel,
+          currentSellingPrice: parsed.data.currentSellingPrice,
+          currencyCode: parsed.data.currencyCode ?? "EGP",
           shelfLifeValue: parsed.data.shelfLifeValue ?? 0,
           shelfLifeUnit: parsed.data.shelfLifeUnit ?? "DAYS",
           storageMethod: parsed.data.storageMethod ?? "ROOM_TEMPERATURE",
@@ -354,6 +365,11 @@ export async function saveDraft(id: string, input: unknown, version: number): Pr
         description: parsed.data.description,
         yieldQuantity: parsed.data.yieldQuantity,
         yieldUnit: parsed.data.yieldUnit,
+        servingQuantity: parsed.data.servingQuantity,
+        servingUnit: parsed.data.servingUnit,
+        servingLabel: parsed.data.servingLabel,
+        currentSellingPrice: parsed.data.currentSellingPrice,
+        currencyCode: parsed.data.currencyCode,
         shelfLifeValue: parsed.data.shelfLifeValue,
         shelfLifeUnit: parsed.data.shelfLifeUnit,
         storageMethod: parsed.data.storageMethod,
@@ -398,6 +414,10 @@ export async function getRecipe(id: string): Promise<ActionResult<RecipeDetailDt
     if (!recipe) return { success: false, code: "NOT_FOUND", error: "Recipe not found." };
 
     const assignments = recipe.assignments.map(toAssignmentDto);
+    let calculations = null;
+    try { calculations = serializeCalculation(await calculateRecipeById(id)); } catch (error) {
+      if (!(error instanceof Error && error.message.startsWith("MISSING_REFERENCE_PROFILE"))) throw error;
+    }
 
     const item = toListItem(recipe);
     return {
@@ -412,9 +432,19 @@ export async function getRecipe(id: string): Promise<ActionResult<RecipeDetailDt
         productionNotes: recipe.productionNotes,
         version: recipe.version,
         createdAt: recipe.createdAt.toISOString(),
-        ingredients: recipe.ingredients.map(toIngredientDto),
+        ingredients: recipe.ingredients.map((ingredient) => {
+          const dto = toIngredientDto(ingredient);
+          const line = calculations?.lines.find((entry) => entry.recipeIngredientId === ingredient.id);
+          return line ? { ...dto, normalizedUnit: line.normalizedUnit, referenceProfileId: line.referenceProfileId, lineCost: line.lineCost, lineCalories: line.lineCalories } : dto;
+        }),
         steps: recipe.steps.map(toStepDto),
         assignments
+        ,servingQuantity: recipe.servingQuantity?.toString() ?? null,
+        servingUnit: recipe.servingUnit,
+        servingLabel: recipe.servingLabel,
+        currentSellingPrice: recipe.currentSellingPrice?.toString() ?? null,
+        currencyCode: recipe.currencyCode,
+        calculations
       }
     };
   } catch (error) {
@@ -482,7 +512,17 @@ export async function listRecipes(
   }
 }
 
-export async function publishRecipe(id: string, version: number): Promise<ActionResult<{ publishedVersion: number }>> {
+export async function getRecipeCalculationPreview(id: string): Promise<ActionResult<ReturnType<typeof serializeCalculation>>> {
+  try {
+    await sessionWithPermission(EDIT_RECIPES);
+    return { success: true, data: serializeCalculation(await calculateRecipeById(id)) };
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("MISSING_REFERENCE_PROFILE")) return validationError(["Every ingredient requires an active cost and calorie reference profile."]);
+    return unknownError(error);
+  }
+}
+
+export async function publishRecipe(id: string, version: number): Promise<ActionResult<{ publishedVersion: number; calculationSnapshot: RecipeSnapshot["calculations"] }>> {
   try {
     const session = await sessionWithPermission(PUBLISH_RECIPES);
     const recipe = await prisma.recipe.findUnique({ where: { id } });
@@ -521,6 +561,18 @@ export async function publishRecipe(id: string, version: number): Promise<Action
           snapshot: toJson(finalSnapshot),
           publishedById: session.user.id,
           publishedAt
+          ,totalCost: finalSnapshot.calculations.totalCost,
+          totalCalories: finalSnapshot.calculations.totalCalories,
+          costPerYieldUnit: finalSnapshot.calculations.costPerYieldUnit ?? 0,
+          caloriesPerYieldUnit: finalSnapshot.calculations.caloriesPerYieldUnit ?? 0,
+          servingQuantity: finalSnapshot.serving?.quantity,
+          servingUnit: finalSnapshot.serving?.unit as Prisma.RecipeVersionCreateInput["servingUnit"],
+          servingLabel: finalSnapshot.serving?.label,
+          caloriesPerServing: finalSnapshot.calculations.caloriesPerServing,
+          sellingPriceSnapshot: finalSnapshot.calculations.sellingPriceSnapshot,
+          profitAmountSnapshot: finalSnapshot.calculations.profitAmountSnapshot,
+          profitMarginSnapshot: finalSnapshot.calculations.profitMarginSnapshot,
+          calculationCurrency: finalSnapshot.calculations.currency
         }
       });
       await writeAuditLog(tx, {
@@ -533,7 +585,7 @@ export async function publishRecipe(id: string, version: number): Promise<Action
     });
 
     pathsToRevalidate();
-    return { success: true, data: { publishedVersion: versionNumber } };
+    return { success: true, data: { publishedVersion: versionNumber, calculationSnapshot: finalSnapshot.calculations } };
   } catch (error) {
     return unknownError(error);
   }
@@ -708,7 +760,10 @@ export async function getRecipeVersionHistory(id: string): Promise<ActionResult<
       data: versions.map((version) => ({
         versionNumber: version.versionNumber,
         publishedAt: version.publishedAt.toISOString(),
-        publishedByName: names.get(version.publishedById) ?? "Unknown"
+        publishedByName: names.get(version.publishedById) ?? "Unknown",
+        totalCost: version.totalCost.toString(),
+        totalCalories: version.totalCalories.toString(),
+        profitMarginSnapshot: version.profitMarginSnapshot?.toString() ?? null
       }))
     };
   } catch (error) {
@@ -728,6 +783,9 @@ export async function getRecipeVersion(id: string, versionNumber: number): Promi
         versionNumber: version.versionNumber,
         publishedAt: version.publishedAt.toISOString(),
         publishedByName: user?.displayName ?? "Unknown",
+        totalCost: version.totalCost.toString(),
+        totalCalories: version.totalCalories.toString(),
+        profitMarginSnapshot: version.profitMarginSnapshot?.toString() ?? null,
         snapshot: version.snapshot as RecipeSnapshot
       }
     };

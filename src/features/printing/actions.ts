@@ -38,7 +38,7 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
   if (targetType === "BATCH") {
     const batch = await prisma.productionBatch.findFirst({
       where: { OR: [{ id: targetId }, { batchNumber: targetId }] },
-      include: { recipe: true, warehouse: true }
+      include: { recipe: true, recipeVersion: true, warehouse: true }
     });
     if (!batch) throw new Error("NOT_FOUND");
     const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(batch.batchNumber)}`;
@@ -53,6 +53,12 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       unit: batch.unit,
       warehouseName: batch.warehouse.name,
       storageInstructions: batch.recipe.storageNotes,
+      servingSize: batch.recipeVersion.servingQuantity ? `${batch.recipeVersion.servingQuantity} ${batch.recipeVersion.servingUnit ?? ""}${batch.recipeVersion.servingLabel ? ` (${batch.recipeVersion.servingLabel})` : ""}`.trim() : undefined,
+      caloriesPerServing: decimalToString(batch.recipeVersion.caloriesPerServing),
+      caloriesPerUnit: decimalToString(batch.recipeVersion.caloriesPerYieldUnit),
+      totalCalories: decimalToString(batch.recipeVersion.totalCalories),
+      costPerUnit: decimalToString(batch.recipeVersion.costPerYieldUnit),
+      totalCost: decimalToString(batch.recipeVersion.totalCost),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };
@@ -61,7 +67,7 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
   if (targetType === "CONTAINER") {
     const container = await prisma.batchContainer.findFirst({
       where: { OR: [{ id: targetId }, { containerNumber: targetId }] },
-      include: { batch: { include: { recipe: true, warehouse: true } } }
+      include: { batch: { include: { recipe: true, recipeVersion: true, warehouse: true } } }
     });
     if (!container) throw new Error("NOT_FOUND");
     const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(container.batch.batchNumber)}?container=${encodeURIComponent(container.containerNumber)}`;
@@ -74,6 +80,12 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       quantity: decimalToString(container.quantity),
       unit: container.batch.unit,
       warehouseName: container.batch.warehouse.name,
+      servingSize: container.batch.recipeVersion.servingQuantity ? `${container.batch.recipeVersion.servingQuantity} ${container.batch.recipeVersion.servingUnit ?? ""}`.trim() : undefined,
+      caloriesPerServing: decimalToString(container.batch.recipeVersion.caloriesPerServing),
+      caloriesPerUnit: decimalToString(container.batch.recipeVersion.caloriesPerYieldUnit),
+      totalCalories: decimalToString(container.batch.recipeVersion.totalCalories),
+      costPerUnit: decimalToString(container.batch.recipeVersion.costPerYieldUnit),
+      totalCost: decimalToString(container.batch.recipeVersion.totalCost),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };

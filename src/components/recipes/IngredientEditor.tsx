@@ -41,10 +41,12 @@ export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { 
       {warning ? <div className="rounded-md border border-warning/40 bg-warning/15 px-3 py-2 text-sm text-secondary">{warning}</div> : null}
       <div className="space-y-2">
         {ingredients.map((ingredient) => (
-          <div key={ingredient.id} className={`grid gap-2 rounded-md border bg-surface p-3 ${canEdit ? "md:grid-cols-[1fr_120px_100px_1fr_44px]" : "md:grid-cols-[1fr_120px_100px_1fr]"}`}>
+          <div key={ingredient.id} className={`grid gap-2 rounded-md border bg-surface p-3 ${canEdit ? "md:grid-cols-[1fr_100px_90px_100px_110px_1fr_44px]" : "md:grid-cols-[1fr_100px_90px_100px_110px_1fr]"}`}>
             <div className="font-semibold">{ingredient.inventoryItemNameEn || ingredient.inventoryItemNameAr}</div>
             <div>{ingredient.quantity}</div>
             <div>{ingredient.unit}</div>
+            <div><span className="block text-xs text-secondary">Cost</span>{ingredient.lineCost ?? "—"}</div>
+            <div><span className="block text-xs text-secondary">Calories</span>{ingredient.lineCalories ?? "—"}</div>
             <div className="text-secondary">{ingredient.purpose}</div>
             {canEdit ? <Button
               className="h-9 w-9 px-0"
@@ -61,10 +63,12 @@ export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { 
           </div>
         ))}
       </div>
-      {canEdit ? <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_100px_1fr_44px]">
+      {canEdit ? <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_120px_1fr_44px]">
         <SearchCombobox name="inventoryItemId" source="inventory-item-ids" placeholder="Select inventory item" required />
         <Input name="quantity" type="number" step="0.001" placeholder="Qty" required />
-        <Input name="unit" placeholder="Unit" required />
+        <select className="h-10 rounded-md border bg-white px-2 text-sm" name="unit" required>
+          {["KG", "GRAM", "LITER", "MILLILITER", "PIECE"].map((unit) => <option key={unit}>{unit}</option>)}
+        </select>
         <Input name="purpose" placeholder="Purpose" />
         <Button className="h-10 w-10 px-0" type="submit" disabled={pending}>
           <Plus className="h-4 w-4" />

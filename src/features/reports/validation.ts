@@ -22,7 +22,11 @@ export const reportTypeSchema = z.enum([
   "STAFF_ACTIVITY",
   "AUDIT_USER",
   "AUDIT_INVENTORY",
-  "AUDIT_BATCH"
+  "AUDIT_BATCH",
+  "RECIPE_COST_SUMMARY",
+  "RECIPE_CALORIE_SUMMARY",
+  "RECIPE_PROFITABILITY",
+  "RECIPE_COST_TREND"
 ]);
 
 export const reportFiltersSchema = z

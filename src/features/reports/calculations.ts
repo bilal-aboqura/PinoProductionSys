@@ -1,5 +1,18 @@
 import { Prisma } from "@prisma/client";
-import type { TrendPoint } from "./types";
+import type { ReportColumn, TrendPoint } from "./types";
+
+export const recipeCostingColumns: ReportColumn[] = [
+  { key: "recipe", label: "Recipe" },
+  { key: "version", label: "Version", align: "right" },
+  { key: "totalCost", label: "Total Cost (EGP)", align: "right" },
+  { key: "totalCalories", label: "Total Calories", align: "right" },
+  { key: "costPerUnit", label: "Cost / Yield", align: "right" },
+  { key: "caloriesPerUnit", label: "Calories / Yield", align: "right" },
+  { key: "sellingPrice", label: "Selling Price", align: "right" },
+  { key: "profit", label: "Profit", align: "right" },
+  { key: "margin", label: "Margin %", align: "right" },
+  { key: "publishedAt", label: "Published" }
+];
 
 export function toNumber(value: Prisma.Decimal | number | bigint | null | undefined) {
   if (value == null) return 0;

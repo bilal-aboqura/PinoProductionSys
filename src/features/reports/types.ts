@@ -20,7 +20,11 @@ export type ReportType =
   | "STAFF_ACTIVITY"
   | "AUDIT_USER"
   | "AUDIT_INVENTORY"
-  | "AUDIT_BATCH";
+  | "AUDIT_BATCH"
+  | "RECIPE_COST_SUMMARY"
+  | "RECIPE_CALORIE_SUMMARY"
+  | "RECIPE_PROFITABILITY"
+  | "RECIPE_COST_TREND";
 
 export type ReportFrequency = "DAILY" | "WEEKLY" | "MONTHLY";
 export type ReportFormat = "EXCEL" | "PDF" | "BOTH";

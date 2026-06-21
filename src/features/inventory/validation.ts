@@ -18,6 +18,25 @@ export const updateItemSchema = createItemSchema.partial().extend({
   isActive: z.boolean().optional()
 });
 
+const referenceUnit = z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]);
+export const ingredientReferenceProfileSchema = z
+  .object({
+    inventoryItemId: z.string().min(1),
+    costReferenceQuantity: positiveDecimal,
+    costReferenceUnit: referenceUnit,
+    costReferenceValue: nonNegativeDecimal,
+    calorieReferenceQuantity: positiveDecimal,
+    calorieReferenceUnit: referenceUnit,
+    calorieValue: nonNegativeDecimal,
+    effectiveAt: z.coerce.date().optional()
+  })
+  .superRefine((value, context) => {
+    const family = (unit: string) => unit === "PIECE" ? "piece" : unit === "KG" || unit === "GRAM" ? "weight" : "volume";
+    if (family(value.costReferenceUnit) !== family(value.calorieReferenceUnit)) {
+      context.addIssue({ code: "custom", path: ["calorieReferenceUnit"], message: "Cost and calorie reference units must use the same unit family." });
+    }
+  });
+
 export const createWarehouseSchema = z.object({
   code: codeSchema.max(10),
   name: z.string().trim().min(3).max(50),
@@ -60,6 +79,7 @@ export const wasteSchema = z.object({
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 export type UpdateItemInput = z.infer<typeof updateItemSchema>;
+export type IngredientReferenceProfileInput = z.infer<typeof ingredientReferenceProfileSchema>;
 export type CreateWarehouseInput = z.infer<typeof createWarehouseSchema>;
 export type TransferInput = z.infer<typeof transferSchema>;
 export type AdjustmentInput = z.infer<typeof adjustmentSchema>;

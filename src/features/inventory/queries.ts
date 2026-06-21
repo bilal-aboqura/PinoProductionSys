@@ -2,10 +2,31 @@ import { Prisma, type ItemType, type MovementType } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { paginationInput, totalPages } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
-import type { BalanceDto, BalanceFilters, InventoryItemDto, MovementDto, MovementFilters, PagedList, WarehouseDto } from "./types";
+import type { BalanceDto, BalanceFilters, IngredientReferenceProfileDto, InventoryItemDto, MovementDto, MovementFilters, PagedList, WarehouseDto } from "./types";
 
 function decimalToString(value: Prisma.Decimal | null | undefined) {
   return value == null ? "0" : value.toString();
+}
+
+function referenceDto(profile: Prisma.IngredientReferenceProfileGetPayload<Record<string, never>>): IngredientReferenceProfileDto {
+  return {
+    id: profile.id,
+    costReferenceQuantity: profile.costReferenceQuantity.toString(),
+    costReferenceUnit: profile.costReferenceUnit,
+    costReferenceValue: profile.costReferenceValue.toString(),
+    calorieReferenceQuantity: profile.calorieReferenceQuantity.toString(),
+    calorieReferenceUnit: profile.calorieReferenceUnit,
+    calorieValue: profile.calorieValue.toString(),
+    normalizedCost: profile.costReferenceValue.div(profile.costReferenceQuantity).toFixed(4),
+    normalizedCalories: profile.calorieValue.div(profile.calorieReferenceQuantity).toFixed(4),
+    effectiveAt: profile.effectiveAt.toISOString(),
+    archivedAt: profile.archivedAt?.toISOString() ?? null
+  };
+}
+
+function withProfiles<T extends { ingredientReferenceProfiles: Prisma.IngredientReferenceProfileGetPayload<Record<string, never>>[] }>(item: T) {
+  const referenceProfiles = item.ingredientReferenceProfiles.map(referenceDto);
+  return { referenceProfiles, currentReferenceProfile: referenceProfiles.find((profile) => !profile.archivedAt && new Date(profile.effectiveAt) <= new Date()) ?? null };
 }
 
 function toWarehouseDto(warehouse: { id: string; code: string; name: string; description: string | null; isActive: boolean }): WarehouseDto {
@@ -55,7 +76,7 @@ export async function getInventoryItems(filters: { type?: ItemType; categoryId?:
           }
         : {})
     },
-    include: { category: true },
+    include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } },
     orderBy: [{ isActive: "desc" }, { code: "asc" }]
   });
   return items.map((item) => ({
@@ -68,7 +89,8 @@ export async function getInventoryItems(filters: { type?: ItemType; categoryId?:
     categoryName: item.category.name,
     unit: item.unit,
     minStockLevel: decimalToString(item.minStockLevel),
-    isActive: item.isActive
+    isActive: item.isActive,
+    ...withProfiles(item)
   }));
 }
 
@@ -106,6 +128,7 @@ export async function getInventoryItemList(
         unit: true,
         minStockLevel: true,
         isActive: true
+        ,ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } }
       },
       orderBy: [{ isActive: "desc" }, { code: "asc" }],
       skip,
@@ -124,7 +147,8 @@ export async function getInventoryItemList(
       categoryName: item.category.name,
       unit: item.unit,
       minStockLevel: decimalToString(item.minStockLevel),
-      isActive: item.isActive
+      isActive: item.isActive,
+      ...withProfiles(item)
     })),
     total,
     page,

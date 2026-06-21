@@ -62,7 +62,7 @@ function renderTable(doc: PDFKit.PDFDocument, columns: ReportColumn[], rows: Rep
     columns.forEach((column, index) => {
       const x = startX + widths.slice(0, index).reduce((sum, width) => sum + width, 0);
       doc.rect(x, y, widths[index], rowHeight).fill(rowIndex % 2 === 0 ? "#FFFFFF" : "#F7F3EE");
-      doc.fillColor("#332820").text(String(row[column.key] ?? ""), x + 4, y + 8, {
+      doc.fillColor("#332820").text(formatReportValue(column.key, row[column.key]), x + 4, y + 8, {
         width: widths[index] - 8,
         align: column.align ?? "left",
         ellipsis: true
@@ -70,6 +70,14 @@ function renderTable(doc: PDFKit.PDFDocument, columns: ReportColumn[], rows: Rep
     });
     y += rowHeight;
   });
+}
+
+function formatReportValue(key: string, value: ReportRow[string]) {
+  if (value == null) return "";
+  if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(key)) return `${value} EGP`;
+  if (["totalCalories", "caloriesPerUnit"].includes(key)) return `${value} kcal`;
+  if (key === "margin") return `${value}%`;
+  return String(value);
 }
 
 function renderFooters(doc: PDFKit.PDFDocument) {

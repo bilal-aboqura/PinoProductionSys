@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Edit, PackagePlus, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createInventoryItem, deactivateInventoryItem, updateInventoryItem } from "@/features/inventory/actions";
+import { createInventoryItem, deactivateInventoryItem, updateInventoryItem, upsertIngredientReferenceProfile } from "@/features/inventory/actions";
 import type { InventoryCategoryDto, InventoryItemDto } from "@/features/inventory/types";
 
 type ItemFormProps = {
@@ -22,6 +22,20 @@ function dataFromForm(form: HTMLFormElement) {
     categoryId: formData.get("categoryId"),
     unit: formData.get("unit"),
     minStockLevel: formData.get("minStockLevel")
+  };
+}
+
+function referenceFromForm(form: HTMLFormElement, inventoryItemId: string) {
+  const data = new FormData(form);
+  return {
+    inventoryItemId,
+    costReferenceQuantity: data.get("costReferenceQuantity"),
+    costReferenceUnit: data.get("costReferenceUnit"),
+    costReferenceValue: data.get("costReferenceValue"),
+    calorieReferenceQuantity: data.get("calorieReferenceQuantity"),
+    calorieReferenceUnit: data.get("calorieReferenceUnit"),
+    calorieValue: data.get("calorieValue"),
+    effectiveAt: data.get("effectiveAt") || undefined
   };
 }
 
@@ -52,7 +66,10 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
               const payload = dataFromForm(form);
               startTransition(async () => {
                 const result = isEdit && item ? await updateInventoryItem(item.id, payload) : await createInventoryItem(payload);
-                setMessage(result.success ? (isEdit ? "Item updated." : "Item created.") : result.error.message);
+                if (result.success && isEdit && item && form.elements.namedItem("costReferenceQuantity")) {
+                  const profileResult = await upsertIngredientReferenceProfile(referenceFromForm(form, item.id));
+                  setMessage(profileResult.success ? "Item and reference profile updated." : profileResult.error.message);
+                } else setMessage(result.success ? (isEdit ? "Item updated." : "Item created.") : result.error.message);
                 if (result.success && isEdit) setOpen(false);
                 if (result.success && !isEdit && form.isConnected) form.reset();
               });
@@ -97,6 +114,22 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
               min="0"
               defaultValue={item?.minStockLevel ?? "0"}
             />
+            {isEdit ? <>
+              <div className="md:col-span-4 mt-2 border-t pt-3 font-bold">New effective cost &amp; calorie reference</div>
+              <input className="rounded-md border px-3 py-2 text-sm" name="costReferenceQuantity" type="number" min="0.001" step="0.001" required placeholder="Cost ref quantity" />
+              <select className="rounded-md border px-3 py-2 text-sm" name="costReferenceUnit" defaultValue={item?.unit}>{["KG","GRAM","LITER","MILLILITER","PIECE"].map((unit) => <option key={unit}>{unit}</option>)}</select>
+              <input className="rounded-md border px-3 py-2 text-sm" name="costReferenceValue" type="number" min="0" step="0.01" required placeholder="Cost (EGP)" />
+              <input className="rounded-md border px-3 py-2 text-sm" name="calorieReferenceQuantity" type="number" min="0.001" step="0.001" required placeholder="Calorie ref quantity" />
+              <select className="rounded-md border px-3 py-2 text-sm" name="calorieReferenceUnit" defaultValue={item?.unit}>{["KG","GRAM","LITER","MILLILITER","PIECE"].map((unit) => <option key={unit}>{unit}</option>)}</select>
+              <input className="rounded-md border px-3 py-2 text-sm" name="calorieValue" type="number" min="0" step="0.01" required placeholder="Calories" />
+              <input className="rounded-md border px-3 py-2 text-sm" name="effectiveAt" type="datetime-local" />
+              <div className="text-xs text-secondary">Previous profiles remain immutable. Current: {item?.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} EGP/${item.currentReferenceProfile.costReferenceUnit}; ${item.currentReferenceProfile.normalizedCalories} kcal/${item.currentReferenceProfile.calorieReferenceUnit}` : "none"}</div>
+              <div className="md:col-span-4 max-h-32 overflow-auto rounded-md bg-accent/20 p-2 text-xs text-secondary">
+                {item?.referenceProfiles.length ? item.referenceProfiles.map((profile) => (
+                  <div key={profile.id}>{new Date(profile.effectiveAt).toLocaleString()}: {profile.costReferenceValue} EGP / {profile.costReferenceQuantity} {profile.costReferenceUnit}; {profile.calorieValue} kcal / {profile.calorieReferenceQuantity} {profile.calorieReferenceUnit}</div>
+                )) : "No reference profile history."}
+              </div>
+            </> : null}
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={isPending}>
                 <PackagePlus className="h-4 w-4" />

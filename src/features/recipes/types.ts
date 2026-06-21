@@ -1,4 +1,4 @@
-import type { RecipeStatus, ScopeType, ShelfLifeUnit, StorageMethod, YieldUnit } from "@prisma/client";
+import type { RecipeStatus, ScopeType, ShelfLifeUnit, StorageMethod, Unit, YieldUnit } from "@prisma/client";
 import type { RecipeSnapshot } from "@/lib/recipes/snapshot";
 
 export type RecipeCategoryDto = {
@@ -19,6 +19,10 @@ export type RecipeIngredientDto = {
   unit: string;
   purpose: string | null;
   sortOrder: number;
+  normalizedUnit?: string;
+  referenceProfileId?: string;
+  lineCost?: string;
+  lineCalories?: string;
 };
 
 export type RecipeStepDto = {
@@ -66,12 +70,23 @@ export type RecipeDetailDto = RecipeListItemDto & {
   ingredients: RecipeIngredientDto[];
   steps: RecipeStepDto[];
   assignments: RecipeAssignmentDto[];
+  servingQuantity: string | null;
+  servingUnit: Unit | null;
+  servingLabel: string | null;
+  currentSellingPrice: string | null;
+  currencyCode: string;
+  calculations: RecipeCalculationDto | null;
 };
+
+export type RecipeCalculationDto = ReturnType<typeof import("@/lib/recipes/calculations").serializeCalculation>;
 
 export type RecipeVersionSummaryDto = {
   versionNumber: number;
   publishedAt: string;
   publishedByName: string;
+  totalCost: string;
+  totalCalories: string;
+  profitMarginSnapshot: string | null;
 };
 
 export type RecipeVersionDto = RecipeVersionSummaryDto & {

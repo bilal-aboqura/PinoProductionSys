@@ -14,6 +14,7 @@ import {
   createWarehouseSchema,
   transferSchema,
   updateItemSchema,
+  ingredientReferenceProfileSchema,
   wasteSchema
 } from "./validation";
 import { getInventoryCategories as queryInventoryCategories } from "./queries";
@@ -83,7 +84,24 @@ async function runInventoryAlertCheck(inventoryItemId: string) {
   }
 }
 
-function toItemDto(item: Prisma.InventoryItemGetPayload<{ include: { category: true } }>): InventoryItemDto {
+function toProfileDto(profile: Prisma.IngredientReferenceProfileGetPayload<Record<string, never>>) {
+  return {
+    id: profile.id,
+    costReferenceQuantity: profile.costReferenceQuantity.toString(),
+    costReferenceUnit: profile.costReferenceUnit,
+    costReferenceValue: profile.costReferenceValue.toString(),
+    calorieReferenceQuantity: profile.calorieReferenceQuantity.toString(),
+    calorieReferenceUnit: profile.calorieReferenceUnit,
+    calorieValue: profile.calorieValue.toString(),
+    normalizedCost: profile.costReferenceValue.div(profile.costReferenceQuantity).toFixed(4),
+    normalizedCalories: profile.calorieValue.div(profile.calorieReferenceQuantity).toFixed(4),
+    effectiveAt: profile.effectiveAt.toISOString(),
+    archivedAt: profile.archivedAt?.toISOString() ?? null
+  };
+}
+
+function toItemDto(item: Prisma.InventoryItemGetPayload<{ include: { category: true; ingredientReferenceProfiles: true } }>): InventoryItemDto {
+  const profiles = item.ingredientReferenceProfiles.map(toProfileDto);
   return {
     id: item.id,
     code: item.code,
@@ -94,7 +112,9 @@ function toItemDto(item: Prisma.InventoryItemGetPayload<{ include: { category: t
     categoryName: item.category.name,
     unit: item.unit,
     minStockLevel: item.minStockLevel.toString(),
-    isActive: item.isActive
+    isActive: item.isActive,
+    currentReferenceProfile: profiles.find((profile) => !profile.archivedAt && new Date(profile.effectiveAt) <= new Date()) ?? null,
+    referenceProfiles: profiles
   };
 }
 
@@ -155,7 +175,7 @@ export async function createInventoryItem(input: unknown): Promise<ActionResult<
       if (!category) throw new Error("NOT_FOUND");
       const created = await tx.inventoryItem.create({
         data: { ...parsed.data, code: parsed.data.code.toUpperCase(), minStockLevel: new Prisma.Decimal(parsed.data.minStockLevel) },
-        include: { category: true }
+        include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } }
       });
       await writeAudit(tx, session.user.id, "ITEM_CREATE", created.id, null, created);
       return created;
@@ -175,7 +195,7 @@ export async function updateInventoryItem(id: string, input: unknown): Promise<A
     const parsed = updateItemSchema.safeParse(input);
     if (!parsed.success) return validationFailure(parsed.error);
     const item = await prisma.$transaction(async (tx) => {
-      const previous = await tx.inventoryItem.findUnique({ where: { id }, include: { category: true } });
+      const previous = await tx.inventoryItem.findUnique({ where: { id }, include: { category: true, ingredientReferenceProfiles: true } });
       if (!previous) throw new Error("NOT_FOUND");
       const updated = await tx.inventoryItem.update({
         where: { id },
@@ -184,7 +204,7 @@ export async function updateInventoryItem(id: string, input: unknown): Promise<A
           code: parsed.data.code?.toUpperCase(),
           minStockLevel: parsed.data.minStockLevel == null ? undefined : new Prisma.Decimal(parsed.data.minStockLevel)
         },
-        include: { category: true }
+        include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } }
       });
       await writeAudit(tx, session.user.id, "ITEM_UPDATE", id, previous, updated);
       return updated;
@@ -192,6 +212,30 @@ export async function updateInventoryItem(id: string, input: unknown): Promise<A
     revalidateInventory();
     await runInventoryAlertCheck(item.id);
     return ok(toItemDto(item));
+  } catch (error) {
+    return unknownError(error);
+  }
+}
+
+export async function upsertIngredientReferenceProfile(input: unknown): Promise<ActionResult<{ profileId: string }>> {
+  try {
+    const session = await getServerSession();
+    requireInventoryPermission(session, "inventory:manage");
+    const parsed = ingredientReferenceProfileSchema.safeParse(input);
+    if (!parsed.success) return validationFailure(parsed.error);
+    const profile = await prisma.$transaction(async (tx) => {
+      const item = await tx.inventoryItem.findUnique({ where: { id: parsed.data.inventoryItemId } });
+      if (!item) throw new Error("NOT_FOUND");
+      const family = (unit: string) => unit === "PIECE" ? "piece" : unit === "KG" || unit === "GRAM" ? "weight" : "volume";
+      if (family(item.unit) !== family(parsed.data.costReferenceUnit)) throw new Error("INVALID_UNIT_CONVERSION");
+      const created = await tx.ingredientReferenceProfile.create({
+        data: { ...parsed.data, effectiveAt: parsed.data.effectiveAt ?? new Date(), createdById: session.user.id }
+      });
+      await writeAudit(tx, session.user.id, "INGREDIENT_REFERENCE_PROFILE_CREATE", item.id, null, created);
+      return created;
+    });
+    revalidateInventory();
+    return ok({ profileId: profile.id });
   } catch (error) {
     return unknownError(error);
   }

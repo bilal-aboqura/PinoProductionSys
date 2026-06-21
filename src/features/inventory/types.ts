@@ -38,6 +38,22 @@ export type InventoryItemDto = {
   unit: Unit;
   minStockLevel: string;
   isActive: boolean;
+  currentReferenceProfile: IngredientReferenceProfileDto | null;
+  referenceProfiles: IngredientReferenceProfileDto[];
+};
+
+export type IngredientReferenceProfileDto = {
+  id: string;
+  costReferenceQuantity: string;
+  costReferenceUnit: Unit;
+  costReferenceValue: string;
+  calorieReferenceQuantity: string;
+  calorieReferenceUnit: Unit;
+  calorieValue: string;
+  normalizedCost: string;
+  normalizedCalories: string;
+  effectiveAt: string;
+  archivedAt: string | null;
 };
 
 export type WarehouseDto = {
