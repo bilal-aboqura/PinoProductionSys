@@ -77,7 +77,7 @@ export async function getInventoryItems(filters: { type?: ItemType; categoryId?:
         : {})
     },
     include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } },
-    orderBy: [{ isActive: "desc" }, { code: "asc" }]
+    orderBy: [{ nameEn: "asc" }, { code: "asc" }]
   });
   return items.map((item) => ({
     id: item.id,
@@ -130,7 +130,7 @@ export async function getInventoryItemList(
         isActive: true
         ,ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } }
       },
-      orderBy: [{ isActive: "desc" }, { code: "asc" }],
+      orderBy: [{ nameEn: "asc" }, { code: "asc" }],
       skip,
       take
     }),

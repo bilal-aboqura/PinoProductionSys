@@ -10,6 +10,7 @@ import { parsePage } from "@/lib/pagination";
 import { InventoryBreadcrumb } from "../_components/InventoryBreadcrumb";
 import { EmptyState } from "../_components/EmptyState";
 import { ItemForm } from "./_components/ItemForm";
+import { ItemExcelActions } from "./_components/ItemExcelActions";
 import { getTranslations } from "next-intl/server";
 
 export default async function InventoryItemsPage({
@@ -58,6 +59,7 @@ export default async function InventoryItemsPage({
         <SearchCombobox className="min-w-64 flex-1" name="search" source="inventory-items" defaultValue={query.search} placeholder={t("selectItem")} />
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white" type="submit">{common("search")}</button>
       </form>
+      <ItemExcelActions canManage={canManage} />
       <ItemForm categories={categories} canManage={canManage} />
       {itemPage.items.length === 0 ? (
         <EmptyState title={t("noInventoryItems")} />
