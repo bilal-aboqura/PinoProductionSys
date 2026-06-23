@@ -444,13 +444,22 @@ export async function completeProductionOrder(
   producedQuantity: number,
   version: number,
   warehouseId?: string,
-  sourceWarehouseId?: string
-): Promise<ActionResult<{ newVersion: number; batchNumber: string }>> {
+  sourceWarehouseId?: string,
+  containerQuantities?: number[]
+): Promise<ActionResult<{ newVersion: number; batchNumber: string; containerCount: number }>> {
   try {
     const session = await getServerSession();
     requireProductionPermission(session.user.permissions, COMPLETE_PRODUCTION_ORDERS);
     if (!Number.isFinite(producedQuantity) || producedQuantity <= 0) return validationError(["Produced quantity must be greater than zero."]);
     if (!warehouseId) return validationError(["A storage warehouse is required to create the finished-product batch."]);
+    const parsedContainerQuantities = containerQuantities?.map(Number).filter((quantity) => Number.isFinite(quantity) && quantity > 0);
+    if (containerQuantities?.length && parsedContainerQuantities?.length !== containerQuantities.length) {
+      return validationError(["Container quantities must be greater than zero."]);
+    }
+    const containerTotal = parsedContainerQuantities?.reduce((sum, quantity) => sum + quantity, 0) ?? 0;
+    if (parsedContainerQuantities?.length && Math.abs(containerTotal - producedQuantity) > 0.001) {
+      return validationError(["Container quantities must equal the produced quantity."]);
+    }
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.productionOrder.findUnique({ where: { id: orderId } });
       if (!order) return { kind: "missing" as const };
@@ -504,9 +513,10 @@ export async function completeProductionOrder(
         warehouseId,
         actorId: session.user.id,
         actorName: session.user.name ?? session.user.email ?? session.user.id,
-        locale: session.user.languagePreference
+        locale: session.user.languagePreference,
+        containerQuantities: parsedContainerQuantities
       });
-      return { kind: "saved" as const, newVersion: updated.version, batchNumber: batch.batchNumber };
+      return { kind: "saved" as const, newVersion: updated.version, batchNumber: batch.batchNumber, containerCount: parsedContainerQuantities?.length ?? 0 };
     });
     if (result.kind === "missing") return { success: false, code: "NOT_FOUND", error: "Order not found." };
     if (result.kind === "conflict") return { success: false, code: "CONFLICT", error: "This order was modified by another user." };
@@ -516,7 +526,7 @@ export async function completeProductionOrder(
     revalidatePath("/[locale]/inventory", "page");
     revalidatePath("/[locale]/inventory/batches", "page");
     await runProductionAlertCheck(orderId);
-    return { success: true, data: { newVersion: result.newVersion, batchNumber: result.batchNumber } };
+    return { success: true, data: { newVersion: result.newVersion, batchNumber: result.batchNumber, containerCount: result.containerCount } };
   } catch (error) {
     return unknownError(error);
   }

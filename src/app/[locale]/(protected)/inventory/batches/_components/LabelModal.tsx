@@ -19,7 +19,7 @@ export function LabelModal({
   const [containerId, setContainerId] = useState("");
   const [isReprint, setIsReprint] = useState(false);
   const [reprintReason, setReprintReason] = useState("");
-  const [label, setLabel] = useState<LabelData | null>(null);
+  const [labels, setLabels] = useState<LabelData[]>([]);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -39,6 +39,7 @@ export function LabelModal({
             <label className="text-sm font-semibold text-secondary">Container</label>
             <select className="h-10 rounded-md border px-3 text-sm" value={containerId} onChange={(event) => setContainerId(event.target.value)}>
               <option value="">Whole batch</option>
+              <option value="__all">All containers</option>
               {containers.map((container) => (
                 <option key={container.id} value={container.id}>
                   {container.containerNumber}
@@ -63,36 +64,43 @@ export function LabelModal({
           disabled={isPending}
           onClick={() =>
             startTransition(async () => {
-              const result = await printBatchLabelAction({
-                batchId,
-                containerId: containerId || undefined,
-                template,
-                isReprint,
-                reprintReason
-              });
-              if (!result.success) {
-                setMessage(result.error.message);
-                return;
+              const targets = containerId === "__all" ? containers.map((container) => container.id) : [containerId || undefined];
+              const nextLabels: LabelData[] = [];
+              for (const target of targets) {
+                const result = await printBatchLabelAction({
+                  batchId,
+                  containerId: target,
+                  template,
+                  isReprint,
+                  reprintReason
+                });
+                if (!result.success) {
+                  setMessage(result.error.message);
+                  return;
+                }
+                nextLabels.push(result.data.labelData);
               }
-              setLabel(result.data.labelData);
-              setMessage("Label snapshot logged. Use print when the preview looks right.");
+              setLabels(nextLabels);
+              setMessage(`${nextLabels.length} label snapshot${nextLabels.length === 1 ? "" : "s"} logged. Use print when the preview looks right.`);
             })
           }
         >
           <Printer className="h-4 w-4" />
           Preview
         </Button>
-        {label ? (
+        {labels.length ? (
           <Button variant="secondary" onClick={() => window.print()}>
             <Printer className="h-4 w-4" />
-            Print
+            Print {labels.length > 1 ? `${labels.length} stickers` : ""}
           </Button>
         ) : null}
       </div>
       {message ? <p className="mt-2 text-sm text-secondary print-hidden">{message}</p> : null}
-      {label ? (
-        <div className="mt-4">
-          <LabelPrintLayout label={label} template={template} />
+      {labels.length ? (
+        <div className="mt-4 grid gap-4">
+          {labels.map((label) => (
+            <LabelPrintLayout key={`${label.batchNumber}-${label.containerNumber ?? "batch"}`} label={label} template={template} />
+          ))}
         </div>
       ) : null}
     </div>

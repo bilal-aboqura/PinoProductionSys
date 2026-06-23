@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getBatchTraceabilityAction } from "@/features/batches/queries";
 import { PrintBatchButton } from "@/features/printing/components/PrintBatchButton";
 import { getPrinters, getPrintTemplates } from "@/features/printing/queries";
+import { getServerSession } from "@/lib/auth";
 import { DisposalModal } from "../_components/DisposalModal";
 import { EvidenceUploader } from "../_components/EvidenceUploader";
 import { LabelModal } from "../_components/LabelModal";
@@ -17,6 +18,10 @@ function formatDuration(seconds: number | null) {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+}
+
+function canDownloadTransfers(permissions: string[]) {
+  return permissions.includes("inventory:view") || permissions.includes("inventory:transfer") || permissions.includes("reports:view");
 }
 
 export default async function BatchDetailPage({
@@ -40,6 +45,8 @@ export default async function BatchDetailPage({
   }
   if (!result.success) notFound();
   const batch = result.data;
+  const session = await getServerSession();
+  const showTransferDownload = isScanView && canDownloadTransfers(session.user.permissions);
   const [templates, printers] = isScanView
     ? [[], []]
     : await Promise.all([
@@ -60,6 +67,14 @@ export default async function BatchDetailPage({
           <p className="mt-2 text-sm text-secondary">
             This page shows the batch identity, recipe execution steps, photos, notes, and traceability records linked to the QR/barcode.
           </p>
+          {showTransferDownload ? (
+            <a
+              className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+              href={`/api/inventory/transfers/export?batchNumber=${encodeURIComponent(batch.batchNumber)}`}
+            >
+              Download warehouse transfers
+            </a>
+          ) : null}
         </div>
       ) : null}
 
