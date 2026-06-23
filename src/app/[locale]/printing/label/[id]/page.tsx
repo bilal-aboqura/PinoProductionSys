@@ -82,6 +82,9 @@ export default async function LabelPrintPage({ params }: { params: Promise<{ loc
                 {payload.totalCalories ? <div><dt>Total calories</dt><dd>{payload.totalCalories} kcal</dd></div> : null}
                 {payload.costPerUnit ? <div><dt>Cost / unit</dt><dd>{payload.costPerUnit} SAR</dd></div> : null}
                 {payload.totalCost ? <div><dt>Total cost</dt><dd>{payload.totalCost} SAR</dd></div> : null}
+                {payload.sellingPrice ? <div><dt>Selling price</dt><dd>{payload.sellingPrice} SAR</dd></div> : null}
+                {payload.profit ? <div><dt>Profit</dt><dd>{payload.profit} SAR</dd></div> : null}
+                {payload.margin ? <div><dt>Margin</dt><dd>{payload.margin}%</dd></div> : null}
               </dl>
             </div>
             <div className="grid place-items-center gap-1 text-center text-[6pt]">

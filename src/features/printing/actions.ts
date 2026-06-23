@@ -59,6 +59,9 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       totalCalories: decimalToString(batch.recipeVersion.totalCalories),
       costPerUnit: decimalToString(batch.recipeVersion.costPerYieldUnit),
       totalCost: decimalToString(batch.recipeVersion.totalCost),
+      sellingPrice: decimalToString(batch.recipeVersion.sellingPriceSnapshot),
+      profit: decimalToString(batch.recipeVersion.profitAmountSnapshot),
+      margin: decimalToString(batch.recipeVersion.profitMarginSnapshot),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };
@@ -86,6 +89,9 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       totalCalories: decimalToString(container.batch.recipeVersion.totalCalories),
       costPerUnit: decimalToString(container.batch.recipeVersion.costPerYieldUnit),
       totalCost: decimalToString(container.batch.recipeVersion.totalCost),
+      sellingPrice: decimalToString(container.batch.recipeVersion.sellingPriceSnapshot),
+      profit: decimalToString(container.batch.recipeVersion.profitAmountSnapshot),
+      margin: decimalToString(container.batch.recipeVersion.profitMarginSnapshot),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };

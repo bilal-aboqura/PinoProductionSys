@@ -1,22 +1,20 @@
 import path from "node:path";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import type { PrintPayload } from "@/features/printing/types";
 
 const cairoFontPath = path.join(process.cwd(), "public", "fonts", "Cairo-Regular.ttf");
+const labelSize = 288;
 
 export async function buildProductionLabelPdf(input: {
+  payload: Omit<PrintPayload, "qrCodeImage">;
   orderNumber: string;
-  recipeName: string;
-  batchReference: string;
   labelReference: string;
-  producedQuantity: string;
-  yieldUnit: string;
   completedAt: string;
-  traceUrl: string;
 }) {
-  const doc = new PDFDocument({ margin: 20, size: [288, 432], bufferPages: false, font: cairoFontPath });
+  const doc = new PDFDocument({ margin: 0, size: [labelSize, labelSize], bufferPages: false, font: cairoFontPath });
   const chunks: Buffer[] = [];
-  const qrBuffer = await QRCode.toBuffer(input.traceUrl, { errorCorrectionLevel: "M", margin: 1, width: 180 });
+  const qrBuffer = await QRCode.toBuffer(input.payload.qrCodeData, { errorCorrectionLevel: "M", margin: 1, width: 180 });
 
   doc.on("data", (chunk: Buffer) => chunks.push(chunk));
   const done = new Promise<Buffer>((resolve, reject) => {
@@ -24,32 +22,69 @@ export async function buildProductionLabelPdf(input: {
     doc.on("error", reject);
   });
 
-  doc.roundedRect(16, 16, 256, 400, 8).stroke("#332820");
-  doc.rect(16, 16, 256, 54).fill("#A14323");
-  doc.fillColor("#FFFFFF").fontSize(15).text("Pino Production Label", 28, 29, { width: 232, align: "center" });
-  doc.fontSize(8).text("Unified traceability label", 28, 50, { width: 232, align: "center" });
-
-  labelRow(doc, "Order", input.orderNumber, 28, 82);
-  labelRow(doc, "Batch", input.batchReference, 28, 113);
-  labelRow(doc, "Label", input.labelReference, 28, 144);
-
-  doc.fillColor("#665936").fontSize(8).text("Recipe", 28, 177);
-  doc.fillColor("#332820").fontSize(12).text(input.recipeName, 28, 190, { width: 232, height: 32, ellipsis: true });
-
-  labelRow(doc, "Produced Quantity", `${input.producedQuantity} ${input.yieldUnit}`, 28, 230);
-  labelRow(doc, "Completed At", input.completedAt, 28, 260);
-
-  doc.image(qrBuffer, 92, 295, { width: 104, height: 104 });
-  doc.fillColor("#332820").fontSize(8).text("Scan for recipe steps, photos, notes, and traceability", 28, 400, {
-    width: 232,
-    align: "center"
-  });
-
+  renderThermalLabel(doc, input, qrBuffer);
   doc.end();
   return done;
 }
 
-function labelRow(doc: PDFKit.PDFDocument, label: string, value: string, x: number, y: number) {
-  doc.fillColor("#665936").fontSize(8).text(label, x, y, { width: 92 });
-  doc.fillColor("#332820").fontSize(11).text(value || "Not recorded", x, y + 13, { width: 232, ellipsis: true });
+function renderThermalLabel(doc: PDFKit.PDFDocument, input: {
+  payload: Omit<PrintPayload, "qrCodeImage">;
+  orderNumber: string;
+  labelReference: string;
+  completedAt: string;
+}, qrBuffer: Buffer) {
+  const payload = input.payload;
+  doc.rect(10, 10, 268, 268).stroke("#111111");
+
+  doc.fillColor("#000000").fontSize(7).font(cairoFontPath).text(payload.subtitle ?? "BATCH LABEL", 20, 22, { width: 118 });
+  doc.fontSize(13).text(payload.title, 20, 34, { width: 122, height: 20, ellipsis: true });
+
+  const rows = [
+    ["Batch", payload.batchNumber],
+    ["Order", input.orderNumber],
+    ["Label", input.labelReference],
+    ["Warehouse", payload.warehouseName],
+    ["Quantity", payload.quantity && payload.unit ? `${payload.quantity} ${payload.unit}` : payload.quantity],
+    ["Produced", formatDate(payload.productionDate)],
+    ["Expiry", formatDate(payload.expiryDate)],
+    ["Serving", payload.servingSize],
+    ["Calories / serving", suffix(payload.caloriesPerServing, "kcal")],
+    ["Calories / unit", suffix(payload.caloriesPerUnit, "kcal")],
+    ["Total calories", suffix(payload.totalCalories, "kcal")],
+    ["Cost / unit", suffix(payload.costPerUnit, "SAR")],
+    ["Total cost", suffix(payload.totalCost, "SAR")],
+    ["Selling price", suffix(payload.sellingPrice, "SAR")],
+    ["Profit", suffix(payload.profit, "SAR")],
+    ["Margin", suffix(payload.margin, "%")]
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+
+  let y = 61;
+  for (const [label, value] of rows) {
+    if (y > 242) break;
+    doc.fontSize(6.2).fillColor("#000000").text(label, 20, y, { width: 66, height: 9 });
+    doc.fontSize(6.8).text(value, 20, y + 8, { width: 118, height: 11, ellipsis: true });
+    y += 20;
+  }
+
+  doc.image(qrBuffer, 153, 72, { width: 104, height: 104 });
+  doc.fontSize(4.5).fillColor("#000000").text(payload.qrCodeData, 105, 262, { width: 162, align: "center", ellipsis: true });
+
+  if (payload.storageInstructions) {
+    doc.fontSize(5.2).fillColor("#000000").text(`Storage: ${payload.storageInstructions}`, 153, 184, {
+      width: 104,
+      height: 34,
+      ellipsis: true
+    });
+  }
+  if (input.completedAt) {
+    doc.fontSize(5.2).text(`Completed: ${input.completedAt}`, 153, 222, { width: 104, height: 10, ellipsis: true });
+  }
+}
+
+function formatDate(value?: string) {
+  return value ? new Date(value).toLocaleDateString() : undefined;
+}
+
+function suffix(value: string | undefined, unit: string) {
+  return value ? `${value} ${unit}` : undefined;
 }
