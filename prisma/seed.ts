@@ -244,7 +244,7 @@ async function main() {
     {
       key: "general_preferences",
       description: "Company localization and date defaults",
-      value: { companyName: "Pino Restaurant", companyLogoUrl: "/images/logo.png", timeZone: "Africa/Cairo", dateFormat: "YYYY-MM-DD", defaultLanguage: "ar" }
+      value: { companyName: "Pino Restaurant", companyLogoUrl: "/images/logo.png", timeZone: "Africa/Cairo", dateFormat: "YYYY-MM-DD", defaultLanguage: "ar", currencyCode: "SAR" }
     },
     {
       key: "qr_config",

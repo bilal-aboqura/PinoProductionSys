@@ -40,7 +40,7 @@ export async function getRecipeCalculationPreview(input: {
   | {
       success: true;
       data: {
-        currency: "EGP";
+        currency: "SAR";
         totalCost: string;
         totalCalories: string;
         costPerYieldUnit: string | null;

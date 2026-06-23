@@ -21,6 +21,7 @@ export type GeneralPreferences = {
   timeZone: string;
   dateFormat: string;
   defaultLanguage: "ar" | "en";
+  currencyCode: "SAR";
 };
 
 export type QrConfig = {

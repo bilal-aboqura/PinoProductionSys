@@ -251,6 +251,7 @@
     "timeZone": "Time zone",
     "dateFormat": "Date format",
     "defaultLanguage": "Default language",
+    "currency": "Currency",
     "arabic": "Arabic",
     "english": "English",
     "qrCodes": "QR codes",

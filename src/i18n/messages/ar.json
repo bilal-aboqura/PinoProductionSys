@@ -251,6 +251,7 @@
     "timeZone": "المنطقة الزمنية",
     "dateFormat": "تنسيق التاريخ",
     "defaultLanguage": "اللغة الافتراضية",
+    "currency": "العملة",
     "arabic": "العربية",
     "english": "الإنجليزية",
     "qrCodes": "رموز QR",

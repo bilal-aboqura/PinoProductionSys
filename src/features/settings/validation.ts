@@ -41,7 +41,8 @@ export const generalPreferencesSchema = z.object({
   companyLogoUrl: z.string().trim().max(300).optional().nullable(),
   timeZone: z.string().trim().min(3).max(80),
   dateFormat: z.enum(["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"]),
-  defaultLanguage: z.enum(["ar", "en"])
+  defaultLanguage: z.enum(["ar", "en"]),
+  currencyCode: z.literal("SAR")
 });
 
 export const qrConfigSchema = z.object({

@@ -10,5 +10,6 @@ test.describe("settings preferences", () => {
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
     await expect(page.locator("input[name='lowStockThresholdPercent']")).toBeVisible();
     await expect(page.locator("select[name='defaultLanguage']")).toBeVisible();
+    await expect(page.locator("select[name='currencyCode']")).toHaveValue("SAR");
   });
 });

@@ -54,7 +54,8 @@ export function SettingsPreferencesForm({ locale, settings, canManage }: { local
                 companyLogoUrl: formData.get("companyLogoUrl"),
                 timeZone: formData.get("timeZone"),
                 dateFormat: formData.get("dateFormat"),
-                defaultLanguage: formData.get("defaultLanguage")
+                defaultLanguage: formData.get("defaultLanguage"),
+                currencyCode: formData.get("currencyCode")
               }),
               saveSystemSetting("qr_config", {
                 qrEnabled: formData.get("qrEnabled") === "true",
@@ -90,6 +91,11 @@ export function SettingsPreferencesForm({ locale, settings, canManage }: { local
         <label className="grid gap-1 text-sm font-semibold text-secondary">{t("defaultLanguage")}
           <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="defaultLanguage" defaultValue={String(general.defaultLanguage ?? "ar")} disabled={!canManage}>
             <option value="ar">{t("arabic")}</option><option value="en">{t("english")}</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold text-secondary">{t("currency")}
+          <select className="rounded-md border px-3 py-2 font-normal text-foreground" name="currencyCode" defaultValue={String(general.currencyCode ?? "SAR")} disabled={!canManage}>
+            <option value="SAR">Saudi Riyal (SAR)</option>
           </select>
         </label>
         <label className="grid gap-1 text-sm font-semibold text-secondary">{t("qrCodes")}
