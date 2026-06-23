@@ -54,6 +54,9 @@ export default async function InventoryPage({
           </div>
           <div className="flex flex-wrap gap-2">
             <PrintPageButton label={t("printSummary")} />
+            <Link href={`/${locale}/reports`}>
+              <Button variant="secondary">{t("reports")}</Button>
+            </Link>
             <Link href={`/${locale}/inventory/items`}>
               <Button variant="secondary">{t("catalog")}</Button>
             </Link>

@@ -1,4 +1,4 @@
-import type { BatchStatus, DisposalReason, LabelTemplate } from "@prisma/client";
+import type { BatchStatus, DisposalReason, LabelTemplate, ProductionOrderStatus } from "@prisma/client";
 
 export type BatchErrorCode = "UNAUTHORIZED" | "FORBIDDEN" | "VALIDATION" | "NOT_FOUND" | "CONFLICT" | "INTERNAL";
 
@@ -63,6 +63,48 @@ export type BatchTraceability = BatchListItem & {
     version: number;
     storageInstructions?: string | null;
   };
+  productionOrder?: {
+    id: string;
+    orderNumber: string;
+    status: ProductionOrderStatus;
+    createdAt: string;
+    startedAt: string | null;
+    completedAt: string | null;
+    durationSeconds: number | null;
+    creationNotes: string | null;
+    createdByName: string;
+    assignedToName: string | null;
+    completedByName: string | null;
+  };
+  productionSteps?: {
+    id: string;
+    stepNumber: number;
+    title: string;
+    instructions: string;
+    estimatedMinutes: number | null;
+    requiresPhoto: boolean;
+    requiresNotes: boolean;
+    requiresQuantity: boolean;
+    isCompleted: boolean;
+    completedByName: string | null;
+    startedAt: string | null;
+    completedAt: string | null;
+    confirmedQuantity: string | null;
+    confirmedUnit: string | null;
+    photos: {
+      id: string;
+      url: string;
+      mimeType: string;
+      uploadedByName: string;
+      uploadedAt: string;
+    }[];
+    notes: {
+      id: string;
+      content: string;
+      addedByName: string;
+      addedAt: string;
+    }[];
+  }[];
   containers: {
     id: string;
     containerNumber: string;

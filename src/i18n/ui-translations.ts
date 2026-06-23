@@ -18,6 +18,20 @@ const catalog = new Map<string, string>();
 collectParallelMessages(enMessages, arMessages, catalog);
 
 const legacyArabic: Record<string, string> = {
+  "Saudi Riyal (SAR)": "الريال السعودي (SAR)",
+  "SAR Ã‚Â·": "ر.س ·",
+  "Production Order": "أمر الإنتاج",
+  "Scan-ready recipe execution details for order": "تفاصيل تنفيذ الوصفة الجاهزة للمسح للأمر",
+  "Created By": "أنشأه",
+  "Completed By": "أكمله",
+  "Duration": "المدة",
+  "Creation Notes": "ملاحظات الإنشاء",
+  "Recipe Steps, Photos & Notes": "خطوات الوصفة والصور والملاحظات",
+  "This is the traceability view opened by scanning the label QR/barcode.": "هذا عرض التتبع الذي يفتح عند مسح QR/الباركود على الملصق.",
+  "Quantity required": "الكمية مطلوبة",
+  "Estimated": "المدة المتوقعة",
+  "Confirmed Quantity": "الكمية المؤكدة",
+  "Photos": "الصور",
   "Cost / base": "التكلفة / الوحدة الأساسية",
   "Calories / base": "السعرات / الوحدة الأساسية",
   "New effective cost &amp; calorie reference": "مرجع جديد للتكلفة والسعرات بتاريخ سريان",
@@ -434,6 +448,8 @@ const legacyArabic: Record<string, string> = {
 };
 
 for (const [english, arabic] of Object.entries(legacyArabic)) catalog.set(english, arabic);
+catalog.set("SAR \u00C2\u00B7", "ر.س ·");
+catalog.set("SAR \u00B7", "ر.س ·");
 
 const enumArabic: Record<string, string> = {
   PENDING_UNASSIGNED: "قيد الانتظار دون تعيين",

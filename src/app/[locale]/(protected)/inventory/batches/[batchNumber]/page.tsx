@@ -10,6 +10,15 @@ import { EvidenceUploader } from "../_components/EvidenceUploader";
 import { LabelModal } from "../_components/LabelModal";
 import { SplitModal } from "../_components/SplitModal";
 
+function formatDuration(seconds: number | null) {
+  if (!seconds) return "Not recorded";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+}
+
 export default async function BatchDetailPage({ params }: { params: Promise<{ locale: string; batchNumber: string }> }) {
   const { locale, batchNumber } = await params;
   let result;
@@ -90,6 +99,123 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
               <div className="text-xs font-semibold uppercase text-secondary">Storage</div>
               <div className="font-semibold">{batch.recipeDetails.storageInstructions ?? "Default recipe storage"}</div>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {batch.productionOrder ? (
+        <div className="rounded-md border bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Production Order</h2>
+              <p className="mt-1 text-sm text-secondary">
+                Scan-ready recipe execution details for order {batch.productionOrder.orderNumber}
+              </p>
+            </div>
+            <Badge>{batch.productionOrder.status}</Badge>
+          </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs font-semibold uppercase text-secondary">Created By</dt>
+              <dd className="mt-1 font-semibold">{batch.productionOrder.createdByName}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase text-secondary">Assigned To</dt>
+              <dd className="mt-1 font-semibold">{batch.productionOrder.assignedToName ?? "Not assigned"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase text-secondary">Completed By</dt>
+              <dd className="mt-1 font-semibold">{batch.productionOrder.completedByName ?? "Not completed"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-semibold uppercase text-secondary">Duration</dt>
+              <dd className="mt-1 font-semibold">{formatDuration(batch.productionOrder.durationSeconds)}</dd>
+            </div>
+          </dl>
+          {batch.productionOrder.creationNotes ? (
+            <div className="mt-4 rounded-md border bg-surface-subtle p-3 text-sm">
+              <div className="font-semibold">Creation Notes</div>
+              <p className="mt-1 whitespace-pre-wrap text-secondary">{batch.productionOrder.creationNotes}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {batch.productionSteps?.length ? (
+        <div className="rounded-md border bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-bold">Recipe Steps, Photos & Notes</h2>
+          <p className="mt-1 text-sm text-secondary">
+            This is the traceability view opened by scanning the label QR/barcode.
+          </p>
+          <div className="mt-4 grid gap-4">
+            {batch.productionSteps.map((step) => (
+              <article key={step.id} className="rounded-lg border p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-secondary">Step {step.stepNumber}</div>
+                    <h3 className="mt-1 text-lg font-bold">{step.title}</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge>{step.isCompleted ? "Completed" : "Pending"}</Badge>
+                    {step.requiresPhoto ? <Badge className="bg-surface-subtle">Photo required</Badge> : null}
+                    {step.requiresNotes ? <Badge className="bg-surface-subtle">Notes required</Badge> : null}
+                    {step.requiresQuantity ? <Badge className="bg-surface-subtle">Quantity required</Badge> : null}
+                  </div>
+                </div>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-secondary">{step.instructions}</p>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                  <div>
+                    <dt className="font-semibold text-secondary">Estimated</dt>
+                    <dd>{step.estimatedMinutes ? `${step.estimatedMinutes} min` : "Not set"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-secondary">Completed By</dt>
+                    <dd>{step.completedByName ?? "Not completed"}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-secondary">Confirmed Quantity</dt>
+                    <dd>{step.confirmedQuantity ? `${step.confirmedQuantity} ${step.confirmedUnit ?? batch.unit}` : "Not recorded"}</dd>
+                  </div>
+                </dl>
+
+                {step.photos.length ? (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold">Photos</h4>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {step.photos.map((photo) => (
+                        <figure key={photo.id} className="overflow-hidden rounded-md border bg-surface-subtle">
+                          {photo.url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={photo.url} alt={`Evidence for step ${step.stepNumber}`} className="h-44 w-full object-cover" />
+                          ) : (
+                            <div className="flex h-44 items-center justify-center text-sm text-secondary">Photo unavailable</div>
+                          )}
+                          <figcaption className="p-2 text-xs text-secondary">
+                            {photo.uploadedByName} · {new Date(photo.uploadedAt).toLocaleString()}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {step.notes.length ? (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold">Notes</h4>
+                    <div className="mt-2 grid gap-2">
+                      {step.notes.map((note) => (
+                        <div key={note.id} className="rounded-md border bg-surface-subtle p-3 text-sm">
+                          <p className="whitespace-pre-wrap">{note.content}</p>
+                          <div className="mt-2 text-xs text-secondary">
+                            {note.addedByName} · {new Date(note.addedAt).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            ))}
           </div>
         </div>
       ) : null}
