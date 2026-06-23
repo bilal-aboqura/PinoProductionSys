@@ -59,7 +59,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const label = order.downstreamActions.find((action) => action.actionType === "LABEL_PRINT");
   const batchReference = order.productionBatch?.batchNumber ?? batch?.referenceId ?? `BATCH-${order.orderNumber}`;
   const traceUrl = order.productionBatch
-    ? `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(order.productionBatch.batchNumber)}`
+    ? `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(order.productionBatch.batchNumber)}?view=scan`
     : `${publicBaseUrl()}/production-orders/${encodeURIComponent(order.id)}`;
   const payload: Omit<PrintPayload, "qrCodeImage"> = {
     title: order.recipeNameSnapshot,

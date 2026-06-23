@@ -41,7 +41,7 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       include: { recipe: true, recipeVersion: true, warehouse: true }
     });
     if (!batch) throw new Error("NOT_FOUND");
-    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(batch.batchNumber)}`;
+    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(batch.batchNumber)}?view=scan`;
     return {
       title: batch.recipe.nameEn || batch.recipe.nameAr,
       subtitle: "Batch Label",
@@ -73,7 +73,7 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       include: { batch: { include: { recipe: true, recipeVersion: true, warehouse: true } } }
     });
     if (!container) throw new Error("NOT_FOUND");
-    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(container.batch.batchNumber)}?container=${encodeURIComponent(container.containerNumber)}`;
+    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(container.batch.batchNumber)}?view=scan&container=${encodeURIComponent(container.containerNumber)}`;
     return {
       title: container.batch.recipe.nameEn || container.batch.recipe.nameAr,
       subtitle: "Container Label",

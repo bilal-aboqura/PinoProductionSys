@@ -19,8 +19,16 @@ function formatDuration(seconds: number | null) {
   return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
-export default async function BatchDetailPage({ params }: { params: Promise<{ locale: string; batchNumber: string }> }) {
+export default async function BatchDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string; batchNumber: string }>;
+  searchParams?: Promise<{ view?: string; container?: string }>;
+}) {
   const { locale, batchNumber } = await params;
+  const query = await searchParams;
+  const isScanView = query?.view === "scan";
   let result;
   try {
     result = await getBatchTraceabilityAction({ batchNumber: decodeURIComponent(batchNumber) });
@@ -32,22 +40,35 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
   }
   if (!result.success) notFound();
   const batch = result.data;
-  const [templates, printers] = await Promise.all([
-    getPrintTemplates(true).catch(() => []),
-    getPrinters(true).catch(() => [])
-  ]);
+  const [templates, printers] = isScanView
+    ? [[], []]
+    : await Promise.all([
+        getPrintTemplates(true).catch(() => []),
+        getPrinters(true).catch(() => [])
+      ]);
 
   return (
     <section className="logical-container space-y-6 py-8">
-      <Link className="text-sm font-semibold text-primary print-hidden" href={`/${locale}/inventory/batches`}>
+      {!isScanView ? <Link className="text-sm font-semibold text-primary print-hidden" href={`/${locale}/inventory/batches`}>
         Back to batches
-      </Link>
+      </Link> : null}
+
+      {isScanView ? (
+        <div className="rounded-md border border-primary/20 bg-primary/10 p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase text-primary">Scanned Label</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-normal">{batch.productName}</h1>
+          <p className="mt-2 text-sm text-secondary">
+            This page shows the batch identity, recipe execution steps, photos, notes, and traceability records linked to the QR/barcode.
+          </p>
+        </div>
+      ) : null}
 
       <div className="rounded-md border bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-normal">{batch.batchNumber}</h1>
-            <p className="mt-1 text-secondary">{batch.productName}</p>
+            <p className="text-xs font-semibold uppercase text-secondary">Batch Number</p>
+            <h2 className="text-3xl font-bold tracking-normal">{batch.batchNumber}</h2>
+            {!isScanView ? <p className="mt-1 text-secondary">{batch.productName}</p> : null}
           </div>
           <Badge>{batch.status}</Badge>
         </div>
@@ -75,13 +96,17 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </dl>
       </div>
 
-      <PrintBatchButton batchId={batch.id} locale={locale} templates={templates} printers={printers} />
-      <LabelModal batchId={batch.id} containers={batch.containers.map((container) => ({ id: container.id, containerNumber: container.containerNumber }))} />
+      {!isScanView ? (
+        <>
+          <PrintBatchButton batchId={batch.id} locale={locale} templates={templates} printers={printers} />
+          <LabelModal batchId={batch.id} containers={batch.containers.map((container) => ({ id: container.id, containerNumber: container.containerNumber }))} />
+        </>
+      ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2 print-hidden">
+      {!isScanView ? <div className="grid gap-4 lg:grid-cols-2 print-hidden">
         <SplitModal batchId={batch.id} disabled={batch.containers.length > 0} />
         <DisposalModal batchId={batch.id} containers={batch.containers.map((container) => ({ id: container.id, containerNumber: container.containerNumber }))} />
-      </div>
+      </div> : null}
 
       {batch.recipeDetails ? (
         <div className="rounded-md border bg-white p-5 shadow-sm">
@@ -107,9 +132,9 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         <div className="rounded-md border bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold">Production Order</h2>
+              <h2 className="text-xl font-bold">{isScanView ? "Recipe Execution Summary" : "Production Order"}</h2>
               <p className="mt-1 text-sm text-secondary">
-                Scan-ready recipe execution details for order {batch.productionOrder.orderNumber}
+                {isScanView ? "What was produced, who completed it, and how long it took." : "Scan-ready recipe execution details for order"} {batch.productionOrder.orderNumber}
               </p>
             </div>
             <Badge>{batch.productionOrder.status}</Badge>
@@ -143,9 +168,9 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
 
       {batch.productionSteps?.length ? (
         <div className="rounded-md border bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold">Recipe Steps, Photos & Notes</h2>
+          <h2 className="text-xl font-bold">{isScanView ? "Recipe Instructions, Photos & Notes" : "Recipe Steps, Photos & Notes"}</h2>
           <p className="mt-1 text-sm text-secondary">
-            This is the traceability view opened by scanning the label QR/barcode.
+            {isScanView ? "Follow each step below. Photos and notes are the recorded production evidence." : "This is the traceability view opened by scanning the label QR/barcode."}
           </p>
           <div className="mt-4 grid gap-4">
             {batch.productionSteps.map((step) => (
@@ -220,7 +245,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </div>
       ) : null}
 
-      <div className="rounded-md border bg-white p-5 shadow-sm">
+      {!isScanView || batch.containers.length > 0 ? <div className="rounded-md border bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold">Containers</h2>
         <div className="mt-3 grid gap-2">
           {batch.containers.map((container) => (
@@ -233,10 +258,10 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
           ))}
           {batch.containers.length === 0 ? <p className="text-sm text-secondary">No container splits recorded.</p> : null}
         </div>
-      </div>
+      </div> : null}
 
       <div className="rounded-md border bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold">Traceability Timeline</h2>
+        <h2 className="text-xl font-bold">{isScanView ? "Batch Status Timeline" : "Traceability Timeline"}</h2>
         <div className="mt-3 grid gap-2">
           {batch.statusHistory.map((item) => (
             <div key={item.id} className="rounded-md border p-3">
@@ -254,7 +279,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </div>
       </div>
 
-      {batch.printHistory ? (
+      {!isScanView && batch.printHistory ? (
         <div className="rounded-md border bg-white p-5 shadow-sm print-hidden">
           <h2 className="text-xl font-bold">Print History</h2>
           <div className="mt-3 grid gap-2">
@@ -268,7 +293,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </div>
       ) : null}
 
-      {batch.disposals ? (
+      {!isScanView && batch.disposals ? (
         <div className="rounded-md border bg-white p-5 shadow-sm print-hidden">
           <h2 className="text-xl font-bold">Disposals</h2>
           <div className="mt-3 grid gap-2">
@@ -282,7 +307,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </div>
       ) : null}
 
-      <div className="print-hidden">
+      {!isScanView ? <div className="print-hidden">
         <EvidenceUploader batchId={batch.id} />
         {batch.evidence?.length ? (
           <div className="mt-4 rounded-md border bg-white p-5 shadow-sm">
@@ -296,7 +321,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
             </div>
           </div>
         ) : null}
-      </div>
+      </div> : null}
     </section>
   );
 }

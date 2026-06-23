@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 
 export function buildTraceabilityUrl(batchNumber: string, locale = "ar", baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "") {
-  const path = `/${locale}/inventory/batches/${encodeURIComponent(batchNumber)}`;
+  const path = `/${locale}/inventory/batches/${encodeURIComponent(batchNumber)}?view=scan`;
   return baseUrl ? new URL(path, baseUrl).toString() : path;
 }
 
