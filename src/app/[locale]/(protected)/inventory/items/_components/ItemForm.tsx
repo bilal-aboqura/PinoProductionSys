@@ -251,7 +251,7 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
                     </Field>
                     <div className="grid content-start gap-1.5">
                       <span className="text-sm font-semibold text-secondary">{labels.costCurrency}</span>
-                      <div className="flex min-h-10 items-center rounded-md border bg-accent/15 px-3 py-2 text-sm font-semibold">EGP</div>
+                      <div className="flex min-h-10 items-center rounded-md border bg-accent/15 px-3 py-2 text-sm font-semibold">SAR</div>
                     </div>
                   </section>
 
@@ -299,7 +299,7 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
                       <dl className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-md bg-white p-3 shadow-sm">
                           <dt className="text-xs font-semibold text-secondary">{labels.costLabel}</dt>
-                          <dd className="mt-1 font-bold">{item.currentReferenceProfile.normalizedCost} EGP / {item.currentReferenceProfile.costReferenceUnit}</dd>
+                          <dd className="mt-1 font-bold">{item.currentReferenceProfile.normalizedCost} SAR / {item.currentReferenceProfile.costReferenceUnit}</dd>
                         </div>
                         <div className="rounded-md bg-white p-3 shadow-sm">
                           <dt className="text-xs font-semibold text-secondary">{labels.caloriesLabel}</dt>
@@ -314,7 +314,7 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
                         {item?.referenceProfiles.length ? item.referenceProfiles.map((profile) => (
                           <div className="rounded-md border bg-white px-3 py-2" key={profile.id}>
                             <time className="font-semibold">{new Date(profile.effectiveAt).toLocaleString(locale)}</time>
-                            <span className="block mt-1">{profile.costReferenceValue} EGP / {profile.costReferenceQuantity} {profile.costReferenceUnit}; {profile.calorieValue} kcal / {profile.calorieReferenceQuantity} {profile.calorieReferenceUnit}</span>
+                            <span className="block mt-1">{profile.costReferenceValue} SAR / {profile.costReferenceQuantity} {profile.costReferenceUnit}; {profile.calorieValue} kcal / {profile.calorieReferenceQuantity} {profile.calorieReferenceUnit}</span>
                           </div>
                         )) : labels.noHistory}
                       </div>

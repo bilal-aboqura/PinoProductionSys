@@ -56,7 +56,7 @@ describe("item reference import service", () => {
       costReferenceQuantity: 100,
       costReferenceUnit: "GRAM",
       costReferenceValue: 25,
-      costCurrency: "EGP",
+      costCurrency: "SAR",
       calorieValue: 112,
       calorieReferenceQuantity: 100,
       calorieReferenceUnit: "GRAM",

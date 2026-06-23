@@ -27,11 +27,11 @@ export default async function RecipeVersionDetailPage({
       <div className="grid gap-3 rounded-md border bg-accent/20 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <div><b>Total cost:</b> {snapshot.calculations.totalCost} {snapshot.calculations.currency}</div>
         <div><b>Total calories:</b> {snapshot.calculations.totalCalories} kcal</div>
-        <div><b>Cost / yield:</b> {snapshot.calculations.costPerYieldUnit ?? "—"}</div>
-        <div><b>Calories / serving:</b> {snapshot.calculations.caloriesPerServing ?? "—"}</div>
-        <div><b>Selling price:</b> {snapshot.calculations.sellingPriceSnapshot ?? "—"}</div>
-        <div><b>Profit:</b> {snapshot.calculations.profitAmountSnapshot ?? "—"}</div>
-        <div><b>Margin:</b> {snapshot.calculations.profitMarginSnapshot ? `${snapshot.calculations.profitMarginSnapshot}%` : "—"}</div>
+        <div><b>Cost / yield:</b> {snapshot.calculations.costPerYieldUnit ?? "â€”"}</div>
+        <div><b>Calories / serving:</b> {snapshot.calculations.caloriesPerServing ?? "â€”"}</div>
+        <div><b>Selling price:</b> {snapshot.calculations.sellingPriceSnapshot ?? "â€”"}</div>
+        <div><b>Profit:</b> {snapshot.calculations.profitAmountSnapshot ?? "â€”"}</div>
+        <div><b>Margin:</b> {snapshot.calculations.profitMarginSnapshot ? `${snapshot.calculations.profitMarginSnapshot}%` : "â€”"}</div>
       </div>
       <div>
         <h1 className="font-cairo text-3xl font-bold">{snapshot.nameAr}</h1>
@@ -51,7 +51,7 @@ export default async function RecipeVersionDetailPage({
           {snapshot.ingredients.map((ingredient) => (
             <div key={ingredient.id} className="rounded-md border bg-surface p-3">
               {ingredient.inventoryItemNameEn} <Badge>{ingredient.quantity} {ingredient.unit}</Badge>
-              <span className="ms-3 text-sm text-secondary">{ingredient.lineCost} EGP · {ingredient.lineCalories} kcal</span>
+              <span className="ms-3 text-sm text-secondary">{ingredient.lineCost} SAR Â· {ingredient.lineCalories} kcal</span>
             </div>
           ))}
         </div>
@@ -70,4 +70,3 @@ export default async function RecipeVersionDetailPage({
     </section>
   );
 }
-

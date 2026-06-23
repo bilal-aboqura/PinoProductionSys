@@ -74,7 +74,7 @@ function renderTable(doc: PDFKit.PDFDocument, columns: ReportColumn[], rows: Rep
 
 function formatReportValue(key: string, value: ReportRow[string]) {
   if (value == null) return "";
-  if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(key)) return `${value} EGP`;
+  if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(key)) return `${value} SAR`;
   if (["totalCalories", "caloriesPerUnit"].includes(key)) return `${value} kcal`;
   if (key === "margin") return `${value}%`;
   return String(value);

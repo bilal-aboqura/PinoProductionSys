@@ -75,7 +75,7 @@ const arabicErrors: Record<string, string> = {
   "Reference Unit is not allowed.": "الوحدة المرجعية غير مسموح بها.",
   "Cost must be numeric.": "يجب أن تكون التكلفة رقمًا.",
   "Cost must be greater than or equal to 0.": "يجب أن تكون التكلفة أكبر من أو تساوي صفرًا.",
-  "Cost Currency must be EGP.": "يجب أن تكون عملة التكلفة EGP.",
+  "Cost Currency must be SAR.": "يجب أن تكون عملة التكلفة SAR.",
   "Calories must be numeric.": "يجب أن تكون السعرات رقمًا.",
   "Calories must be greater than or equal to 0.": "يجب أن تكون السعرات أكبر من أو تساوي صفرًا.",
   "Calorie Reference Quantity must be numeric.": "يجب أن تكون الكمية المرجعية للسعرات رقمًا.",

@@ -91,7 +91,7 @@ export default async function InventoryItemsPage({
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>
-                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} EGP / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
+                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} SAR / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCalories} kcal / ${item.currentReferenceProfile.calorieReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.isActive ? <Badge>{common("active")}</Badge> : <Badge className="bg-muted/20">{common("inactive")}</Badge>}</TableCell>
                   {canManage ? (

@@ -55,7 +55,7 @@ export type ItemReferenceImportRow = {
   costReferenceQuantity: number;
   costReferenceUnit: Unit;
   costReferenceValue: number;
-  costCurrency: "EGP";
+  costCurrency: "SAR";
   calorieValue: number;
   calorieReferenceQuantity: number;
   calorieReferenceUnit: Unit;
@@ -120,7 +120,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     1,
     "KG",
     50,
-    "EGP",
+    "SAR",
     364,
     100,
     "GRAM",
@@ -204,10 +204,10 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     sheet.getCell(row, 11).dataValidation = {
       type: "list",
       allowBlank: false,
-      formulae: ['"EGP"'],
+      formulae: ['"SAR"'],
       showErrorMessage: true,
       errorTitle: "Invalid currency",
-      error: "The supported currency is EGP."
+      error: "The supported currency is SAR."
     };
     sheet.getCell(row, 15).dataValidation = {
       type: "date",
@@ -424,7 +424,7 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
     if (!ITEM_REFERENCE_UNITS.includes(costReferenceUnit as Unit)) add(headerByField.costReferenceUnit, "Reference Unit is not allowed.");
     if (costReferenceValue == null) add(headerByField.costReferenceValue, "Cost must be numeric.");
     else if (costReferenceValue < 0) add(headerByField.costReferenceValue, "Cost must be greater than or equal to 0.");
-    if (costCurrency !== "EGP") add(headerByField.costCurrency, "Cost Currency must be EGP.");
+    if (costCurrency !== "SAR") add(headerByField.costCurrency, "Cost Currency must be SAR.");
     if (calorieValue == null) add(headerByField.calorieValue, "Calories must be numeric.");
     else if (calorieValue < 0) add(headerByField.calorieValue, "Calories must be greater than or equal to 0.");
     if (calorieReferenceQuantity == null) add(headerByField.calorieReferenceQuantity, "Calorie Reference Quantity must be numeric.");
@@ -447,7 +447,7 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
       costReferenceQuantity: costReferenceQuantity!,
       costReferenceUnit: costReferenceUnit as Unit,
       costReferenceValue: costReferenceValue!,
-      costCurrency: "EGP",
+      costCurrency: "SAR",
       calorieValue: calorieValue!,
       calorieReferenceQuantity: calorieReferenceQuantity!,
       calorieReferenceUnit: calorieReferenceUnit as Unit,

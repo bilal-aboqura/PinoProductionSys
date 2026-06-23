@@ -47,7 +47,7 @@ export function calculateRecipe(input: RecipeCalculationInput) {
   const profitAmount = sellingPrice && costPerYieldUnit ? sellingPrice.sub(costPerYieldUnit) : null;
   const profitMargin = sellingPrice?.gt(0) && profitAmount ? profitAmount.div(sellingPrice).mul(100) : null;
   return {
-    currency: input.currency ?? "EGP",
+    currency: input.currency ?? "SAR",
     lines,
     totalCost,
     totalCalories,

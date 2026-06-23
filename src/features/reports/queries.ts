@@ -187,7 +187,7 @@ export function columnsForReport(reportType: ReportType): ReportColumn[] {
   if (reportType.startsWith("RECIPE")) return [
     { key: "recipe", label: "Recipe" },
     { key: "version", label: "Version", align: "right" },
-    { key: "totalCost", label: "Total Cost (EGP)", align: "right" },
+    { key: "totalCost", label: "Total Cost (SAR)", align: "right" },
     { key: "totalCalories", label: "Total Calories", align: "right" },
     { key: "costPerUnit", label: "Cost / Yield", align: "right" },
     { key: "caloriesPerUnit", label: "Calories / Yield", align: "right" },

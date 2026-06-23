@@ -39,9 +39,9 @@ describe("item reference Excel template", () => {
 describe("item reference Excel parser", () => {
   it("parses and sorts valid rows by item name then effective date", async () => {
     const buffer = await workbookBuffer([
-      ["SUGAR", "Sugar", "", "", "", "", "", 1, "KG", 40, "EGP", 387, 100, "GRAM", "2026-06-02 09:00"],
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "EGP", 364, 100, "GRAM", "2026-06-03 09:00"],
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 45, "EGP", 364, 100, "GRAM", "2026-06-01 09:00"]
+      ["SUGAR", "Sugar", "", "", "", "", "", 1, "KG", 40, "SAR", 387, 100, "GRAM", "2026-06-02 09:00"],
+      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-03 09:00"],
+      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 45, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
     ]);
     const result = await parseItemReferenceWorkbook(buffer);
 
@@ -64,7 +64,7 @@ describe("item reference Excel parser", () => {
       { row: 2, column: "Reference Quantity", message: "Reference Quantity must be greater than 0." },
       { row: 2, column: "Reference Unit", message: "Reference Unit is not allowed." },
       { row: 2, column: "Cost", message: "Cost must be greater than or equal to 0." },
-      { row: 2, column: "Cost Currency", message: "Cost Currency must be EGP." },
+      { row: 2, column: "Cost Currency", message: "Cost Currency must be SAR." },
       { row: 2, column: "Effective Date", message: "Effective Date must use yyyy-mm-dd hh:mm or a valid Excel date." }
     ]));
   });
@@ -72,7 +72,7 @@ describe("item reference Excel parser", () => {
   it("continues to accept the original template columns for existing items", async () => {
     const legacyHeaders = ITEM_REFERENCE_HEADERS.filter((header) => !["Arabic Item Name", "Item Type", "Category", "Base Unit", "Minimum Stock"].includes(header));
     const buffer = await workbookBuffer([
-      ["FLOUR", "Flour", 1, "KG", 50, "EGP", 364, 100, "GRAM", "2026-06-01 09:00"]
+      ["FLOUR", "Flour", 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
     ], legacyHeaders);
     const result = await parseItemReferenceWorkbook(buffer);
 
@@ -82,7 +82,7 @@ describe("item reference Excel parser", () => {
 
   it("interprets Excel wall-clock dates in the configured system timezone", async () => {
     const buffer = await workbookBuffer([
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "EGP", 364, 100, "GRAM", new Date(Date.UTC(2026, 5, 23, 0, 0))]
+      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", new Date(Date.UTC(2026, 5, 23, 0, 0))]
     ]);
     const result = await parseItemReferenceWorkbook(buffer, "Africa/Cairo");
 
@@ -115,7 +115,7 @@ describe("item reference import validation", () => {
     costReferenceQuantity: 1,
     costReferenceUnit: "KG",
     costReferenceValue: 50,
-    costCurrency: "EGP",
+    costCurrency: "SAR",
     calorieValue: 364,
     calorieReferenceQuantity: 100,
     calorieReferenceUnit: "GRAM",

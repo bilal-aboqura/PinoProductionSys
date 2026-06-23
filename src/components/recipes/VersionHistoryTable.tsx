@@ -26,7 +26,7 @@ export function VersionHistoryTable({ versions, locale, recipeId }: { versions: 
               </TableCell>
               <TableCell>{version.publishedByName}</TableCell>
               <TableCell>{new Date(version.publishedAt).toLocaleString()}</TableCell>
-              <TableCell>{version.totalCost} EGP</TableCell>
+              <TableCell>{version.totalCost} SAR</TableCell>
               <TableCell>{version.totalCalories} kcal</TableCell>
               <TableCell>{version.profitMarginSnapshot ? `${version.profitMarginSnapshot}%` : "—"}</TableCell>
             </TableRow>

@@ -40,7 +40,7 @@ export async function generateExcelReport(input: {
   });
 
   input.columns.forEach((column, index) => {
-    if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(column.key)) sheet.getColumn(index + 1).numFmt = '#,##0.00 "EGP"';
+    if (["totalCost", "costPerUnit", "sellingPrice", "profit"].includes(column.key)) sheet.getColumn(index + 1).numFmt = '#,##0.00 "SAR"';
     if (["totalCalories", "caloriesPerUnit"].includes(column.key)) sheet.getColumn(index + 1).numFmt = '#,##0.00 "kcal"';
     if (column.key === "margin") sheet.getColumn(index + 1).numFmt = '0.0000"%"';
   });
