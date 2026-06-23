@@ -66,7 +66,7 @@ const arabicErrors: Record<string, string> = {
   "The workbook does not contain any data rows.": "لا يحتوي ملف Excel على صفوف بيانات.",
   "Item Code is required.": "رمز الصنف مطلوب.",
   "Item Name is required.": "اسم الصنف مطلوب.",
-  "Item Type must be RAW_MATERIAL or FINISHED_PRODUCT.": "يجب أن يكون نوع الصنف RAW_MATERIAL أو FINISHED_PRODUCT.",
+  "Item Type must be RAW_MATERIAL, TRANSFORMATION_MATERIAL, or FINISHED_PRODUCT.": "يجب أن يكون نوع الصنف RAW_MATERIAL أو TRANSFORMATION_MATERIAL أو FINISHED_PRODUCT.",
   "Base Unit is not allowed.": "الوحدة الأساسية غير مسموح بها.",
   "Minimum Stock must be numeric.": "يجب أن يكون الحد الأدنى للمخزون رقمًا.",
   "Minimum Stock must be greater than or equal to 0.": "يجب أن يكون الحد الأدنى للمخزون أكبر من أو يساوي صفرًا.",

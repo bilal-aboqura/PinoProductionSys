@@ -299,6 +299,7 @@
     "allWarehouses": "All warehouses",
     "allItemTypes": "All item types",
     "rawMaterial": "Raw Material",
+    "transformationMaterial": "Transformation Material",
     "finishedProduct": "Finished Product",
     "reconcile": "Reconcile",
     "current": "Current",

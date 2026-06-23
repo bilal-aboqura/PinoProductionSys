@@ -13,6 +13,12 @@ import { ItemForm } from "./_components/ItemForm";
 import { ItemExcelActions } from "./_components/ItemExcelActions";
 import { getTranslations } from "next-intl/server";
 
+const itemTypeLabels = {
+  RAW_MATERIAL: "rawMaterial",
+  TRANSFORMATION_MATERIAL: "transformationMaterial",
+  FINISHED_PRODUCT: "finishedProduct"
+} as const;
+
 export default async function InventoryItemsPage({
   params,
   searchParams
@@ -87,7 +93,7 @@ export default async function InventoryItemsPage({
                   <TableCell className="font-semibold">{item.code}</TableCell>
                   <TableCell>{item.nameEn}</TableCell>
                   <TableCell>{item.nameAr}</TableCell>
-                  <TableCell>{item.itemType}</TableCell>
+                  <TableCell>{t(itemTypeLabels[item.itemType])}</TableCell>
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>

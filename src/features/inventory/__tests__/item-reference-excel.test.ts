@@ -80,6 +80,16 @@ describe("item reference Excel parser", () => {
     expect(result.rows[0]).toMatchObject({ nameAr: "Flour", itemType: "RAW_MATERIAL", baseUnit: "KG", minStockLevel: 0 });
   });
 
+  it("accepts transformation material as a valid item type", async () => {
+    const buffer = await workbookBuffer([
+      ["BASE", "Base Mix", "", "TRANSFORMATION_MATERIAL", "Ingredients", "KG", 0, 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
+    ]);
+    const result = await parseItemReferenceWorkbook(buffer);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]).toMatchObject({ itemType: "TRANSFORMATION_MATERIAL" });
+  });
+
   it("interprets Excel wall-clock dates in the configured system timezone", async () => {
     const buffer = await workbookBuffer([
       ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", new Date(Date.UTC(2026, 5, 23, 0, 0))]
@@ -126,6 +136,7 @@ describe("item reference import validation", () => {
     code: "FLOUR",
     nameEn: "Flour",
     nameAr: "دقيق",
+    itemType: "RAW_MATERIAL" as const,
     unit: "KG" as const,
     isActive: true,
     ingredientReferenceProfiles: []

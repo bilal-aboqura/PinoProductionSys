@@ -199,8 +199,9 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
             </Field>
             <Field id={fieldId("itemType")} label={labels.itemType} error={fieldErrors.itemType}>
               <select className={controlClass} id={fieldId("itemType")} name="itemType" required defaultValue={item?.itemType ?? "RAW_MATERIAL"} aria-invalid={Boolean(fieldErrors.itemType)} aria-describedby={describedBy("itemType")}>
-                <option value="RAW_MATERIAL">Raw Material</option>
-                <option value="FINISHED_PRODUCT">Finished Product</option>
+                <option value="RAW_MATERIAL">{locale === "ar" ? "مادة خام" : "Raw Material"}</option>
+                <option value="TRANSFORMATION_MATERIAL">{locale === "ar" ? "مادة تحويلية" : "Transformation Material"}</option>
+                <option value="FINISHED_PRODUCT">{locale === "ar" ? "منتج نهائي" : "Finished Product"}</option>
               </select>
             </Field>
             <Field id={fieldId("categoryId")} label={labels.category} error={fieldErrors.categoryId}>

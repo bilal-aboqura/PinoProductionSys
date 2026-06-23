@@ -450,6 +450,7 @@ const enumArabic: Record<string, string> = {
   EXPIRED: "منتهي الصلاحية",
   DISPOSED: "تم الإتلاف",
   RAW_MATERIAL: "مادة خام",
+  TRANSFORMATION_MATERIAL: "مادة تحويلية",
   FINISHED_PRODUCT: "منتج نهائي",
   PURCHASE: "شراء",
   PRODUCTION_CONSUMPTION: "استهلاك إنتاج",

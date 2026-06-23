@@ -1283,6 +1283,7 @@ enum ScopeType {
 
 enum ItemType {
   RAW_MATERIAL
+  TRANSFORMATION_MATERIAL
   FINISHED_PRODUCT
 }
 

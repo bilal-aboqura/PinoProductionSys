@@ -18,6 +18,7 @@ export function StockFilters({ warehouses, defaultValues = {} }: { warehouses: W
       <select className="rounded-md border px-3 py-2 text-sm" name="itemType" defaultValue={defaultValues.itemType ?? ""}>
         <option value="">{t("allItemTypes")}</option>
         <option value="RAW_MATERIAL">{t("rawMaterial")}</option>
+        <option value="TRANSFORMATION_MATERIAL">{t("transformationMaterial")}</option>
         <option value="FINISHED_PRODUCT">{t("finishedProduct")}</option>
       </select>
       <div className="flex flex-wrap items-center gap-4 text-sm">

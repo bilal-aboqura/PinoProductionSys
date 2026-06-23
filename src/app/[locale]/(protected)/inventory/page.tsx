@@ -30,7 +30,12 @@ export default async function InventoryPage({
     const balances = await getInventoryBalances({
       warehouseId: filters.warehouseId || undefined,
       search: filters.search || undefined,
-      itemType: filters.itemType === "RAW_MATERIAL" || filters.itemType === "FINISHED_PRODUCT" ? filters.itemType : undefined,
+      itemType:
+        filters.itemType === "RAW_MATERIAL" ||
+        filters.itemType === "TRANSFORMATION_MATERIAL" ||
+        filters.itemType === "FINISHED_PRODUCT"
+          ? filters.itemType
+          : undefined,
       lowStockOnly: filters.lowStockOnly === "1",
       needsReconciliationOnly: filters.needsReconciliationOnly === "1",
       page: parsePage(filters.page),

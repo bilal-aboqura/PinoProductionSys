@@ -186,10 +186,10 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     sheet.getCell(row, 4).dataValidation = {
       type: "list",
       allowBlank: true,
-      formulae: ['"RAW_MATERIAL,FINISHED_PRODUCT"'],
+      formulae: ['"RAW_MATERIAL,TRANSFORMATION_MATERIAL,FINISHED_PRODUCT"'],
       showErrorMessage: true,
       errorTitle: "Invalid item type",
-      error: "Choose RAW_MATERIAL or FINISHED_PRODUCT."
+      error: "Choose RAW_MATERIAL, TRANSFORMATION_MATERIAL, or FINISHED_PRODUCT."
     };
     if (categories.length > 0 && categories.join(",").length <= 220 && categories.every((category) => !category.includes(","))) {
       sheet.getCell(row, 5).dataValidation = {
@@ -244,7 +244,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     ? [
         "1. احذف صف المثال من ورقة Item References.",
         "2. للصنف الموجود: استخدم رمزًا واسمًا مطابقين لورقة Valid Items، ويمكن ترك أعمدة بيانات الصنف الجديدة فارغة.",
-        "3. للصنف الجديد: الفئة مطلوبة. الاسم العربي افتراضيًا يساوي اسم الصنف، والنوع RAW_MATERIAL، والوحدة الأساسية هي الوحدة المرجعية، والحد الأدنى صفر.",
+        "3. للصنف الجديد: الفئة مطلوبة. الاسم العربي افتراضيًا يساوي اسم الصنف، والنوع الافتراضي RAW_MATERIAL، ويمكن أيضًا استخدام TRANSFORMATION_MATERIAL أو FINISHED_PRODUCT، والوحدة الأساسية هي الوحدة المرجعية، والحد الأدنى صفر.",
         "4. استخدم الوحدات المتاحة فقط، واكتب التاريخ بصيغة yyyy-mm-dd hh:mm.",
         "5. تظل المراجع السابقة ثابتة؛ لا يمكن استيراد نفس الصنف وتاريخ السريان مرتين.",
         `6. الحد الأقصى هو ${ITEM_REFERENCE_MAX_ROWS} صف.`
@@ -252,7 +252,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     : [
         "1. Delete the example row from the Item References sheet.",
         "2. Existing item: match the code and name in Valid Items; the new item-detail columns may be blank.",
-        "3. New item: Category is required. Arabic name defaults to Item Name, Item Type to RAW_MATERIAL, Base Unit to Reference Unit, and Minimum Stock to 0.",
+        "3. New item: Category is required. Arabic name defaults to Item Name, Item Type defaults to RAW_MATERIAL, you may also use TRANSFORMATION_MATERIAL or FINISHED_PRODUCT, Base Unit defaults to Reference Unit, and Minimum Stock to 0.",
         "4. Use only the available units and enter dates as yyyy-mm-dd hh:mm.",
         "5. Previous references remain immutable; the same item and effective date cannot be imported twice.",
         `6. The maximum import size is ${ITEM_REFERENCE_MAX_ROWS} rows.`
@@ -415,7 +415,9 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
 
     if (!itemCode) add(headerByField.itemCode, "Item Code is required.");
     if (!itemName) add(headerByField.itemName, "Item Name is required.");
-    if (itemTypeValue !== "RAW_MATERIAL" && itemTypeValue !== "FINISHED_PRODUCT") add(headerByField.itemType, "Item Type must be RAW_MATERIAL or FINISHED_PRODUCT.");
+    if (itemTypeValue !== "RAW_MATERIAL" && itemTypeValue !== "TRANSFORMATION_MATERIAL" && itemTypeValue !== "FINISHED_PRODUCT") {
+      add(headerByField.itemType, "Item Type must be RAW_MATERIAL, TRANSFORMATION_MATERIAL, or FINISHED_PRODUCT.");
+    }
     if (!ITEM_REFERENCE_UNITS.includes(baseUnitValue as Unit)) add(headerByField.baseUnit, "Base Unit is not allowed.");
     if (minStockLevel == null) add(headerByField.minStockLevel, "Minimum Stock must be numeric.");
     else if (minStockLevel < 0) add(headerByField.minStockLevel, "Minimum Stock must be greater than or equal to 0.");

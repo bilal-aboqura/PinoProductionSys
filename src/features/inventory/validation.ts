@@ -8,7 +8,7 @@ export const createItemSchema = z.object({
   code: codeSchema,
   nameAr: z.string().trim().min(2).max(100),
   nameEn: z.string().trim().min(2).max(100),
-  itemType: z.enum(["RAW_MATERIAL", "FINISHED_PRODUCT"]),
+  itemType: z.enum(["RAW_MATERIAL", "TRANSFORMATION_MATERIAL", "FINISHED_PRODUCT"]),
   categoryId: z.string().min(1),
   unit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]),
   minStockLevel: nonNegativeDecimal.default(0)
