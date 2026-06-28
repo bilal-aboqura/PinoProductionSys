@@ -272,6 +272,9 @@ export async function printBatchLabelAction(input: unknown): Promise<BatchAction
       if (parsed.data.containerId && !container) throw new Error("NOT_FOUND");
 
       const qr = await ensureQrForBatch(tx, batch);
+      const qrCodeData = container
+        ? await generateBatchQrDataUrl(buildTraceabilityUrl(batch.batchNumber, session.user.languagePreference ?? "ar", undefined, container.containerNumber))
+        : qr.qrCodeData;
       const quantity = container?.remainingQuantity ?? batch.remainingQuantity;
       const label = await tx.batchLabel.create({
         data: {
@@ -287,7 +290,7 @@ export async function printBatchLabelAction(input: unknown): Promise<BatchAction
           storageInstructions: batch.recipe.storageNotes,
           productCode: batch.recipe.code,
           warehouseName: batch.warehouse.name,
-          qrCodeData: qr.qrCodeData
+          qrCodeData
         }
       });
       await tx.batchPrintHistory.create({

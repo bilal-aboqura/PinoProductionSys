@@ -23,7 +23,14 @@ export function DownstreamActionsPanel({ orderId, actions }: { orderId: string; 
   const inventoryAction = actionFor(actions, "INVENTORY_CONSUMPTION");
   const batchAction = actionFor(actions, "BATCH_RECORD");
   const labelAction = actionFor(actions, "LABEL_PRINT");
-  const openLabelPdf = () => window.open(`/api/production-orders/${orderId}/label`, "_blank", "noopener,noreferrer");
+  const openLabelTarget = () => {
+    if (batchAction?.referenceId) {
+      const locale = window.location.pathname.split("/").filter(Boolean)[0] || "ar";
+      window.open(`/${locale}/inventory/batches/${encodeURIComponent(batchAction.referenceId)}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+    window.open(`/api/production-orders/${orderId}/label?pdf=1`, "_blank", "noopener,noreferrer");
+  };
   const run = (action: () => Promise<{ success: boolean; error?: string; data?: { referenceId: string; alreadyRecorded: boolean } }>, label: string) => {
     setMessage("");
     startTransition(async () => {
@@ -33,7 +40,7 @@ export function DownstreamActionsPanel({ orderId, actions }: { orderId: string; 
           ? `${label} ${result.data?.alreadyRecorded ? "was already recorded" : "recorded"}${result.data?.referenceId ? `: ${result.data.referenceId}` : ""}. Refreshing...`
           : result.error ?? "Action failed."
       );
-      if (result.success && label === "Label print") openLabelPdf();
+      if (result.success && label === "Label print") openLabelTarget();
       if (result.success) window.location.reload();
     });
   };
@@ -58,7 +65,7 @@ export function DownstreamActionsPanel({ orderId, actions }: { orderId: string; 
         <Button
           disabled={isPending}
           variant="ghost"
-          onClick={() => (labelAction ? openLabelPdf() : run(() => triggerLabelPrint(orderId), "Label print"))}
+          onClick={() => (labelAction ? openLabelTarget() : run(() => triggerLabelPrint(orderId), "Label print"))}
         >
           <Printer className="h-4 w-4" />
           {labelAction ? "Open Label PDF" : "Print Label"}

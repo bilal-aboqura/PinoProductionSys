@@ -1,8 +1,21 @@
 import QRCode from "qrcode";
 
-export function buildTraceabilityUrl(batchNumber: string, locale = "ar", baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "") {
+function defaultBaseUrl() {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "";
+}
+
+export function buildTraceabilityUrl(
+  batchNumber: string,
+  locale = "ar",
+  baseUrl = defaultBaseUrl(),
+  containerNumber?: string
+) {
   const path = `/${locale}/inventory/batches/${encodeURIComponent(batchNumber)}`;
-  return baseUrl ? new URL(path, baseUrl).toString() : path;
+  const query = containerNumber ? `?container=${encodeURIComponent(containerNumber)}` : "";
+  return baseUrl ? new URL(`${path}${query}`, baseUrl).toString() : `${path}${query}`;
 }
 
 export async function generateBatchQrDataUrl(targetUrl: string) {

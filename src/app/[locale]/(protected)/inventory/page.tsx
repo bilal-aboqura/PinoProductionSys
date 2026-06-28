@@ -9,6 +9,7 @@ import { parsePage } from "@/lib/pagination";
 import { getServerSession } from "@/lib/auth";
 import { requirePermission } from "@/lib/permissions";
 import { DiscrepancyReport } from "./_components/DiscrepancyReport";
+import { InventoryExcelActions } from "./_components/InventoryExcelActions";
 import { StockFilters } from "./_components/StockFilters";
 import { StockLevelsTable } from "./_components/StockLevelsTable";
 import { getTranslations } from "next-intl/server";
@@ -39,6 +40,7 @@ export default async function InventoryPage({
     const lowStockItems = balances.items.filter((item) => item.isLowStock);
     const lowStock = lowStockItems.length;
     const negative = balances.items.filter((item) => item.isNegativeStock).length;
+    const canAdjustInventory = session.user.permissions.includes("inventory:adjust");
 
     return (
       <section className="logical-container space-y-6 py-8">
@@ -81,6 +83,7 @@ export default async function InventoryPage({
           </Card>
         </div>
         <StockFilters warehouses={warehouses} defaultValues={filters} />
+        <InventoryExcelActions canAdjust={canAdjustInventory} />
         {lowStockItems.length > 0 ? (
           <details className="rounded-md border border-warning/40 bg-white p-4">
             <summary className="cursor-pointer text-lg font-bold">

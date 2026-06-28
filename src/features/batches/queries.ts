@@ -118,7 +118,7 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         warehouse: true,
         containers: { orderBy: { containerNumber: "asc" } },
         statusHistory: { include: { changedBy: true }, orderBy: { changedAt: "asc" } },
-        printHistory: { include: { printedBy: true }, orderBy: { printedAt: "desc" } },
+        printHistory: { include: { printedBy: true, container: true }, orderBy: { printedAt: "desc" } },
         disposals: { include: { disposedBy: true }, orderBy: { disposedAt: "desc" } },
         evidence: { orderBy: { uploadedAt: "desc" } }
       }
@@ -170,7 +170,8 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
               printedByName: item.printedBy.displayName,
               printedAt: item.printedAt.toISOString(),
               isReprint: item.isReprint,
-              reprintReason: item.reprintReason
+              reprintReason: item.reprintReason,
+              containerNumber: item.container?.containerNumber ?? null
             }))
           : undefined,
         disposals: full

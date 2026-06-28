@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { buildTraceabilityUrl } from "@/features/batches/qr";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildProductionLabelPdf } from "@/lib/pdf/simple-label";
@@ -12,9 +13,30 @@ function error(message: string, status: number) {
   return NextResponse.json({ success: false, error: message }, { status });
 }
 
-export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession();
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const requestUrl = new URL(request.url);
   const { id } = await context.params;
+  const orderTraceabilityTarget = await prisma.productionOrder.findUnique({
+    where: { id },
+    include: { productionBatch: { include: { containers: { orderBy: { containerNumber: "asc" } } } } }
+  });
+  const productionBatch = orderTraceabilityTarget?.productionBatch;
+  if (productionBatch && !requestUrl.searchParams.has("pdf")) {
+    const requestedContainer = requestUrl.searchParams.get("container");
+    const container = requestedContainer
+      ? productionBatch.containers.find((item) => item.id === requestedContainer || item.containerNumber === requestedContainer)
+      : null;
+    return NextResponse.redirect(
+      buildTraceabilityUrl(
+        productionBatch.batchNumber,
+        "ar",
+        requestUrl.origin,
+        container?.containerNumber
+      )
+    );
+  }
+
+  const session = await getServerSession();
   const canViewAll = hasProductionOrderPermission(session.user.permissions, VIEW_ALL_PRODUCTION_ORDERS);
   const canView = hasProductionOrderPermission(session.user.permissions, VIEW_PRODUCTION_ORDERS);
   if (!canView && !canViewAll) return error("You do not have permission to view this label.", 403);

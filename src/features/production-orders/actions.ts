@@ -34,7 +34,7 @@ const createOrderSchema = z.object({
   recipeVersionId: z.string().min(1),
   sourceWarehouseId: z.string().min(1),
   targetQuantity: z.coerce.number().positive().optional(),
-  assignedToId: z.string().optional().nullable().or(z.literal("")),
+  assignedToId: z.string().trim().min(1, "Assignee is required."),
   creationNotes: z.string().trim().max(2000).optional().nullable()
 });
 
@@ -144,8 +144,8 @@ export async function createProductionOrder(input: unknown): Promise<ActionResul
       if (!scoped) return { success: false, code: "UNAUTHORIZED", error: "Recipe is outside your assigned category scope." };
     }
 
-    const assignedToId = parsed.data.assignedToId || null;
-    if (assignedToId && !(await targetUserCanExecute(assignedToId))) {
+    const assignedToId = parsed.data.assignedToId;
+    if (!(await targetUserCanExecute(assignedToId))) {
       return { success: false, code: "VALIDATION", error: "Selected assignee cannot execute production orders." };
     }
 
@@ -154,7 +154,7 @@ export async function createProductionOrder(input: unknown): Promise<ActionResul
     if (!sourceWarehouse) return { success: false, code: "NOT_FOUND", error: "Active source warehouse not found." };
     const order = await prisma.$transaction(async (tx) => {
       const orderNumber = await generateOrderNumber(tx);
-      const status: ProductionOrderStatus = assignedToId ? "PENDING" : "PENDING_UNASSIGNED";
+      const status: ProductionOrderStatus = "PENDING";
       const created = await tx.productionOrder.create({
         data: {
           orderNumber,

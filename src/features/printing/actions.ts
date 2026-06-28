@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { logAuditEvent } from "@/features/audit/lib/logger";
+import { buildTraceabilityUrl } from "@/features/batches/qr";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canCreatePrintJobs, canManagePrinters, canReprintLabels, getPrintHistory } from "./queries";
@@ -41,7 +42,7 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       include: { recipe: true, recipeVersion: true, warehouse: true }
     });
     if (!batch) throw new Error("NOT_FOUND");
-    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(batch.batchNumber)}`;
+    const qrCodeData = buildTraceabilityUrl(batch.batchNumber, "ar", publicBaseUrl());
     return {
       title: batch.recipe.nameEn || batch.recipe.nameAr,
       subtitle: "Batch Label",
@@ -57,8 +58,6 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       caloriesPerServing: decimalToString(batch.recipeVersion.caloriesPerServing),
       caloriesPerUnit: decimalToString(batch.recipeVersion.caloriesPerYieldUnit),
       totalCalories: decimalToString(batch.recipeVersion.totalCalories),
-      costPerUnit: decimalToString(batch.recipeVersion.costPerYieldUnit),
-      totalCost: decimalToString(batch.recipeVersion.totalCost),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };
@@ -70,22 +69,23 @@ async function buildPrintPayload(targetType: CreatePrintJobInput["targetType"], 
       include: { batch: { include: { recipe: true, recipeVersion: true, warehouse: true } } }
     });
     if (!container) throw new Error("NOT_FOUND");
-    const qrCodeData = `${publicBaseUrl()}/inventory/batches/${encodeURIComponent(container.batch.batchNumber)}?container=${encodeURIComponent(container.containerNumber)}`;
+    const qrCodeData = buildTraceabilityUrl(container.batch.batchNumber, "ar", publicBaseUrl(), container.containerNumber);
     return {
       title: container.batch.recipe.nameEn || container.batch.recipe.nameAr,
       subtitle: "Container Label",
       productName: container.batch.recipe.nameEn || container.batch.recipe.nameAr,
       batchNumber: container.batch.batchNumber,
       containerNumber: container.containerNumber,
+      productionDate: container.batch.productionDate.toISOString(),
+      expiryDate: container.batch.expiryDate.toISOString(),
       quantity: decimalToString(container.quantity),
       unit: container.batch.unit,
       warehouseName: container.batch.warehouse.name,
+      storageInstructions: container.batch.recipe.storageNotes,
       servingSize: container.batch.recipeVersion.servingQuantity ? `${container.batch.recipeVersion.servingQuantity} ${container.batch.recipeVersion.servingUnit ?? ""}`.trim() : undefined,
       caloriesPerServing: decimalToString(container.batch.recipeVersion.caloriesPerServing),
       caloriesPerUnit: decimalToString(container.batch.recipeVersion.caloriesPerYieldUnit),
       totalCalories: decimalToString(container.batch.recipeVersion.totalCalories),
-      costPerUnit: decimalToString(container.batch.recipeVersion.costPerYieldUnit),
-      totalCost: decimalToString(container.batch.recipeVersion.totalCost),
       qrCodeData,
       qrCodeImage: await qrImage(qrCodeData)
     };

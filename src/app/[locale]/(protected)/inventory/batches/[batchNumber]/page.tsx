@@ -9,9 +9,17 @@ import { DisposalModal } from "../_components/DisposalModal";
 import { EvidenceUploader } from "../_components/EvidenceUploader";
 import { LabelModal } from "../_components/LabelModal";
 import { SplitModal } from "../_components/SplitModal";
+import { cn } from "@/lib/utils";
 
-export default async function BatchDetailPage({ params }: { params: Promise<{ locale: string; batchNumber: string }> }) {
+export default async function BatchDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ locale: string; batchNumber: string }>;
+  searchParams?: Promise<{ container?: string }>;
+}) {
   const { locale, batchNumber } = await params;
+  const selectedContainerNumber = (await searchParams)?.container;
   let result;
   try {
     result = await getBatchTraceabilityAction({ batchNumber: decodeURIComponent(batchNumber) });
@@ -66,7 +74,14 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         </dl>
       </div>
 
-      <PrintBatchButton batchId={batch.id} locale={locale} templates={templates} printers={printers} />
+      <PrintBatchButton
+        batchId={batch.id}
+        locale={locale}
+        templates={templates}
+        printers={printers}
+        title="Batch Label"
+        description="Queue a thermal label for the full production batch."
+      />
       <LabelModal batchId={batch.id} containers={batch.containers.map((container) => ({ id: container.id, containerNumber: container.containerNumber }))} />
 
       <div className="grid gap-4 lg:grid-cols-2 print-hidden">
@@ -98,11 +113,26 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
         <h2 className="text-xl font-bold">Containers</h2>
         <div className="mt-3 grid gap-2">
           {batch.containers.map((container) => (
-            <div key={container.id} className="grid gap-2 rounded-md border p-3 sm:grid-cols-4">
+            <div
+              key={container.id}
+              className={cn(
+                "grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-start",
+                selectedContainerNumber === container.containerNumber ? "border-primary bg-accent/30" : ""
+              )}
+            >
               <span className="font-semibold">{container.containerNumber}</span>
               <span>{container.quantity} {batch.unit}</span>
               <span>{container.remainingQuantity} remaining</span>
               <Badge>{container.status}</Badge>
+              <PrintBatchButton
+                targetType="CONTAINER"
+                targetId={container.id}
+                locale={locale}
+                templates={templates}
+                printers={printers}
+                buttonLabel="Print sticker"
+                compact
+              />
             </div>
           ))}
           {batch.containers.length === 0 ? <p className="text-sm text-secondary">No container splits recorded.</p> : null}
@@ -135,6 +165,7 @@ export default async function BatchDetailPage({ params }: { params: Promise<{ lo
             {batch.printHistory.map((item) => (
               <div key={item.id} className="rounded-md border p-3 text-sm">
                 <span className="font-semibold">{item.labelTemplate}</span> printed by {item.printedByName} on {new Date(item.printedAt).toLocaleString()}
+                {item.containerNumber ? <span className="ml-2 font-semibold text-primary">Container: {item.containerNumber}</span> : null}
                 {item.isReprint ? <span className="ml-2 text-warning">Reprint: {item.reprintReason}</span> : null}
               </div>
             ))}

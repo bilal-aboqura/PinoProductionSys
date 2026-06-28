@@ -36,8 +36,6 @@ export type PrintPayload = {
   caloriesPerServing?: string;
   caloriesPerUnit?: string;
   totalCalories?: string;
-  costPerUnit?: string;
-  totalCost?: string;
   storageInstructions?: string | null;
   qrCodeData: string;
   qrCodeImage: string;

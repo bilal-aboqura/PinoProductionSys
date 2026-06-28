@@ -56,6 +56,7 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
   const canViewPrinting = permissions.has("printing:view") || permissions.has("printing:create") || permissions.has("printing:reprint") || permissions.has("system:configure");
   const items = [
     { href: `/${locale}/dashboard`, label: navigation("dashboard"), icon: LayoutDashboard, show: true, exact: true },
+    { href: `/${locale}/reports`, label: navigation("reports"), icon: BarChart3, show: permissions.has("reports:view") },
     { href: `/${locale}/production`, label: navigation("production"), icon: Factory, show: canViewProduction },
     { href: `/${locale}/inventory`, label: navigation("inventory"), icon: Boxes, show: permissions.has("inventory:view"), exact: true },
     { href: `/${locale}/inventory/items`, label: navigation("catalog"), icon: PackageSearch, show: permissions.has("inventory:view") },
@@ -63,7 +64,6 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
     { href: `/${locale}/inventory/history`, label: navigation("history"), icon: History, show: permissions.has("inventory:view") },
     { href: `/${locale}/inventory/batches`, label: navigation("batches"), icon: Package, show: permissions.has("inventory:view") },
     { href: `/${locale}/recipes`, label: navigation("recipes"), icon: BookOpen, show: permissions.has("recipes:view") },
-    { href: `/${locale}/reports`, label: navigation("reports"), icon: BarChart3, show: permissions.has("reports:view") },
     { href: `/${locale}/printing`, label: navigation("printing"), icon: Printer, show: canViewPrinting },
     { href: `/${locale}/admin/users`, label: navigation("users"), icon: Users, show: permissions.has("users:view") },
     { href: `/${locale}/admin/audit`, label: navigation("audit"), icon: ScrollText, show: permissions.has("audit:view") },

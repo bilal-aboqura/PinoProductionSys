@@ -16,7 +16,7 @@ export function LabelModal({
   containers: { id: string; containerNumber: string }[];
 }) {
   const [template, setTemplate] = useState<LabelTemplate>("STANDARD");
-  const [containerId, setContainerId] = useState("");
+  const [containerId, setContainerId] = useState(containers[0]?.id ?? "");
   const [isReprint, setIsReprint] = useState(false);
   const [reprintReason, setReprintReason] = useState("");
   const [label, setLabel] = useState<LabelData | null>(null);
@@ -38,7 +38,6 @@ export function LabelModal({
           <div className="grid gap-1">
             <label className="text-sm font-semibold text-secondary">Container</label>
             <select className="h-10 rounded-md border px-3 text-sm" value={containerId} onChange={(event) => setContainerId(event.target.value)}>
-              <option value="">Whole batch</option>
               {containers.map((container) => (
                 <option key={container.id} value={container.id}>
                   {container.containerNumber}
@@ -75,7 +74,11 @@ export function LabelModal({
                 return;
               }
               setLabel(result.data.labelData);
-              setMessage("Label snapshot logged. Use print when the preview looks right.");
+              setMessage(
+                result.data.labelData.containerNumber
+                  ? "Container label snapshot logged. Use print when the preview looks right."
+                  : "Label snapshot logged. Use print when the preview looks right."
+              );
             })
           }
         >

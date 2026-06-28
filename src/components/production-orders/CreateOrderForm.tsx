@@ -37,12 +37,16 @@ export function CreateOrderForm({
       onSubmit={(event) => {
         event.preventDefault();
         setMessage("");
+        if (!assignedToId) {
+          setMessage("Assignee is required.");
+          return;
+        }
         startTransition(async () => {
           const result = await createProductionOrder({
             recipeVersionId,
             sourceWarehouseId,
             targetQuantity: targetQuantity ? Number(targetQuantity) : undefined,
-            assignedToId: assignedToId || null,
+            assignedToId,
             creationNotes
           });
           if (!result.success) {
@@ -96,14 +100,16 @@ export function CreateOrderForm({
           className="h-10 rounded-md border bg-white px-3 text-sm"
           value={assignedToId}
           onChange={(event) => setAssignedToId(event.target.value)}
+          required
         >
-          <option value="">Leave unassigned</option>
+          <option value="">Select assignee</option>
           {staff.map((user) => (
             <option key={user.id} value={user.id}>
               {user.displayName}
             </option>
           ))}
         </select>
+        {staff.length === 0 ? <p className="text-xs font-semibold text-error">No eligible production staff are available.</p> : null}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="notes">Creation notes</Label>
@@ -116,7 +122,7 @@ export function CreateOrderForm({
         />
       </div>
       {message ? <p className="text-sm font-semibold text-error">{message}</p> : null}
-      <Button type="submit" disabled={isPending || recipes.length === 0 || !sourceWarehouseId}>
+      <Button type="submit" disabled={isPending || recipes.length === 0 || !sourceWarehouseId || !assignedToId}>
         <ClipboardPlus className="h-4 w-4" />
         {isPending ? "Creating..." : "Create Order"}
       </Button>

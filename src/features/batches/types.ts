@@ -85,6 +85,7 @@ export type BatchTraceability = BatchListItem & {
     printedAt: string;
     isReprint: boolean;
     reprintReason: string | null;
+    containerNumber?: string | null;
   }[];
   disposals?: {
     id: string;
