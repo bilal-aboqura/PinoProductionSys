@@ -18,6 +18,8 @@ const catalog = new Map<string, string>();
 collectParallelMessages(enMessages, arMessages, catalog);
 
 const legacyArabic: Record<string, string> = {
+  "Select assignee": "اختر المسند إليه",
+  "No eligible production staff are available.": "لا يوجد موظفو إنتاج مؤهلون متاحون.",
   "Saudi Riyal (SAR)": "الريال السعودي (SAR)",
   "SAR Ã‚Â·": "ر.س ·",
   "Production Order": "أمر الإنتاج",

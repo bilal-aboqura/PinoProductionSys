@@ -30,7 +30,7 @@ describe("label and container rules", () => {
 
   it("builds container-specific traceability URLs", () => {
     expect(buildTraceabilityUrl("B-2026-00005", "ar", "", "B-2026-00005-C1")).toBe(
-      "/ar/inventory/batches/B-2026-00005?container=B-2026-00005-C1"
+      "/ar/inventory/batches/B-2026-00005?view=scan&container=B-2026-00005-C1"
     );
   });
 });
