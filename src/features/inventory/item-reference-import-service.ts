@@ -35,6 +35,7 @@ export type ImportableReferenceItem = {
   code: string;
   nameEn: string;
   nameAr: string;
+  itemType: ItemType;
   unit: Unit;
   isActive: boolean;
   ingredientReferenceProfiles: { effectiveAt: Date }[];
@@ -144,6 +145,7 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
         code: true,
         nameEn: true,
         nameAr: true,
+        itemType: true,
         unit: true,
         isActive: true,
         ingredientReferenceProfiles: { select: { effectiveAt: true } }
@@ -165,7 +167,7 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
     for (const [code, row] of firstRowByCode) {
       const existing = existingItemByCode.get(code);
       if (existing) {
-        importedItemByCode.set(code, { id: existing.id, code: existing.code, unit: existing.unit, itemType: "RAW_MATERIAL" });
+        importedItemByCode.set(code, { id: existing.id, code: existing.code, unit: existing.unit, itemType: existing.itemType });
         continue;
       }
       const category = categoryByName.get(normalizedName(row.categoryName))!;

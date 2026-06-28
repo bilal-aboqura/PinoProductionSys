@@ -163,7 +163,7 @@ An authorized user wants recipe cost and calorie information to be available for
 - This feature extends the existing recipe workflow and version history already used by the platform rather than replacing recipe management itself.
 - Recipe ingredients are selected from a maintained ingredient master list rather than entered as free text.
 - Nutrition analysis in this version is limited to calorie calculations; broader nutrient breakdowns such as protein, fat, carbohydrate, sodium, or allergen analysis are out of scope.
-- Currency values are stored and displayed in Egyptian Pounds (EGP) unless the business later introduces multi-currency support.
+- Currency values are stored and displayed in Saudi Riyal (SAR) unless the business later introduces multi-currency support.
 - Existing production and label workflows provide batch number, production date, expiry date, and related operational fields when printed outputs are generated from those contexts.
 - The printing workflow is responsible for rendering and sending labels or production sheets to printers; this feature is responsible for supplying the calculation data used by those outputs.
 - Profitability reporting depends on recipes being linked to a finished product or selling price record elsewhere in the business workflow; recipes without a current selling price remain calculable for cost and calories but are excluded from profitability rankings.

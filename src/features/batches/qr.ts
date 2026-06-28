@@ -14,7 +14,9 @@ export function buildTraceabilityUrl(
   containerNumber?: string
 ) {
   const path = `/${locale}/inventory/batches/${encodeURIComponent(batchNumber)}`;
-  const query = containerNumber ? `?container=${encodeURIComponent(containerNumber)}` : "";
+  const query = containerNumber
+    ? `?view=scan&container=${encodeURIComponent(containerNumber)}`
+    : `?view=scan`;
   return baseUrl ? new URL(`${path}${query}`, baseUrl).toString() : `${path}${query}`;
 }
 

@@ -60,6 +60,7 @@ export default async function ProductionOrderDetailPage({ params }: { params: Pr
           warehouses={warehouses}
           sourceWarehouseId={order.sourceWarehouseId}
           sourceWarehouseName={order.sourceWarehouseName}
+          locale={locale}
         />
       ) : null}
       {order.status === "COMPLETED" ? <DownstreamActionsPanel orderId={order.id} actions={order.downstreamActions} /> : null}

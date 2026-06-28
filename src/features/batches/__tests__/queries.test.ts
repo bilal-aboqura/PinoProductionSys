@@ -9,6 +9,6 @@ describe("traceability lookup rules", () => {
   });
 
   it("builds a gated in-app traceability URL", () => {
-    expect(buildTraceabilityUrl("B-2026-00001", "en", "https://pino.example")).toBe("https://pino.example/en/inventory/batches/B-2026-00001");
+    expect(buildTraceabilityUrl("B-2026-00001", "en", "https://pino.example")).toBe("https://pino.example/en/inventory/batches/B-2026-00001?view=scan");
   });
 });

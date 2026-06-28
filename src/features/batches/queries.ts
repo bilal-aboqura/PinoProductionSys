@@ -1,7 +1,7 @@
 import { Prisma, type BatchStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { PRODUCTION_EVIDENCE_BUCKET, getSupabaseAdminClient } from "@/lib/supabase-admin";
 import type { BatchListFilters, BatchListItem, BatchTraceability, PagedBatches } from "./types";
 import { traceabilitySchema } from "./validation";
 
@@ -103,6 +103,20 @@ async function signedEvidenceUrl(storagePath: string) {
   return data?.signedUrl ?? "";
 }
 
+async function signedProductionEvidenceUrl(storagePath: string) {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) return "";
+  const { data } = await supabase.storage.from(PRODUCTION_EVIDENCE_BUCKET).createSignedUrl(storagePath, 60 * 10);
+  return data?.signedUrl ?? "";
+}
+
+async function displayNames(userIds: Array<string | null | undefined>) {
+  const ids = Array.from(new Set(userIds.filter((id): id is string => Boolean(id))));
+  if (ids.length === 0) return new Map<string, string>();
+  const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, displayName: true } });
+  return new Map(users.map((user) => [user.id, user.displayName]));
+}
+
 export async function getBatchTraceabilityAction(input: { batchNumber: string }): Promise<{ success: true; data: BatchTraceability } | { success: false; error: string }> {
   try {
     const session = await getServerSession();
@@ -116,6 +130,17 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         recipe: true,
         recipeVersion: true,
         warehouse: true,
+        productionOrder: {
+          include: {
+            steps: {
+              include: {
+                photos: { orderBy: { uploadedAt: "desc" } },
+                notes: { orderBy: { addedAt: "asc" } }
+              },
+              orderBy: { stepNumber: "asc" }
+            }
+          }
+        },
         containers: { orderBy: { containerNumber: "asc" } },
         statusHistory: { include: { changedBy: true }, orderBy: { changedAt: "asc" } },
         printHistory: { include: { printedBy: true, container: true }, orderBy: { printedAt: "desc" } },
@@ -125,6 +150,50 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
     });
     if (!batch) return { success: false, error: "Batch not found." };
     const base = toListItem(batch);
+    const productionOrder = batch.productionOrder;
+    const productionUserNames = await displayNames([
+      productionOrder.createdById,
+      productionOrder.assignedToId,
+      productionOrder.completedById,
+      ...productionOrder.steps.flatMap((step) => [
+        step.completedById,
+        ...step.photos.map((photo) => photo.uploadedById),
+        ...step.notes.map((note) => note.addedById)
+      ])
+    ]);
+    const productionSteps = await Promise.all(
+      productionOrder.steps.map(async (step) => ({
+        id: step.id,
+        stepNumber: step.stepNumber,
+        title: step.title,
+        instructions: step.instructions,
+        estimatedMinutes: step.estimatedMinutes,
+        requiresPhoto: step.requiresPhoto,
+        requiresNotes: step.requiresNotes,
+        requiresQuantity: step.requiresQuantity,
+        isCompleted: step.isCompleted,
+        completedByName: step.completedById ? productionUserNames.get(step.completedById) ?? "Unknown user" : null,
+        startedAt: step.startedAt?.toISOString() ?? null,
+        completedAt: step.completedAt?.toISOString() ?? null,
+        confirmedQuantity: step.confirmedQuantity?.toString() ?? null,
+        confirmedUnit: step.confirmedUnit,
+        photos: await Promise.all(
+          step.photos.map(async (photo) => ({
+            id: photo.id,
+            url: await signedProductionEvidenceUrl(photo.storagePath),
+            mimeType: photo.mimeType,
+            uploadedByName: productionUserNames.get(photo.uploadedById) ?? "Unknown user",
+            uploadedAt: photo.uploadedAt.toISOString()
+          }))
+        ),
+        notes: step.notes.map((note) => ({
+          id: note.id,
+          content: note.content,
+          addedByName: productionUserNames.get(note.addedById) ?? "Unknown user",
+          addedAt: note.addedAt.toISOString()
+        }))
+      }))
+    );
     const evidence = full
       ? await Promise.all(
           batch.evidence.map(async (item) => ({
@@ -148,6 +217,20 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
               storageInstructions: batch.recipe.storageNotes
             }
           : undefined,
+        productionOrder: {
+          id: productionOrder.id,
+          orderNumber: productionOrder.orderNumber,
+          status: productionOrder.status,
+          createdAt: productionOrder.createdAt.toISOString(),
+          startedAt: productionOrder.startedAt?.toISOString() ?? null,
+          completedAt: productionOrder.completedAt?.toISOString() ?? null,
+          durationSeconds: productionOrder.durationSeconds,
+          creationNotes: productionOrder.creationNotes,
+          createdByName: productionUserNames.get(productionOrder.createdById) ?? "Unknown user",
+          assignedToName: productionOrder.assignedToId ? productionUserNames.get(productionOrder.assignedToId) ?? "Unknown user" : null,
+          completedByName: productionOrder.completedById ? productionUserNames.get(productionOrder.completedById) ?? "Unknown user" : null
+        },
+        productionSteps,
         containers: batch.containers.map((container) => ({
           id: container.id,
           containerNumber: container.containerNumber,

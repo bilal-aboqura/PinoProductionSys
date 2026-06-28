@@ -91,7 +91,7 @@ model Recipe {
   servingUnit        Unit?
   servingLabel       String?
   currentSellingPrice Decimal?     @db.Decimal(12, 2)
-  currencyCode       String        @default("EGP")
+  currencyCode       String        @default("SAR")
   version            Int           @default(0)
   publishedVersion   Int           @default(0)
   ...
@@ -153,7 +153,7 @@ model RecipeVersion {
   sellingPriceSnapshot   Decimal?  @db.Decimal(12, 2)
   profitAmountSnapshot   Decimal?  @db.Decimal(12, 2)
   profitMarginSnapshot   Decimal?  @db.Decimal(7, 4)
-  calculationCurrency    String    @default("EGP")
+  calculationCurrency    String    @default("SAR")
   publishedById          String
   publishedAt            DateTime  @default(now())
 
@@ -194,7 +194,7 @@ This keeps detailed audits available without adding a second immutable line-item
     "label": "cookies"
   },
   "calculations": {
-    "currency": "EGP",
+    "currency": "SAR",
     "totalCost": "1000.00",
     "totalCalories": "5000.00",
     "costPerYieldUnit": "10.00",

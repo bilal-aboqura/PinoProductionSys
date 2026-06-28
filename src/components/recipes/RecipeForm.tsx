@@ -150,7 +150,7 @@ export function RecipeForm({
           <Input {...form.register("servingLabel")} placeholder="e.g. 2 cookies" onBlur={form.handleSubmit(submit)} />
         </label>
         <label className="grid gap-2 text-sm font-semibold">
-          Selling Price (EGP per yield unit)
+          Selling Price (SAR per yield unit)
           <Input type="number" min="0" step="0.01" {...form.register("currentSellingPrice", { setValueAs: (value) => value === "" ? null : Number(value) })} onBlur={form.handleSubmit(submit)} />
         </label>
         <label className="grid gap-2 text-sm font-semibold">

@@ -207,7 +207,7 @@ model Recipe {
   servingUnit         Unit?
   servingLabel        String?
   currentSellingPrice Decimal?           @db.Decimal(12, 2)
-  currencyCode        String             @default("EGP")
+  currencyCode        String             @default("SAR")
   shelfLifeValue      Int                @default(0)
   shelfLifeUnit       ShelfLifeUnit      @default(DAYS)
   storageMethod       StorageMethod      @default(ROOM_TEMPERATURE)
@@ -288,7 +288,7 @@ model RecipeVersion {
   sellingPriceSnapshot Decimal?          @db.Decimal(12, 2)
   profitAmountSnapshot Decimal?          @db.Decimal(12, 2)
   profitMarginSnapshot Decimal?          @db.Decimal(7, 4)
-  calculationCurrency  String            @default("EGP")
+  calculationCurrency  String            @default("SAR")
   publishedById        String
   publishedAt          DateTime          @default(now())
   productionOrders     ProductionOrder[]
@@ -1283,6 +1283,7 @@ enum ScopeType {
 
 enum ItemType {
   RAW_MATERIAL
+  TRANSFORMATION_MATERIAL
   FINISHED_PRODUCT
 }
 

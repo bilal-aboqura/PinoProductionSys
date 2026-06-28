@@ -16,7 +16,8 @@ export function CompleteOrderButton({
   unit,
   warehouses = [],
   sourceWarehouseId,
-  sourceWarehouseName
+  sourceWarehouseName,
+  locale
 }: {
   orderId: string;
   version: number;
@@ -25,8 +26,11 @@ export function CompleteOrderButton({
   warehouses?: WarehouseDto[];
   sourceWarehouseId: string | null;
   sourceWarehouseName: string | null;
+  locale: string;
 }) {
   const [quantity, setQuantity] = useState("");
+  const [containerCount, setContainerCount] = useState("1");
+  const [containerQuantities, setContainerQuantities] = useState<string[]>([""]);
   const [storageWarehouseId, setStorageWarehouseId] = useState("");
   const [legacySourceWarehouseId, setLegacySourceWarehouseId] = useState("");
   const [warnings, setWarnings] = useState<ProductionConsumptionWarning[]>([]);
@@ -39,12 +43,31 @@ export function CompleteOrderButton({
     if (!target || !actual) return "";
     return Math.abs(actual - target) / target > 0.2 ? "Produced quantity differs from target by more than 20%." : "";
   }, [quantity, targetQuantity]);
+  const containerTotal = useMemo(
+    () => containerQuantities.reduce((sum, value) => sum + (Number(value) || 0), 0),
+    [containerQuantities]
+  );
+  const containerMismatch = containerQuantities.length > 0 && Boolean(quantity) && Math.abs(containerTotal - Number(quantity)) > 0.001;
+
+  function distributeContainers(nextQuantity = quantity, nextCount = Number(containerCount)) {
+    const produced = Number(nextQuantity);
+    const count = Math.max(1, Math.min(100, Math.floor(nextCount || 1)));
+    if (!produced || produced <= 0) {
+      setContainerQuantities(Array.from({ length: count }, () => ""));
+      return;
+    }
+    const base = Math.floor((produced / count) * 1000) / 1000;
+    const values = Array.from({ length: count }, () => base);
+    values[count - 1] = Number((produced - base * (count - 1)).toFixed(3));
+    setContainerQuantities(values.map((value) => String(value)));
+  }
 
   const complete = () =>
     startTransition(async () => {
-      const result = await completeProductionOrder(orderId, Number(quantity), version, storageWarehouseId, sourceWarehouseId ?? legacySourceWarehouseId);
-      setMessage(result.success ? `Order completed. Batch ${result.data.batchNumber} created.` : result.error);
-      if (result.success) window.location.reload();
+      const containers = containerQuantities.map(Number).filter((value) => Number.isFinite(value) && value > 0);
+      const result = await completeProductionOrder(orderId, Number(quantity), version, storageWarehouseId, sourceWarehouseId ?? legacySourceWarehouseId, containers);
+      setMessage(result.success ? `Order completed. Batch ${result.data.batchNumber} created with ${result.data.containerCount} containers.` : result.error);
+      if (result.success) window.location.href = `/${locale}/inventory/batches/${encodeURIComponent(result.data.batchNumber)}`;
     });
 
   return (
@@ -60,7 +83,9 @@ export function CompleteOrderButton({
             type="number"
             value={quantity}
             onChange={(event) => {
-              setQuantity(event.target.value);
+              const nextQuantity = event.target.value;
+              setQuantity(nextQuantity);
+              distributeContainers(nextQuantity);
               setWarnings([]);
               setWarningConfirmed(false);
             }}
@@ -109,8 +134,24 @@ export function CompleteOrderButton({
             </select>
           </div>
         ) : null}
+        <div className="grid gap-1">
+          <label className="text-sm font-semibold text-secondary">Container count</label>
+          <Input
+            className="w-40"
+            min="1"
+            max="100"
+            step="1"
+            type="number"
+            value={containerCount}
+            onChange={(event) => {
+              const nextCount = event.target.value;
+              setContainerCount(nextCount);
+              distributeContainers(quantity, Number(nextCount));
+            }}
+          />
+        </div>
         <Button
-          disabled={isPending || !quantity}
+          disabled={isPending || !quantity || containerMismatch}
           onClick={() =>
             startTransition(async () => {
               if (warehouses.length > 0 && !storageWarehouseId) {
@@ -141,6 +182,42 @@ export function CompleteOrderButton({
           <PackageCheck className="h-4 w-4" />
           Complete Order
         </Button>
+      </div>
+      <div className="mt-4 rounded-md border bg-background p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="font-bold">Container split</h3>
+            <p className="text-sm text-secondary">
+              Enter one quantity per container. The system will create one container sticker for each line.
+            </p>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => distributeContainers()}>
+            Auto distribute
+          </Button>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {containerQuantities.map((value, index) => (
+            <label key={index} className="grid gap-1 text-sm font-semibold text-secondary">
+              Container {index + 1} ({unit})
+              <Input
+                min="0.001"
+                step="0.001"
+                type="number"
+                value={value}
+                onChange={(event) => {
+                  const next = [...containerQuantities];
+                  next[index] = event.target.value;
+                  setContainerQuantities(next);
+                }}
+              />
+            </label>
+          ))}
+        </div>
+        <p className={`mt-3 text-sm font-semibold ${containerMismatch ? "text-error" : "text-secondary"}`}>
+          Container total: {containerTotal || 0} {unit}
+          {quantity ? ` / Produced: ${quantity} ${unit}` : ""}
+        </p>
+        {containerMismatch ? <p className="mt-1 text-sm font-semibold text-error">Container total must equal produced quantity.</p> : null}
       </div>
       {warning ? <p className="mt-2 text-sm font-semibold text-warning">{warning}</p> : null}
       {warnings.length > 0 ? (

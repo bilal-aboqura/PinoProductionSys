@@ -13,6 +13,12 @@ import { ItemForm } from "./_components/ItemForm";
 import { ItemExcelActions } from "./_components/ItemExcelActions";
 import { getTranslations } from "next-intl/server";
 
+const itemTypeLabels = {
+  RAW_MATERIAL: "rawMaterial",
+  TRANSFORMATION_MATERIAL: "transformationMaterial",
+  FINISHED_PRODUCT: "finishedProduct"
+} as const;
+
 export default async function InventoryItemsPage({
   params,
   searchParams
@@ -87,11 +93,11 @@ export default async function InventoryItemsPage({
                   <TableCell className="font-semibold">{item.code}</TableCell>
                   <TableCell>{item.nameEn}</TableCell>
                   <TableCell>{item.nameAr}</TableCell>
-                  <TableCell>{item.itemType}</TableCell>
+                  <TableCell>{t(itemTypeLabels[item.itemType])}</TableCell>
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>
-                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} EGP / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
+                  <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} SAR / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCalories} kcal / ${item.currentReferenceProfile.calorieReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.isActive ? <Badge>{common("active")}</Badge> : <Badge className="bg-muted/20">{common("inactive")}</Badge>}</TableCell>
                   {canManage ? (

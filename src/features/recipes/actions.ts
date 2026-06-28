@@ -320,7 +320,7 @@ export async function createRecipe(input: unknown): Promise<ActionResult<{ id: s
           servingUnit: parsed.data.servingUnit,
           servingLabel: parsed.data.servingLabel,
           currentSellingPrice: parsed.data.currentSellingPrice,
-          currencyCode: parsed.data.currencyCode ?? "EGP",
+          currencyCode: parsed.data.currencyCode ?? "SAR",
           shelfLifeValue: parsed.data.shelfLifeValue ?? 0,
           shelfLifeUnit: parsed.data.shelfLifeUnit ?? "DAYS",
           storageMethod: parsed.data.storageMethod ?? "ROOM_TEMPERATURE",
