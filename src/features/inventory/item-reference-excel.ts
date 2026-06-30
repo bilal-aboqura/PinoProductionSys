@@ -430,7 +430,11 @@ function parseClientProductWorkbook(sheet: ExcelJS.Worksheet, timeZone: string) 
     const itemNameAr = textValue(valueAt(row, "اسم المنتج (عربي)"));
     const itemCode = textValue(valueAt(row, "الكود (تلقائي)")).toUpperCase();
     if (!itemNameAr && !itemCode) continue;
-    if (itemNameAr.startsWith("▼")) continue;
+    if (itemNameAr.startsWith("▼")) {
+      rows.length = 0;
+      errors.length = 0;
+      continue;
+    }
     if (itemCode === "الكود" || itemNameAr === "اسم المنتج (عربي)") continue;
 
     const itemTypeValue = arabicItemType(textValue(valueAt(row, "نوع المنتج")));

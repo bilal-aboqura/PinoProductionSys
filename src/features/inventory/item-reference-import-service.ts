@@ -108,7 +108,7 @@ export function validateItemReferenceRows(
 
     const itemUnitWeightKg = item?.unitWeightKg ?? (row.unitWeightKg == null ? null : new Prisma.Decimal(row.unitWeightKg));
     const canUsePieceWeight = baseUnit === "PIECE" && itemUnitWeightKg?.gt(0) && unitFamily(row.costReferenceUnit) === "weight";
-    if (unitFamily(baseUnit) !== unitFamily(row.costReferenceUnit) && !canUsePieceWeight) {
+    if (!row.allowCreateCategory && unitFamily(baseUnit) !== unitFamily(row.costReferenceUnit) && !canUsePieceWeight) {
       errors.push({ row: row.rowNumber, column: "Reference Unit", message: `Reference Unit is incompatible with the item's base unit (${baseUnit}).` });
     }
     const parsedReference = ingredientReferenceProfileSchema.safeParse({
