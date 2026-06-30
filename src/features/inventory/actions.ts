@@ -111,6 +111,7 @@ function toItemDto(item: Prisma.InventoryItemGetPayload<{ include: { category: t
     categoryId: item.categoryId,
     categoryName: item.category.name,
     unit: item.unit,
+    unitWeightKg: item.unitWeightKg?.toString() ?? null,
     minStockLevel: item.minStockLevel.toString(),
     isActive: item.isActive,
     currentReferenceProfile: profiles.find((profile) => !profile.archivedAt && new Date(profile.effectiveAt) <= new Date()) ?? null,
@@ -174,7 +175,12 @@ export async function createInventoryItem(input: unknown): Promise<ActionResult<
       const category = await tx.inventoryCategory.findUnique({ where: { id: parsed.data.categoryId } });
       if (!category) throw new Error("NOT_FOUND");
       const created = await tx.inventoryItem.create({
-        data: { ...parsed.data, code: parsed.data.code.toUpperCase(), minStockLevel: new Prisma.Decimal(parsed.data.minStockLevel) },
+        data: {
+          ...parsed.data,
+          code: parsed.data.code.toUpperCase(),
+          minStockLevel: new Prisma.Decimal(parsed.data.minStockLevel),
+          unitWeightKg: parsed.data.unitWeightKg == null ? null : new Prisma.Decimal(parsed.data.unitWeightKg)
+        },
         include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } }
       });
       await writeAudit(tx, session.user.id, "ITEM_CREATE", created.id, null, created);
@@ -202,7 +208,8 @@ export async function updateInventoryItem(id: string, input: unknown): Promise<A
         data: {
           ...parsed.data,
           code: parsed.data.code?.toUpperCase(),
-          minStockLevel: parsed.data.minStockLevel == null ? undefined : new Prisma.Decimal(parsed.data.minStockLevel)
+          minStockLevel: parsed.data.minStockLevel == null ? undefined : new Prisma.Decimal(parsed.data.minStockLevel),
+          unitWeightKg: parsed.data.unitWeightKg === undefined ? undefined : parsed.data.unitWeightKg == null ? null : new Prisma.Decimal(parsed.data.unitWeightKg)
         },
         include: { category: true, ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } } }
       });
@@ -227,7 +234,8 @@ export async function upsertIngredientReferenceProfile(input: unknown): Promise<
       const item = await tx.inventoryItem.findUnique({ where: { id: parsed.data.inventoryItemId } });
       if (!item) throw new Error("NOT_FOUND");
       const family = (unit: string) => unit === "PIECE" ? "piece" : unit === "KG" || unit === "GRAM" ? "weight" : "volume";
-      if (family(item.unit) !== family(parsed.data.costReferenceUnit)) throw new Error("INVALID_UNIT_CONVERSION");
+      const canUsePieceWeight = item.unit === "PIECE" && item.unitWeightKg && family(parsed.data.costReferenceUnit) === "weight";
+      if (family(item.unit) !== family(parsed.data.costReferenceUnit) && !canUsePieceWeight) throw new Error("INVALID_UNIT_CONVERSION");
       const created = await tx.ingredientReferenceProfile.create({
         data: { ...parsed.data, effectiveAt: parsed.data.effectiveAt ?? new Date(), createdById: session.user.id }
       });

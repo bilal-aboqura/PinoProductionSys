@@ -8,6 +8,7 @@ export type RecipeCalculationLineInput = {
   inventoryItemId: string;
   quantity: Prisma.Decimal.Value;
   unit: Unit;
+  unitWeightKg?: Prisma.Decimal.Value | null;
   profile: ReferenceProfileValues;
 };
 
@@ -21,8 +22,9 @@ export type RecipeCalculationInput = {
 
 export function calculateRecipe(input: RecipeCalculationInput) {
   const lines = input.lines.map((line) => {
-    const costRatio = normalizeAgainstReference(line.quantity, line.unit, line.profile.costReferenceQuantity, line.profile.costReferenceUnit);
-    const calorieRatio = normalizeAgainstReference(line.quantity, line.unit, line.profile.calorieReferenceQuantity, line.profile.calorieReferenceUnit);
+    const unitContext = { unitWeightKg: line.unitWeightKg };
+    const costRatio = normalizeAgainstReference(line.quantity, line.unit, line.profile.costReferenceQuantity, line.profile.costReferenceUnit, unitContext);
+    const calorieRatio = normalizeAgainstReference(line.quantity, line.unit, line.profile.calorieReferenceQuantity, line.profile.calorieReferenceUnit, unitContext);
     return {
       recipeIngredientId: line.id,
       inventoryItemId: line.inventoryItemId,
@@ -90,7 +92,7 @@ export function serializeCalculation(calculation: ReturnType<typeof calculateRec
 export async function calculateRecipeById(recipeId: string, at = new Date()) {
   const recipe = await prisma.recipe.findUnique({
     where: { id: recipeId },
-    include: { ingredients: { orderBy: { sortOrder: "asc" } } }
+    include: { ingredients: { include: { inventoryItem: { select: { unitWeightKg: true } } }, orderBy: { sortOrder: "asc" } } }
   });
   if (!recipe) throw new Error("NOT_FOUND");
   const profiles = await getActiveReferenceProfiles([...new Set(recipe.ingredients.map((line) => line.inventoryItemId))], at);
@@ -102,6 +104,7 @@ export async function calculateRecipeById(recipeId: string, at = new Date()) {
       inventoryItemId: line.inventoryItemId,
       quantity: line.quantity,
       unit: line.unit as Unit,
+      unitWeightKg: line.inventoryItem.unitWeightKg,
       profile: profiles.get(line.inventoryItemId)!
     })),
     yieldQuantity: recipe.yieldQuantity,

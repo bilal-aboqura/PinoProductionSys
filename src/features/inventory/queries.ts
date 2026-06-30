@@ -88,6 +88,7 @@ export async function getInventoryItems(filters: { type?: ItemType; categoryId?:
     categoryId: item.categoryId,
     categoryName: item.category.name,
     unit: item.unit,
+    unitWeightKg: item.unitWeightKg?.toString() ?? null,
     minStockLevel: decimalToString(item.minStockLevel),
     isActive: item.isActive,
     ...withProfiles(item)
@@ -126,6 +127,7 @@ export async function getInventoryItemList(
         categoryId: true,
         category: { select: { name: true } },
         unit: true,
+        unitWeightKg: true,
         minStockLevel: true,
         isActive: true
         ,ingredientReferenceProfiles: { orderBy: { effectiveAt: "desc" } }
@@ -146,6 +148,7 @@ export async function getInventoryItemList(
       categoryId: item.categoryId,
       categoryName: item.category.name,
       unit: item.unit,
+      unitWeightKg: item.unitWeightKg?.toString() ?? null,
       minStockLevel: decimalToString(item.minStockLevel),
       isActive: item.isActive,
       ...withProfiles(item)

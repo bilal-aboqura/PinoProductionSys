@@ -1,6 +1,6 @@
 import { Prisma, type Unit } from "@prisma/client";
 import type { RecipeSnapshot } from "@/lib/recipes/snapshot";
-import { convertUnit } from "./unit-converter";
+import { convertUnitWithContext } from "./unit-converter";
 
 export type ProductionConsumptionWarning = {
   inventoryItemId: string;
@@ -51,14 +51,14 @@ async function productionRequirements(
   const itemIds = [...new Set(snapshot.ingredients.map((ingredient) => ingredient.inventoryItemId))];
   const items = await tx.inventoryItem.findMany({
     where: { id: { in: itemIds } },
-    select: { id: true, code: true, nameEn: true, nameAr: true, unit: true }
+    select: { id: true, code: true, nameEn: true, nameAr: true, unit: true, unitWeightKg: true }
   });
   const itemById = new Map(items.map((item) => [item.id, item]));
   const requirementByItem = new Map<string, Requirement>();
   for (const ingredient of snapshot.ingredients) {
     const item = itemById.get(ingredient.inventoryItemId);
     if (!item) throw new Error("NOT_FOUND");
-    const quantity = convertUnit(new Prisma.Decimal(ingredient.quantity).mul(ratio), ingredient.unit as Unit, item.unit);
+    const quantity = convertUnitWithContext(new Prisma.Decimal(ingredient.quantity).mul(ratio), ingredient.unit as Unit, item.unit, { unitWeightKg: item.unitWeightKg });
     const existing = requirementByItem.get(item.id);
     requirementByItem.set(item.id, {
       inventoryItemId: item.id,

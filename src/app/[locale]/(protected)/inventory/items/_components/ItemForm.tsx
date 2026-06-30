@@ -27,6 +27,7 @@ const copy = {
     category: "Category",
     selectCategory: "Select a category",
     unit: "Unit",
+    unitWeightKg: "Unit Weight (kg)",
     minimumStock: "Minimum Stock",
     newReference: "New Effective Cost & Calorie Reference",
     referenceDescription: "Add a new effective-dated reference for recipe costing and nutrition.",
@@ -59,6 +60,7 @@ const copy = {
     category: "الفئة",
     selectCategory: "اختر فئة",
     unit: "الوحدة",
+    unitWeightKg: "وزن الوحدة (كجم)",
     minimumStock: "الحد الأدنى للمخزون",
     newReference: "مرجع جديد للتكلفة والسعرات بتاريخ سريان",
     referenceDescription: "أضف مرجعًا جديدًا بتاريخ سريان لحساب تكلفة الوصفات وقيمتها الغذائية.",
@@ -94,6 +96,7 @@ function dataFromForm(form: HTMLFormElement) {
     itemType: formData.get("itemType"),
     categoryId: formData.get("categoryId"),
     unit: formData.get("unit"),
+    unitWeightKg: formData.get("unitWeightKg"),
     minStockLevel: formData.get("minStockLevel")
   };
 }
@@ -214,6 +217,9 @@ export function ItemForm({ categories, item, canManage }: ItemFormProps) {
               <select className={controlClass} id={fieldId("unit")} name="unit" required defaultValue={item?.unit ?? "KG"} aria-invalid={Boolean(fieldErrors.unit)} aria-describedby={describedBy("unit")}>
                 {units.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
               </select>
+            </Field>
+            <Field id={fieldId("unitWeightKg")} label={labels.unitWeightKg} error={fieldErrors.unitWeightKg}>
+              <input className={controlClass} id={fieldId("unitWeightKg")} name="unitWeightKg" placeholder="0.000" type="number" step="0.001" min="0.001" defaultValue={item?.unitWeightKg ?? ""} aria-invalid={Boolean(fieldErrors.unitWeightKg)} aria-describedby={describedBy("unitWeightKg")} />
             </Field>
             <Field id={fieldId("minStockLevel")} label={labels.minimumStock} error={fieldErrors.minStockLevel}>
               <input className={controlClass} id={fieldId("minStockLevel")} name="minStockLevel" placeholder="0" type="number" step="0.001" min="0" defaultValue={item?.minStockLevel ?? "0"} aria-invalid={Boolean(fieldErrors.minStockLevel)} aria-describedby={describedBy("minStockLevel")} />

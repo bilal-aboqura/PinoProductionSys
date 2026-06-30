@@ -36,6 +36,7 @@ export type InventoryItemDto = {
   categoryId: string;
   categoryName: string;
   unit: Unit;
+  unitWeightKg: string | null;
   minStockLevel: string;
   isActive: boolean;
   currentReferenceProfile: IngredientReferenceProfileDto | null;
@@ -116,6 +117,7 @@ export type CreateItemInput = {
   itemType: ItemType;
   categoryId: string;
   unit: Unit;
+  unitWeightKg?: number | string | null;
   minStockLevel?: number | string;
 };
 

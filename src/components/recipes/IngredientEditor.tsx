@@ -13,6 +13,7 @@ export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { 
   const router = useRouter();
   const [warning, setWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [formResetKey, setFormResetKey] = useState(0);
 
   function submit(formData: FormData) {
     setWarning(null);
@@ -28,9 +29,11 @@ export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { 
         },
         version
       );
+      if (!result.success) return;
       if (result.success && "hasDuplicate" in result.data && result.data.hasDuplicate) {
         setWarning("This ingredient appears multiple times - is this intentional?");
       }
+      setFormResetKey((current) => current + 1);
       router.refresh();
     });
   }
@@ -63,8 +66,8 @@ export function IngredientEditor({ recipeId, version, ingredients, canEdit }: { 
           </div>
         ))}
       </div>
-      {canEdit ? <form action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_120px_1fr_44px]">
-        <SearchCombobox name="inventoryItemId" source="inventory-item-ids" placeholder="Select inventory item" required />
+      {canEdit ? <form key={formResetKey} action={submit} className="grid gap-2 rounded-md border bg-surface p-3 md:grid-cols-[1fr_120px_120px_1fr_44px]">
+        <SearchCombobox name="inventoryItemId" source="inventory-item-ids" placeholder="Select inventory item" required autoFocus />
         <Input name="quantity" type="number" step="0.001" placeholder="Qty" required />
         <select className="h-10 rounded-md border bg-white px-2 text-sm" name="unit" required>
           {["KG", "GRAM", "LITER", "MILLILITER", "PIECE"].map((unit) => <option key={unit}>{unit}</option>)}

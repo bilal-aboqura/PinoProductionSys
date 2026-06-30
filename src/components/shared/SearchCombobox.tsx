@@ -11,6 +11,7 @@ type SearchComboboxProps = {
   placeholder?: string;
   className?: string;
   required?: boolean;
+  autoFocus?: boolean;
   onValueChange?: (value: string) => void;
 };
 
@@ -21,6 +22,7 @@ export function SearchCombobox({
   placeholder = "Search or select",
   className = "",
   required,
+  autoFocus,
   onValueChange
 }: SearchComboboxProps) {
   const listId = useId();
@@ -86,6 +88,7 @@ export function SearchCombobox({
           aria-expanded={open}
           aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
           autoComplete="off"
+          autoFocus={autoFocus}
           value={displayValue}
           placeholder={placeholder}
           required={required}

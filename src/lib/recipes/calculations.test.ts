@@ -30,9 +30,10 @@ describe("calculateRecipe", () => {
     expect(result.profitMarginSnapshot).toBe("75.0000");
   });
 
-  it("converts kilograms to grams and rejects piece conversion", () => {
+  it("converts kilograms to grams and only converts pieces when item weight is known", () => {
     expect(serializeCalculation(calculateRecipe({ lines: [{ id: "1", inventoryItemId: "flour", quantity: 1, unit: "KG", profile }] })).totalCost).toBe("1666.67");
     expect(() => calculateRecipe({ lines: [{ id: "1", inventoryItemId: "flour", quantity: 1, unit: "PIECE", profile }] })).toThrow("INVALID_UNIT_CONVERSION");
+    expect(serializeCalculation(calculateRecipe({ lines: [{ id: "2", inventoryItemId: "flour", quantity: 2, unit: "PIECE", unitWeightKg: 1.5, profile }] })).totalCost).toBe("5000.00");
   });
 
   it("returns null derived values for missing yield and price", () => {

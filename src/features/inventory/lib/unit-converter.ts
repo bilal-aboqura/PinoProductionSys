@@ -10,8 +10,24 @@ function family(unit: Unit) {
 }
 
 export function convertUnit(value: Prisma.Decimal.Value, from: Unit, to: Unit) {
+  return convertUnitWithContext(value, from, to);
+}
+
+export function convertUnitWithContext(
+  value: Prisma.Decimal.Value,
+  from: Unit,
+  to: Unit,
+  context: { unitWeightKg?: Prisma.Decimal.Value | null } = {}
+): Prisma.Decimal {
   const amount = new Prisma.Decimal(value);
   if (from === to) return amount;
+  const unitWeightKg = context.unitWeightKg == null ? null : new Prisma.Decimal(context.unitWeightKg);
+  if (unitWeightKg?.gt(0) && from === "PIECE" && family(to) === "weight") {
+    return convertUnitWithContext(amount.mul(unitWeightKg), "KG", to);
+  }
+  if (unitWeightKg?.gt(0) && to === "PIECE" && family(from) === "weight") {
+    return convertUnitWithContext(amount, from, "KG").div(unitWeightKg);
+  }
   if (family(from) !== family(to)) {
     throw new Error("INVALID_UNIT_CONVERSION");
   }

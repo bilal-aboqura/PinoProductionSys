@@ -26,13 +26,13 @@ export async function GET(request: NextRequest) {
     const [items, categories] = await Promise.all([
       prisma.inventoryItem.findMany({
         where: { isActive: true },
-        select: { code: true, nameEn: true, nameAr: true, unit: true, itemType: true, category: { select: { name: true } } },
+        select: { code: true, nameEn: true, nameAr: true, unit: true, unitWeightKg: true, itemType: true, category: { select: { name: true } } },
         orderBy: [{ nameEn: "asc" }, { code: "asc" }]
       }),
       prisma.inventoryCategory.findMany({ select: { name: true }, orderBy: { name: "asc" } })
     ]);
     const body = await generateItemReferenceTemplate(
-      items.map((item) => ({ ...item, categoryName: item.category.name })),
+      items.map((item) => ({ ...item, unitWeightKg: item.unitWeightKg?.toString() ?? null, categoryName: item.category.name })),
       categories.map((category) => category.name),
       request.nextUrl.searchParams.get("locale") ?? "en"
     );

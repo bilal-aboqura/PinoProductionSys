@@ -10,6 +10,7 @@ const columnForField: Record<string, ItemReferenceImportColumn> = {
   itemType: "Item Type",
   categoryId: "Category",
   unit: "Base Unit",
+  unitWeightKg: "Unit Weight (kg)",
   minStockLevel: "Minimum Stock",
   costReferenceQuantity: "Reference Quantity",
   costReferenceUnit: "Reference Unit",
@@ -37,6 +38,7 @@ export type ImportableReferenceItem = {
   nameAr: string;
   itemType: ItemType;
   unit: Unit;
+  unitWeightKg?: Prisma.Decimal | null;
   isActive: boolean;
   ingredientReferenceProfiles: { effectiveAt: Date }[];
 };
@@ -46,7 +48,7 @@ export type ImportableCategory = { id: string; name: string };
 function sameNewItemDetails(left: ItemReferenceImportRow, right: ItemReferenceImportRow) {
   return left.itemName === right.itemName && left.nameAr === right.nameAr && left.itemType === right.itemType &&
     normalizedName(left.categoryName) === normalizedName(right.categoryName) && left.baseUnit === right.baseUnit &&
-    left.minStockLevel === right.minStockLevel;
+    left.unitWeightKg === right.unitWeightKg && left.minStockLevel === right.minStockLevel;
 }
 
 export function validateItemReferenceRows(
@@ -78,7 +80,7 @@ export function validateItemReferenceRows(
       const category = categoryByName.get(normalizedName(row.categoryName));
       if (!row.categoryName) {
         errors.push({ row: row.rowNumber, column: "Category", message: `Category is required to create new item ${row.itemCode}.` });
-      } else if (!category) {
+      } else if (!category && !row.allowCreateCategory) {
         errors.push({ row: row.rowNumber, column: "Category", message: `Category ${row.categoryName} does not exist.` });
       }
       const parsedItem = createItemSchema.safeParse({
@@ -88,6 +90,7 @@ export function validateItemReferenceRows(
         itemType: row.itemType,
         categoryId: category?.id ?? "",
         unit: row.baseUnit,
+        unitWeightKg: row.unitWeightKg,
         minStockLevel: row.minStockLevel
       });
       if (!parsedItem.success) {
@@ -103,7 +106,9 @@ export function validateItemReferenceRows(
       } else if (!firstRow) newItemRows.set(row.itemCode, row);
     }
 
-    if (unitFamily(baseUnit) !== unitFamily(row.costReferenceUnit)) {
+    const itemUnitWeightKg = item?.unitWeightKg ?? (row.unitWeightKg == null ? null : new Prisma.Decimal(row.unitWeightKg));
+    const canUsePieceWeight = baseUnit === "PIECE" && itemUnitWeightKg?.gt(0) && unitFamily(row.costReferenceUnit) === "weight";
+    if (unitFamily(baseUnit) !== unitFamily(row.costReferenceUnit) && !canUsePieceWeight) {
       errors.push({ row: row.rowNumber, column: "Reference Unit", message: `Reference Unit is incompatible with the item's base unit (${baseUnit}).` });
     }
     const parsedReference = ingredientReferenceProfileSchema.safeParse({
@@ -147,6 +152,7 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
         nameAr: true,
         itemType: true,
         unit: true,
+        unitWeightKg: true,
         isActive: true,
         ingredientReferenceProfiles: { select: { effectiveAt: true } }
       }
@@ -163,10 +169,31 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
   let createdItemCount = 0;
 
   await prisma.$transaction(async (tx) => {
+    const missingCategories = [...new Set(rows.filter((row) => row.allowCreateCategory && row.categoryName && !categoryByName.has(normalizedName(row.categoryName))).map((row) => row.categoryName))];
+    for (const name of missingCategories) {
+      const createdCategory = await tx.inventoryCategory.create({ data: { name, description: "Imported from product classification workbook." } });
+      categoryByName.set(normalizedName(createdCategory.name), { id: createdCategory.id, name: createdCategory.name });
+    }
+
     const importedItemByCode = new Map<string, { id: string; code: string; unit: Unit; itemType: ItemType }>();
     for (const [code, row] of firstRowByCode) {
       const existing = existingItemByCode.get(code);
       if (existing) {
+        if (row.unitWeightKg != null && (!existing.unitWeightKg || !existing.unitWeightKg.equals(row.unitWeightKg))) {
+          await tx.inventoryItem.update({
+            where: { id: existing.id },
+            data: { unitWeightKg: new Prisma.Decimal(row.unitWeightKg) }
+          });
+          await tx.inventoryAuditLog.create({
+            data: {
+              actorId,
+              action: "ITEM_UNIT_WEIGHT_IMPORT_UPDATE",
+              targetId: existing.id,
+              previousValue: { unitWeightKg: existing.unitWeightKg?.toString() ?? null },
+              newValue: { unitWeightKg: row.unitWeightKg }
+            }
+          });
+        }
         importedItemByCode.set(code, { id: existing.id, code: existing.code, unit: existing.unit, itemType: existing.itemType });
         continue;
       }
@@ -179,6 +206,7 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
           itemType: row.itemType,
           categoryId: category.id,
           unit: row.baseUnit,
+          unitWeightKg: row.unitWeightKg == null ? null : new Prisma.Decimal(row.unitWeightKg),
           minStockLevel: new Prisma.Decimal(row.minStockLevel)
         }
       });
@@ -197,6 +225,7 @@ export async function importItemReferenceRows(rows: ItemReferenceImportRow[], ac
             itemType: created.itemType,
             categoryId: created.categoryId,
             unit: created.unit,
+            unitWeightKg: row.unitWeightKg,
             minStockLevel: row.minStockLevel
           }
         }

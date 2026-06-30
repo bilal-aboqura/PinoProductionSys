@@ -52,6 +52,7 @@ describe("item reference import service", () => {
       itemType: "RAW_MATERIAL",
       categoryName: "Ingredients",
       baseUnit: "GRAM",
+      unitWeightKg: null,
       minStockLevel: 0,
       costReferenceQuantity: 100,
       costReferenceUnit: "GRAM",

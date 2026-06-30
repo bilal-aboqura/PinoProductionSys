@@ -8,6 +8,7 @@ export const ITEM_REFERENCE_HEADERS = [
   "Item Type",
   "Category",
   "Base Unit",
+  "Unit Weight (kg)",
   "Minimum Stock",
   "Reference Quantity",
   "Reference Unit",
@@ -51,6 +52,7 @@ export type ItemReferenceImportRow = {
   itemType: ItemType;
   categoryName: string;
   baseUnit: Unit;
+  unitWeightKg: number | null;
   minStockLevel: number;
   costReferenceQuantity: number;
   costReferenceUnit: Unit;
@@ -60,9 +62,10 @@ export type ItemReferenceImportRow = {
   calorieReferenceQuantity: number;
   calorieReferenceUnit: Unit;
   effectiveAt: Date;
+  allowCreateCategory?: boolean;
 };
 
-type TemplateItem = { code: string; nameEn: string; nameAr: string; unit: Unit; itemType?: ItemType; categoryName?: string };
+type TemplateItem = { code: string; nameEn: string; nameAr: string; unit: Unit; unitWeightKg?: string | number | null; itemType?: ItemType; categoryName?: string };
 
 const headerByField = {
   itemCode: "Item Code",
@@ -71,6 +74,7 @@ const headerByField = {
   itemType: "Item Type",
   categoryName: "Category",
   baseUnit: "Base Unit",
+  unitWeightKg: "Unit Weight (kg)",
   minStockLevel: "Minimum Stock",
   costReferenceQuantity: "Reference Quantity",
   costReferenceUnit: "Reference Unit",
@@ -107,7 +111,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
   });
   sheet.addRow([...ITEM_REFERENCE_HEADERS]);
   styleHeader(sheet.getRow(1));
-  sheet.autoFilter = `A1:O${ITEM_REFERENCE_MAX_ROWS + 1}`;
+  sheet.autoFilter = `A1:P${ITEM_REFERENCE_MAX_ROWS + 1}`;
 
   const exampleRow = sheet.addRow([
     "EXAMPLE-ITEM",
@@ -116,6 +120,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     "RAW_MATERIAL",
     categories[0] ?? "Ingredients",
     "KG",
+    "",
     0,
     1,
     "KG",
@@ -135,17 +140,18 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     ? "صف مثال فقط. احذفه قبل الاستيراد. يمكن استخدام رمز موجود أو إنشاء صنف جديد مع تحديد الفئة."
     : "Example only. Delete this row before import. You may use an existing code or create a new item by providing its category.";
 
-  const widths = [18, 28, 28, 20, 24, 16, 18, 20, 18, 14, 18, 14, 28, 26, 22];
+  const widths = [18, 28, 28, 20, 24, 16, 18, 18, 20, 18, 14, 18, 14, 28, 26, 22];
   widths.forEach((width, index) => { sheet.getColumn(index + 1).width = width; });
   sheet.getColumn(7).numFmt = "0.000";
   sheet.getColumn(8).numFmt = "0.000";
-  sheet.getColumn(10).numFmt = "0.00";
-  sheet.getColumn(12).numFmt = "0.00";
-  sheet.getColumn(13).numFmt = "0.000";
-  sheet.getColumn(15).numFmt = "yyyy-mm-dd hh:mm";
+  sheet.getColumn(9).numFmt = "0.000";
+  sheet.getColumn(11).numFmt = "0.00";
+  sheet.getColumn(13).numFmt = "0.00";
+  sheet.getColumn(14).numFmt = "0.000";
+  sheet.getColumn(16).numFmt = "yyyy-mm-dd hh:mm";
 
   const lastEditableRow = ITEM_REFERENCE_MAX_ROWS + 1;
-  for (const column of [6, 9, 14]) {
+  for (const column of [6, 10, 15]) {
     sheet.getCell(2, column).dataValidation = {
       type: "list",
       allowBlank: false,
@@ -156,7 +162,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
     };
     for (let row = 3; row <= lastEditableRow; row += 1) sheet.getCell(row, column).dataValidation = sheet.getCell(2, column).dataValidation;
   }
-  for (const column of [8, 13]) {
+  for (const column of [9, 14]) {
     for (let row = 2; row <= lastEditableRow; row += 1) {
       sheet.getCell(row, column).dataValidation = {
         type: "decimal",
@@ -169,7 +175,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
       };
     }
   }
-  for (const column of [7, 10, 12]) {
+  for (const column of [7, 8, 11, 13]) {
     for (let row = 2; row <= lastEditableRow; row += 1) {
       sheet.getCell(row, column).dataValidation = {
         type: "decimal",
@@ -201,7 +207,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
         error: "Choose a category used by the system."
       };
     }
-    sheet.getCell(row, 11).dataValidation = {
+    sheet.getCell(row, 12).dataValidation = {
       type: "list",
       allowBlank: false,
       formulae: ['"SAR"'],
@@ -209,7 +215,7 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
       errorTitle: "Invalid currency",
       error: "The supported currency is SAR."
     };
-    sheet.getCell(row, 15).dataValidation = {
+    sheet.getCell(row, 16).dataValidation = {
       type: "date",
       operator: "between",
       allowBlank: false,
@@ -221,14 +227,14 @@ export async function generateItemReferenceTemplate(items: TemplateItem[], categ
   }
 
   const validItems = workbook.addWorksheet("Valid Items", { views: [{ state: "frozen", ySplit: 1 }] });
-  validItems.addRow(["Item Code", "English Item Name", "Arabic Item Name", "Item Type", "Category", "Base Unit"]);
+  validItems.addRow(["Item Code", "English Item Name", "Arabic Item Name", "Item Type", "Category", "Base Unit", "Unit Weight (kg)"]);
   styleHeader(validItems.getRow(1));
   items
     .slice()
     .sort((left, right) => left.nameEn.localeCompare(right.nameEn) || left.code.localeCompare(right.code))
-    .forEach((item) => validItems.addRow([item.code, item.nameEn, item.nameAr, item.itemType ?? "", item.categoryName ?? "", item.unit]));
-  validItems.columns = [{ width: 20 }, { width: 32 }, { width: 32 }, { width: 20 }, { width: 26 }, { width: 16 }];
-  validItems.autoFilter = `A1:F${Math.max(2, items.length + 1)}`;
+    .forEach((item) => validItems.addRow([item.code, item.nameEn, item.nameAr, item.itemType ?? "", item.categoryName ?? "", item.unit, item.unitWeightKg ?? ""]));
+  validItems.columns = [{ width: 20 }, { width: 32 }, { width: 32 }, { width: 20 }, { width: 26 }, { width: 16 }, { width: 18 }];
+  validItems.autoFilter = `A1:G${Math.max(2, items.length + 1)}`;
 
   const validCategories = workbook.addWorksheet("Valid Categories", { views: [{ state: "frozen", ySplit: 1 }] });
   validCategories.addRow(["Category"]);
@@ -360,6 +366,122 @@ function dateValue(value: unknown, timeZone: string) {
   return parsed;
 }
 
+function headersInRow(sheet: ExcelJS.Worksheet, rowNumber: number) {
+  const headers = new Map<string, number>();
+  sheet.getRow(rowNumber).eachCell((cell, columnNumber) => {
+    const header = textValue(rawCellValue(cell));
+    if (header) headers.set(header, columnNumber);
+  });
+  return headers;
+}
+
+function findHeaderRow(sheet: ExcelJS.Worksheet, requiredHeaders: string[], maxRows = 10) {
+  for (let rowNumber = 1; rowNumber <= Math.min(sheet.rowCount, maxRows); rowNumber += 1) {
+    const headers = headersInRow(sheet, rowNumber);
+    if (requiredHeaders.every((header) => headers.has(header))) return { rowNumber, headers };
+  }
+  return null;
+}
+
+function arabicItemType(value: string): ItemType | null {
+  if (value === "مواد خام") return "RAW_MATERIAL";
+  if (value === "مواد تحويلية") return "TRANSFORMATION_MATERIAL";
+  if (value === "منتج نهائي") return "FINISHED_PRODUCT";
+  return null;
+}
+
+function arabicUnit(value: string): Unit | null {
+  if (value === "كيلو") return "KG";
+  if (value === "جرام") return "GRAM";
+  if (value === "لتر") return "LITER";
+  if (value === "مللتر") return "MILLILITER";
+  if (value === "وحدة") return "PIECE";
+  return null;
+}
+
+function parseClientProductWorkbook(sheet: ExcelJS.Worksheet, timeZone: string) {
+  const header = findHeaderRow(sheet, [
+    "اسم المنتج (عربي)",
+    "اسم المنتج (English)",
+    "نوع المنتج",
+    "حالة المنتج",
+    "الكود (تلقائي)",
+    "وحدة القياس"
+  ], 160);
+  if (!header) return null;
+
+  const valueAt = (row: ExcelJS.Row, headerName: string) => {
+    const column = header.headers.get(headerName);
+    return column ? rawCellValue(row.getCell(column)) : undefined;
+  };
+  const rows: ItemReferenceImportRow[] = [];
+  const errors: ItemReferenceImportError[] = [];
+  const effectiveAt = dateTimeInZone({
+    year: new Date().getUTCFullYear(),
+    month: new Date().getUTCMonth() + 1,
+    day: new Date().getUTCDate(),
+    hour: 0,
+    minute: 0,
+    second: 0
+  }, timeZone);
+
+  for (let rowNumber = header.rowNumber + 1; rowNumber <= Math.min(sheet.rowCount, ITEM_REFERENCE_MAX_ROWS + header.rowNumber + 1); rowNumber += 1) {
+    const row = sheet.getRow(rowNumber);
+    const itemNameAr = textValue(valueAt(row, "اسم المنتج (عربي)"));
+    const itemCode = textValue(valueAt(row, "الكود (تلقائي)")).toUpperCase();
+    if (!itemNameAr && !itemCode) continue;
+    if (itemNameAr.startsWith("▼")) continue;
+    if (itemCode === "الكود" || itemNameAr === "اسم المنتج (عربي)") continue;
+
+    const itemTypeValue = arabicItemType(textValue(valueAt(row, "نوع المنتج")));
+    const baseUnit = arabicUnit(textValue(valueAt(row, "وحدة القياس")));
+    const unitWeightKg = numberValue(valueAt(row, "وزن الوحدة (كجم)"));
+    const calories = numberValue(valueAt(row, "السعرات الحرارية")) ?? 0;
+    const servingGrams = numberValue(valueAt(row, "حجم الحصة (جم)"));
+    const rowErrors: ItemReferenceImportError[] = [];
+    const add = (column: ItemReferenceImportColumn, message: string) => rowErrors.push({ row: rowNumber, column, message });
+
+    if (!itemCode) add("Item Code", "Item Code is required.");
+    if (!itemNameAr) add("Item Name", "Item Name is required.");
+    if (!itemTypeValue) add("Item Type", "Item Type must be RAW_MATERIAL, TRANSFORMATION_MATERIAL, or FINISHED_PRODUCT.");
+    if (!baseUnit) add("Base Unit", "Base Unit is not allowed.");
+    if (unitWeightKg != null && unitWeightKg <= 0) add("Unit Weight (kg)", "Unit Weight (kg) must be greater than 0.");
+    if (calories < 0) add("Calories", "Calories must be greater than or equal to 0.");
+    if (servingGrams != null && servingGrams <= 0) add("Calorie Reference Quantity", "Calorie Reference Quantity must be greater than 0.");
+    if (rowErrors.length > 0) {
+      errors.push(...rowErrors);
+      continue;
+    }
+
+    const hasCalorieReference = servingGrams != null && servingGrams > 0;
+    const referenceQuantity = hasCalorieReference ? servingGrams : 1;
+    const referenceUnit = hasCalorieReference ? "GRAM" : baseUnit!;
+    rows.push({
+      rowNumber,
+      itemCode,
+      itemName: textValue(valueAt(row, "اسم المنتج (English)")) || itemNameAr,
+      nameAr: itemNameAr,
+      itemType: itemTypeValue!,
+      categoryName: textValue(valueAt(row, "حالة المنتج")) || textValue(valueAt(row, "نوع المنتج")) || "Uncategorized",
+      baseUnit: baseUnit!,
+      unitWeightKg: unitWeightKg && unitWeightKg > 0 ? unitWeightKg : null,
+      minStockLevel: 0,
+      costReferenceQuantity: referenceQuantity,
+      costReferenceUnit: referenceUnit,
+      costReferenceValue: 0,
+      costCurrency: "SAR",
+      calorieValue: calories,
+      calorieReferenceQuantity: referenceQuantity,
+      calorieReferenceUnit: referenceUnit,
+      effectiveAt,
+      allowCreateCategory: true
+    });
+  }
+  if (rows.length === 0 && errors.length === 0) errors.push({ row: 0, column: "Workbook", message: "The workbook does not contain any data rows." });
+  rows.sort((left, right) => left.itemName.localeCompare(right.itemName) || left.effectiveAt.getTime() - right.effectiveAt.getTime());
+  return { rows, errors };
+}
+
 export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC"): Promise<{ rows: ItemReferenceImportRow[]; errors: ItemReferenceImportError[] }> {
   const workbook = new ExcelJS.Workbook();
   try {
@@ -367,15 +489,17 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
   } catch {
     return { rows: [], errors: [{ row: 0, column: "Workbook", message: "The file is not a readable Excel workbook." }] };
   }
+  const clientSheet = workbook.getWorksheet("إدخال وسجل المنتجات") ?? workbook.worksheets.find((item) => findHeaderRow(item, ["اسم المنتج (عربي)", "الكود (تلقائي)", "وحدة القياس"], 160));
+  if (clientSheet) {
+    const parsedClient = parseClientProductWorkbook(clientSheet, timeZone);
+    if (parsedClient) return parsedClient;
+  }
+
   const sheet = workbook.getWorksheet("Item References") ?? workbook.worksheets[0];
   if (!sheet) return { rows: [], errors: [{ row: 0, column: "Workbook", message: "The workbook does not contain a worksheet." }] };
 
   const errors: ItemReferenceImportError[] = [];
-  const columnIndexes = new Map<string, number>();
-  sheet.getRow(1).eachCell((cell, columnNumber) => {
-    const header = textValue(rawCellValue(cell));
-    if (header) columnIndexes.set(header, columnNumber);
-  });
+  const columnIndexes = headersInRow(sheet, 1);
   for (const header of LEGACY_REQUIRED_HEADERS) {
     if (!columnIndexes.has(header)) errors.push({ row: 1, column: "Header", message: `Missing required column: ${header}.` });
   }
@@ -401,6 +525,8 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
     const categoryName = textValue(valueAt(row, "Category"));
     const costReferenceUnit = textValue(valueAt(row, "Reference Unit")).toUpperCase();
     const baseUnitValue = textValue(valueAt(row, "Base Unit")).toUpperCase() || costReferenceUnit;
+    const unitWeightRaw = valueAt(row, "Unit Weight (kg)");
+    const unitWeightKg = textValue(unitWeightRaw) === "" ? null : numberValue(unitWeightRaw);
     const minimumStockRaw = valueAt(row, "Minimum Stock");
     const minStockLevel = textValue(minimumStockRaw) === "" ? 0 : numberValue(minimumStockRaw);
     const costReferenceQuantity = numberValue(valueAt(row, "Reference Quantity"));
@@ -419,6 +545,8 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
       add(headerByField.itemType, "Item Type must be RAW_MATERIAL, TRANSFORMATION_MATERIAL, or FINISHED_PRODUCT.");
     }
     if (!ITEM_REFERENCE_UNITS.includes(baseUnitValue as Unit)) add(headerByField.baseUnit, "Base Unit is not allowed.");
+    if (unitWeightKg == null && textValue(unitWeightRaw) !== "") add(headerByField.unitWeightKg, "Unit Weight (kg) must be numeric.");
+    else if (unitWeightKg != null && unitWeightKg <= 0) add(headerByField.unitWeightKg, "Unit Weight (kg) must be greater than 0.");
     if (minStockLevel == null) add(headerByField.minStockLevel, "Minimum Stock must be numeric.");
     else if (minStockLevel < 0) add(headerByField.minStockLevel, "Minimum Stock must be greater than or equal to 0.");
     if (costReferenceQuantity == null) add(headerByField.costReferenceQuantity, "Reference Quantity must be numeric.");
@@ -445,6 +573,7 @@ export async function parseItemReferenceWorkbook(buffer: Buffer, timeZone = "UTC
       itemType: itemTypeValue as ItemType,
       categoryName,
       baseUnit: baseUnitValue as Unit,
+      unitWeightKg,
       minStockLevel: minStockLevel!,
       costReferenceQuantity: costReferenceQuantity!,
       costReferenceUnit: costReferenceUnit as Unit,

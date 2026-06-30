@@ -1,6 +1,6 @@
 import { Prisma, type IngredientReferenceProfile, type Unit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { convertUnit } from "@/features/inventory/lib/unit-converter";
+import { convertUnitWithContext } from "@/features/inventory/lib/unit-converter";
 
 export type ReferenceProfileValues = Pick<
   IngredientReferenceProfile,
@@ -19,9 +19,10 @@ export function normalizeAgainstReference(
   quantity: Prisma.Decimal.Value,
   unit: Unit,
   referenceQuantity: Prisma.Decimal.Value,
-  referenceUnit: Unit
+  referenceUnit: Unit,
+  context: { unitWeightKg?: Prisma.Decimal.Value | null } = {}
 ) {
-  const converted = convertUnit(quantity, unit, referenceUnit);
+  const converted = convertUnitWithContext(quantity, unit, referenceUnit, context);
   return converted.div(referenceQuantity);
 }
 

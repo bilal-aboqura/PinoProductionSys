@@ -28,8 +28,8 @@ describe("item reference Excel template", () => {
     expect(sheet.views[0]).toMatchObject({ state: "frozen", ySplit: 1 });
     expect(sheet.getCell("D2").dataValidation.type).toBe("list");
     expect(sheet.getCell("F2").dataValidation.type).toBe("list");
-    expect(sheet.getCell("H2").dataValidation.operator).toBe("greaterThan");
-    expect(sheet.getCell("O2").numFmt).toBe("yyyy-mm-dd hh:mm");
+    expect(sheet.getCell("I2").dataValidation.operator).toBe("greaterThan");
+    expect(sheet.getCell("P2").numFmt).toBe("yyyy-mm-dd hh:mm");
     expect(workbook.getWorksheet("Valid Items")!.getColumn(1).values).toEqual([undefined, "Item Code", "FLOUR", "SUGAR"]);
     expect(workbook.getWorksheet("Valid Categories")!.getColumn(1).values).toEqual([undefined, "Category", "Ingredients", "Packaging"]);
     expect(workbook.getWorksheet("Instructions")).toBeDefined();
@@ -39,9 +39,9 @@ describe("item reference Excel template", () => {
 describe("item reference Excel parser", () => {
   it("parses and sorts valid rows by item name then effective date", async () => {
     const buffer = await workbookBuffer([
-      ["SUGAR", "Sugar", "", "", "", "", "", 1, "KG", 40, "SAR", 387, 100, "GRAM", "2026-06-02 09:00"],
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-03 09:00"],
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 45, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
+      ["SUGAR", "Sugar", "", "", "", "", "", "", 1, "KG", 40, "SAR", 387, 100, "GRAM", "2026-06-02 09:00"],
+      ["FLOUR", "Flour", "", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-03 09:00"],
+      ["FLOUR", "Flour", "", "", "", "", "", "", 1, "KG", 45, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
     ]);
     const result = await parseItemReferenceWorkbook(buffer);
 
@@ -55,7 +55,7 @@ describe("item reference Excel parser", () => {
 
   it("returns precise row-level errors without returning an invalid row", async () => {
     const buffer = await workbookBuffer([
-      ["FLOUR", "Flour", "", "", "", "", "", 0, "BOX", -1, "USD", "many", 0, "GRAM", "06/01/2026"]
+      ["FLOUR", "Flour", "", "", "", "", "", "", 0, "BOX", -1, "USD", "many", 0, "GRAM", "06/01/2026"]
     ]);
     const result = await parseItemReferenceWorkbook(buffer);
 
@@ -70,7 +70,7 @@ describe("item reference Excel parser", () => {
   });
 
   it("continues to accept the original template columns for existing items", async () => {
-    const legacyHeaders = ITEM_REFERENCE_HEADERS.filter((header) => !["Arabic Item Name", "Item Type", "Category", "Base Unit", "Minimum Stock"].includes(header));
+    const legacyHeaders = ITEM_REFERENCE_HEADERS.filter((header) => !["Arabic Item Name", "Item Type", "Category", "Base Unit", "Unit Weight (kg)", "Minimum Stock"].includes(header));
     const buffer = await workbookBuffer([
       ["FLOUR", "Flour", 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
     ], legacyHeaders);
@@ -80,9 +80,36 @@ describe("item reference Excel parser", () => {
     expect(result.rows[0]).toMatchObject({ nameAr: "Flour", itemType: "RAW_MATERIAL", baseUnit: "KG", minStockLevel: 0 });
   });
 
+  it("parses the client Arabic product classification workbook shape", async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("إدخال وسجل المنتجات");
+    sheet.addRow(["title"]);
+    sheet.addRow([]);
+    sheet.addRow([]);
+    sheet.addRow(["م", "اسم المنتج (عربي)", "اسم المنتج (English)", "نوع المنتج", "حالة المنتج", "الكود (تلقائي)", "وحدة القياس", null, null, null, null, null, null, null, null, null, null, "السعرات الحرارية", "حجم الحصة (جم)", "سعرات / جرام", "وزن الوحدة (كجم)"]);
+    sheet.addRow([1, "منتج اختبار", "Test Product", "منتج نهائي", "جاهز للبيع", "FIN-RTS-999", "وحدة", null, null, null, null, null, null, null, null, null, null, 250, 100, 2.5, 1.5]);
+
+    const result = await parseItemReferenceWorkbook(Buffer.from(await workbook.xlsx.writeBuffer()), "Africa/Cairo");
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows[0]).toMatchObject({
+      itemCode: "FIN-RTS-999",
+      itemName: "Test Product",
+      nameAr: "منتج اختبار",
+      itemType: "FINISHED_PRODUCT",
+      categoryName: "جاهز للبيع",
+      baseUnit: "PIECE",
+      unitWeightKg: 1.5,
+      calorieValue: 250,
+      calorieReferenceQuantity: 100,
+      calorieReferenceUnit: "GRAM",
+      allowCreateCategory: true
+    });
+  });
+
   it("accepts transformation material as a valid item type", async () => {
     const buffer = await workbookBuffer([
-      ["BASE", "Base Mix", "", "TRANSFORMATION_MATERIAL", "Ingredients", "KG", 0, 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
+      ["BASE", "Base Mix", "", "TRANSFORMATION_MATERIAL", "Ingredients", "KG", "", 0, 1, "KG", 50, "SAR", 364, 100, "GRAM", "2026-06-01 09:00"]
     ]);
     const result = await parseItemReferenceWorkbook(buffer);
 
@@ -92,7 +119,7 @@ describe("item reference Excel parser", () => {
 
   it("interprets Excel wall-clock dates in the configured system timezone", async () => {
     const buffer = await workbookBuffer([
-      ["FLOUR", "Flour", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", new Date(Date.UTC(2026, 5, 23, 0, 0))]
+      ["FLOUR", "Flour", "", "", "", "", "", "", 1, "KG", 50, "SAR", 364, 100, "GRAM", new Date(Date.UTC(2026, 5, 23, 0, 0))]
     ]);
     const result = await parseItemReferenceWorkbook(buffer, "Africa/Cairo");
 
@@ -121,6 +148,7 @@ describe("item reference import validation", () => {
     itemType: "RAW_MATERIAL",
     categoryName: "Ingredients",
     baseUnit: "KG",
+    unitWeightKg: null,
     minStockLevel: 0,
     costReferenceQuantity: 1,
     costReferenceUnit: "KG",

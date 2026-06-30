@@ -80,6 +80,7 @@ export default async function InventoryItemsPage({
                 <TableHead>{t("type")}</TableHead>
                 <TableHead>{t("category")}</TableHead>
                 <TableHead>{t("unit")}</TableHead>
+                <TableHead>Unit weight</TableHead>
                 <TableHead>{t("minStock")}</TableHead>
                 <TableHead>Cost / base</TableHead>
                 <TableHead>Calories / base</TableHead>
@@ -96,6 +97,7 @@ export default async function InventoryItemsPage({
                   <TableCell>{t(itemTypeLabels[item.itemType])}</TableCell>
                   <TableCell>{item.categoryName}</TableCell>
                   <TableCell>{item.unit}</TableCell>
+                  <TableCell>{item.unitWeightKg ? `${item.unitWeightKg} kg` : "—"}</TableCell>
                   <TableCell>{item.minStockLevel}</TableCell>
                   <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCost} SAR / ${item.currentReferenceProfile.costReferenceUnit}` : "—"}</TableCell>
                   <TableCell>{item.currentReferenceProfile ? `${item.currentReferenceProfile.normalizedCalories} kcal / ${item.currentReferenceProfile.calorieReferenceUnit}` : "—"}</TableCell>

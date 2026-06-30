@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convertUnit } from "./unit-converter";
+import { convertUnit, convertUnitWithContext } from "./unit-converter";
 
 describe("convertUnit", () => {
   it("converts between compatible weight units", () => {
@@ -14,5 +14,10 @@ describe("convertUnit", () => {
 
   it("blocks incompatible conversions", () => {
     expect(() => convertUnit(1, "KG", "LITER")).toThrow("INVALID_UNIT_CONVERSION");
+  });
+
+  it("uses unit weight when converting pieces to weight", () => {
+    expect(convertUnitWithContext(2, "PIECE", "KG", { unitWeightKg: 1.5 }).toString()).toBe("3");
+    expect(convertUnitWithContext(3000, "GRAM", "PIECE", { unitWeightKg: 1.5 }).toString()).toBe("2");
   });
 });

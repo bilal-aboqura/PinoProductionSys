@@ -3,6 +3,7 @@ import { z } from "zod";
 const codeSchema = z.string().trim().min(1).max(30).regex(/^[A-Z0-9-]+$/i, "Use letters, numbers, and dashes only.");
 const positiveDecimal = z.coerce.number().positive();
 const nonNegativeDecimal = z.coerce.number().min(0);
+const optionalPositiveDecimal = z.preprocess((value) => value === "" ? undefined : value, z.coerce.number().positive().optional().nullable());
 
 export const createItemSchema = z.object({
   code: codeSchema,
@@ -11,6 +12,7 @@ export const createItemSchema = z.object({
   itemType: z.enum(["RAW_MATERIAL", "TRANSFORMATION_MATERIAL", "FINISHED_PRODUCT"]),
   categoryId: z.string().min(1),
   unit: z.enum(["KG", "GRAM", "LITER", "MILLILITER", "PIECE"]),
+  unitWeightKg: optionalPositiveDecimal,
   minStockLevel: nonNegativeDecimal.default(0)
 });
 
