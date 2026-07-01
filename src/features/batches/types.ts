@@ -1,4 +1,5 @@
 import type { BatchStatus, DisposalReason, LabelTemplate, ProductionOrderStatus } from "@prisma/client";
+import type { ScaledRecipeIngredient } from "@/lib/recipes/scaling";
 
 export type BatchErrorCode = "UNAUTHORIZED" | "FORBIDDEN" | "VALIDATION" | "NOT_FOUND" | "CONFLICT" | "INTERNAL";
 
@@ -63,6 +64,12 @@ export type BatchTraceability = BatchListItem & {
     version: number;
     storageInstructions?: string | null;
   };
+  recipeBaseYieldQuantity: string;
+  recipeBaseYieldUnit: string;
+  recipeScaledQuantity: string;
+  recipeScaledUnit: string;
+  recipeScaleMode: "base" | "target" | "produced";
+  recipeIngredients: ScaledRecipeIngredient[];
   productionOrder?: {
     id: string;
     orderNumber: string;
@@ -111,6 +118,8 @@ export type BatchTraceability = BatchListItem & {
     quantity: string;
     remainingQuantity: string;
     status: BatchStatus;
+    warehouseId: string;
+    warehouseName: string;
   }[];
   statusHistory: {
     id: string;

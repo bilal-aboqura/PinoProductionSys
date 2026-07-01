@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Button } from "@/components/ui/button";
+import { ScaledIngredientsCard } from "@/components/recipes/ScaledIngredientsCard";
 import { CancelOrderDialog } from "@/components/production-orders/CancelOrderDialog";
 import { CompleteOrderButton } from "@/components/production-orders/CompleteOrderButton";
 import { DownstreamActionsPanel } from "@/components/production-orders/DownstreamActionsPanel";
@@ -45,6 +46,16 @@ export default async function ProductionOrderDetailPage({ params }: { params: Pr
       </div>
       <OrderDetailHeader order={order} />
       {order.status === "PENDING" && order.canExecute ? <StartProductionButton orderId={order.id} version={order.version} /> : null}
+      <ScaledIngredientsCard
+        title="Recipe Ingredients"
+        description="Ingredient quantities are automatically scaled to this production order."
+        ingredients={order.recipeIngredients}
+        baseYieldQuantity={order.recipeBaseYieldQuantity}
+        baseYieldUnit={order.recipeBaseYieldUnit}
+        scaledQuantity={order.recipeScaledQuantity}
+        scaledUnit={order.recipeScaledUnit}
+        scaleMode={order.recipeScaleMode}
+      />
       <div className="space-y-4">
         {order.steps.map((step) => (
           <StepExecutionCard key={step.id} order={order} step={step} locked={!step.isCompleted && step.id !== firstIncomplete} />

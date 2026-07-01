@@ -6,6 +6,7 @@ import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getSupabaseAdminClient } from "@/lib/supabase-admin";
 import { recordBatchWasteLedger } from "@/features/inventory/actions";
+import { assertUserWarehouseAccess } from "@/features/inventory/lib/warehouse-access";
 import { buildTraceabilityUrl, generateBatchQrDataUrl } from "./qr";
 import type { BatchActionResult, BatchErrorCode, LabelData } from "./types";
 import {
@@ -14,10 +15,11 @@ import {
   maxEvidenceBytes,
   printLabelSchema,
   splitBatchSchema,
+  transferBatchSchema,
   updateBatchStatusSchema,
   validateEvidenceFile
 } from "./validation";
-import { calculateExpiryDate, generateBatchNumber, quantitiesMatchTotal } from "./utils";
+import { calculateExpiryDate, generateBatchNumber, nextContainerNumber, quantitiesMatchTotal } from "./utils";
 
 const BATCH_EVIDENCE_BUCKET = "batch-evidence";
 
@@ -56,6 +58,11 @@ function unknownError(error: unknown): BatchActionResult<never> {
     if (error.message === "INSUFFICIENT_STOCK") return fail("VALIDATION", "Requested quantity exceeds the available batch or inventory quantity.");
     if (error.message === "CONTAINER_TOTAL_MISMATCH") return fail("VALIDATION", "Container quantities must exactly match the batch quantity.");
     if (error.message === "ORDER_NOT_COMPLETED") return fail("VALIDATION", "The production order must be completed before creating a batch.");
+    if (error.message === "TRANSFER_BATCH_CONTAINER_REQUIRED") return fail("VALIDATION", "Scan or select a container before transferring a split batch.");
+    if (error.message === "TRANSFER_REQUIRES_FINISHED_PRODUCT_ITEM") return fail("VALIDATION", "This recipe needs an active finished-product inventory item before it can be transferred.");
+    if (error.message === "TRANSFER_SAME_WAREHOUSE") return fail("VALIDATION", "Source and destination warehouses must be different.");
+    if (error.message === "TRANSFER_NO_AVAILABLE_QUANTITY") return fail("VALIDATION", "No remaining quantity is available to transfer.");
+    if (error.message === "TRANSFER_EXCEEDS_CONTAINER_QUANTITY") return fail("VALIDATION", "Transfer quantity exceeds the remaining quantity in this container.");
     return fail("INTERNAL", error.message);
   }
   return fail("INTERNAL", "Unexpected batch error.");
@@ -64,6 +71,9 @@ function unknownError(error: unknown): BatchActionResult<never> {
 function revalidateBatches() {
   revalidatePath("/[locale]/inventory/batches", "page");
   revalidatePath("/[locale]/inventory/batches/[batchNumber]", "page");
+  revalidatePath("/[locale]/inventory/transfers", "page");
+  revalidatePath("/[locale]/inventory/history", "page");
+  revalidatePath("/[locale]/inventory", "page");
   revalidatePath("/[locale]/production/[id]", "page");
 }
 
@@ -133,6 +143,80 @@ async function adjustInventory(
       sourceRefId: input.sourceRefId
     }
   });
+}
+
+async function transferFinishedProductInventory(
+  tx: Prisma.TransactionClient,
+  input: {
+    batchId: string;
+    userId: string;
+    inventoryItemId: string;
+    sourceWarehouseId: string;
+    destinationWarehouseId: string;
+    quantity: Prisma.Decimal;
+    notes?: string | null;
+  }
+) {
+  const sourceBalance = await lockedBalance(tx, input.sourceWarehouseId, input.inventoryItemId);
+  const sourceCurrentQuantity = sourceBalance.currentQuantity.sub(input.quantity);
+  const sourceAvailableQuantity = sourceCurrentQuantity.sub(sourceBalance.reservedQuantity);
+  if (sourceAvailableQuantity.lt(0)) throw new Error("INSUFFICIENT_STOCK");
+
+  await tx.inventoryBalance.update({
+    where: { id: sourceBalance.id },
+    data: {
+      currentQuantity: sourceCurrentQuantity,
+      availableQuantity: sourceAvailableQuantity,
+      needsReconciliation: sourceCurrentQuantity.lt(0) || sourceBalance.needsReconciliation
+    }
+  });
+
+  const destinationBalance = await lockedBalance(tx, input.destinationWarehouseId, input.inventoryItemId);
+  const destinationCurrentQuantity = destinationBalance.currentQuantity.add(input.quantity);
+  const destinationAvailableQuantity = destinationCurrentQuantity.sub(destinationBalance.reservedQuantity);
+
+  await tx.inventoryBalance.update({
+    where: { id: destinationBalance.id },
+    data: {
+      currentQuantity: destinationCurrentQuantity,
+      availableQuantity: destinationAvailableQuantity,
+      needsReconciliation: destinationCurrentQuantity.lt(0) || destinationBalance.needsReconciliation
+    }
+  });
+
+  const transfer = await tx.inventoryTransfer.create({
+    data: {
+      userId: input.userId,
+      itemId: input.inventoryItemId,
+      sourceWhId: input.sourceWarehouseId,
+      destWhId: input.destinationWarehouseId,
+      quantity: input.quantity,
+      notes: input.notes || null
+    }
+  });
+
+  await tx.stockMovement.createMany({
+    data: [
+      {
+        userId: input.userId,
+        warehouseId: input.sourceWarehouseId,
+        inventoryItemId: input.inventoryItemId,
+        quantityDelta: input.quantity.neg(),
+        movementType: "TRANSFER_OUT",
+        sourceRefId: transfer.id
+      },
+      {
+        userId: input.userId,
+        warehouseId: input.destinationWarehouseId,
+        inventoryItemId: input.inventoryItemId,
+        quantityDelta: input.quantity,
+        movementType: "TRANSFER_IN",
+        sourceRefId: transfer.id
+      }
+    ]
+  });
+
+  return transfer;
 }
 
 export async function createBatchForCompletedOrder(
@@ -368,6 +452,192 @@ export async function splitBatchContainersAction(input: unknown): Promise<BatchA
       });
       return { containerIds: created.map((item) => item.id) };
     });
+    revalidateBatches();
+    return ok(result);
+  } catch (error) {
+    return unknownError(error);
+  }
+}
+
+export async function transferBatchBetweenWarehousesAction(
+  input: unknown
+): Promise<BatchActionResult<{ transferId: string; batchNumber: string; destinationWarehouseName: string }>> {
+  try {
+    const session = await getServerSession();
+    requireAny(session, ["inventory:transfer"]);
+    const parsed = transferBatchSchema.safeParse(input);
+    if (!parsed.success) return validationFailure(parsed.error);
+
+    const existingBatch = await prisma.productionBatch.findUnique({
+      where: { id: parsed.data.batchId },
+      include: {
+        recipe: true,
+        containers: { select: { id: true, warehouseId: true, remainingQuantity: true } }
+      }
+    });
+    if (!existingBatch) throw new Error("NOT_FOUND");
+
+    const sourceWarehouseId = parsed.data.containerId
+      ? existingBatch.containers.find((container) => container.id === parsed.data.containerId)?.warehouseId
+      : existingBatch.warehouseId;
+    if (!sourceWarehouseId) throw new Error("NOT_FOUND");
+    if (sourceWarehouseId === parsed.data.destinationWarehouseId) throw new Error("TRANSFER_SAME_WAREHOUSE");
+
+    await assertUserWarehouseAccess(session.user.id, sourceWarehouseId);
+    await assertUserWarehouseAccess(session.user.id, parsed.data.destinationWarehouseId);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const destinationWarehouse = await tx.warehouse.findFirst({
+        where: { id: parsed.data.destinationWarehouseId, isActive: true }
+      });
+      if (!destinationWarehouse) throw new Error("NOT_FOUND");
+
+      const item = await resolveFinishedProductItem(tx, existingBatch.recipe.code);
+      if (!item) throw new Error("TRANSFER_REQUIRES_FINISHED_PRODUCT_ITEM");
+
+      if (parsed.data.containerId) {
+        const container = await tx.batchContainer.findUnique({
+          where: { id: parsed.data.containerId },
+          include: {
+            warehouse: true,
+            batch: {
+              include: {
+                containers: { select: { id: true, warehouseId: true, containerNumber: true } }
+              }
+            }
+          }
+        });
+        if (!container || container.batchId !== parsed.data.batchId) throw new Error("NOT_FOUND");
+        if (container.remainingQuantity.lte(0)) throw new Error("TRANSFER_NO_AVAILABLE_QUANTITY");
+        const requestedQuantity = parsed.data.quantity == null ? container.remainingQuantity : new Prisma.Decimal(parsed.data.quantity);
+        if (requestedQuantity.gt(container.remainingQuantity)) throw new Error("TRANSFER_EXCEEDS_CONTAINER_QUANTITY");
+
+        const transfer = await transferFinishedProductInventory(tx, {
+          batchId: container.batchId,
+          userId: session.user.id,
+          inventoryItemId: item.id,
+          sourceWarehouseId: container.warehouseId,
+          destinationWarehouseId: parsed.data.destinationWarehouseId,
+          quantity: requestedQuantity,
+          notes: parsed.data.notes
+        });
+
+        const isFullTransfer = requestedQuantity.equals(container.remainingQuantity);
+
+        if (isFullTransfer) {
+          await tx.batchContainer.update({
+            where: { id: container.id },
+            data: { warehouseId: parsed.data.destinationWarehouseId }
+          });
+        } else {
+          const sourceQuantity = container.quantity.sub(requestedQuantity);
+          const sourceRemainingQuantity = container.remainingQuantity.sub(requestedQuantity);
+
+          await tx.batchContainer.update({
+            where: { id: container.id },
+            data: {
+              quantity: sourceQuantity,
+              remainingQuantity: sourceRemainingQuantity
+            }
+          });
+
+          await tx.batchContainer.create({
+            data: {
+              batchId: container.batchId,
+              containerNumber: nextContainerNumber(
+                container.batch.batchNumber,
+                container.batch.containers.map((entry) => entry.containerNumber)
+              ),
+              quantity: requestedQuantity,
+              remainingQuantity: requestedQuantity,
+              warehouseId: parsed.data.destinationWarehouseId
+            }
+          });
+        }
+
+        const warehousesAfterTransfer = new Set(
+          isFullTransfer
+            ? container.batch.containers.map((entry) => (entry.id === container.id ? parsed.data.destinationWarehouseId : entry.warehouseId))
+            : [...container.batch.containers.map((entry) => entry.warehouseId), parsed.data.destinationWarehouseId]
+        );
+        if (warehousesAfterTransfer.size === 1) {
+          await tx.productionBatch.update({
+            where: { id: container.batchId },
+            data: { warehouseId: parsed.data.destinationWarehouseId }
+          });
+        }
+
+        await writeBatchAudit(tx, {
+          batchId: container.batchId,
+          actorId: session.user.id,
+          actorName: actorName(session),
+          action: "CONTAINER_TRANSFERRED",
+          previousValue: {
+            containerId: container.id,
+            warehouseId: container.warehouseId,
+            remainingQuantity: container.remainingQuantity.toString(),
+            quantity: container.quantity.toString()
+          },
+          newValue: {
+            transferId: transfer.id,
+            destinationWarehouseId: parsed.data.destinationWarehouseId,
+            destinationWarehouseName: destinationWarehouse.name,
+            quantity: requestedQuantity.toString(),
+            splitCreated: !isFullTransfer,
+            notes: parsed.data.notes || null
+          }
+        });
+
+        return {
+          transferId: transfer.id,
+          batchNumber: container.batch.batchNumber,
+          destinationWarehouseName: destinationWarehouse.name
+        };
+      }
+
+      if (existingBatch.containers.length > 0) throw new Error("TRANSFER_BATCH_CONTAINER_REQUIRED");
+      if (existingBatch.remainingQuantity.lte(0)) throw new Error("TRANSFER_NO_AVAILABLE_QUANTITY");
+
+      const transfer = await transferFinishedProductInventory(tx, {
+        batchId: existingBatch.id,
+        userId: session.user.id,
+        inventoryItemId: item.id,
+        sourceWarehouseId: existingBatch.warehouseId,
+        destinationWarehouseId: parsed.data.destinationWarehouseId,
+        quantity: existingBatch.remainingQuantity,
+        notes: parsed.data.notes
+      });
+
+      await tx.productionBatch.update({
+        where: { id: existingBatch.id },
+        data: { warehouseId: parsed.data.destinationWarehouseId }
+      });
+
+      await writeBatchAudit(tx, {
+        batchId: existingBatch.id,
+        actorId: session.user.id,
+        actorName: actorName(session),
+        action: "BATCH_TRANSFERRED",
+        previousValue: {
+          warehouseId: existingBatch.warehouseId,
+          remainingQuantity: existingBatch.remainingQuantity.toString()
+        },
+        newValue: {
+          transferId: transfer.id,
+          destinationWarehouseId: parsed.data.destinationWarehouseId,
+          destinationWarehouseName: destinationWarehouse.name,
+          quantity: existingBatch.remainingQuantity.toString(),
+          notes: parsed.data.notes || null
+        }
+      });
+
+      return {
+        transferId: transfer.id,
+        batchNumber: existingBatch.batchNumber,
+        destinationWarehouseName: destinationWarehouse.name
+      };
+    });
+
     revalidateBatches();
     return ok(result);
   } catch (error) {

@@ -2,10 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
+import { ScaledIngredientsCard } from "@/components/recipes/ScaledIngredientsCard";
 import { getBatchTraceabilityAction } from "@/features/batches/queries";
 import { PrintBatchButton } from "@/features/printing/components/PrintBatchButton";
 import { getPrinters, getPrintTemplates } from "@/features/printing/queries";
+import { getWarehouses } from "@/features/inventory/queries";
 import { getServerSession } from "@/lib/auth";
+import { BatchTransferForm } from "../_components/BatchTransferForm";
 import { DisposalModal } from "../_components/DisposalModal";
 import { EvidenceUploader } from "../_components/EvidenceUploader";
 import { LabelModal } from "../_components/LabelModal";
@@ -23,6 +26,10 @@ function formatDuration(seconds: number | null) {
 
 function canDownloadTransfers(permissions: string[]) {
   return permissions.includes("inventory:view") || permissions.includes("inventory:transfer") || permissions.includes("reports:view");
+}
+
+function canTransferInventory(permissions: string[]) {
+  return permissions.includes("inventory:transfer");
 }
 export default async function BatchDetailPage({
   params,
@@ -48,12 +55,31 @@ export default async function BatchDetailPage({
   const batch = result.data;
   const session = await getServerSession();
   const showTransferDownload = isScanView && canDownloadTransfers(session.user.permissions);
+  const showTransferForm = isScanView && canTransferInventory(session.user.permissions);
   const [templates, printers] = isScanView
     ? [[], []]
     : await Promise.all([
         getPrintTemplates(true).catch(() => []),
         getPrinters(true).catch(() => [])
       ]);
+  const destinationWarehouses = showTransferForm ? await getWarehouses().catch(() => []) : [];
+  const selectedContainer = selectedContainerNumber
+    ? batch.containers.find((container) => container.containerNumber === selectedContainerNumber)
+    : null;
+  const transferTarget = selectedContainer
+    ? {
+        batchId: batch.id,
+        containerId: selectedContainer.id,
+        sourceWarehouseName: selectedContainer.warehouseName,
+        quantity: selectedContainer.remainingQuantity
+      }
+    : batch.containers.length === 0
+      ? {
+          batchId: batch.id,
+          sourceWarehouseName: batch.warehouseName,
+          quantity: batch.remainingQuantity
+        }
+      : null;
 
   return (
     <section className="logical-container space-y-6 py-8">
@@ -76,6 +102,25 @@ export default async function BatchDetailPage({
               Download warehouse transfers
             </a>
           ) : null}
+        </div>
+      ) : null}
+
+      {showTransferForm && transferTarget ? (
+        <BatchTransferForm
+          batchId={transferTarget.batchId}
+          containerId={transferTarget.containerId}
+          productName={batch.productName}
+          sourceWarehouseName={transferTarget.sourceWarehouseName}
+          quantity={transferTarget.quantity}
+          unit={batch.unit}
+          destinationWarehouses={destinationWarehouses}
+        />
+      ) : null}
+
+      {showTransferForm && !transferTarget && batch.containers.length > 0 ? (
+        <div className="rounded-md border bg-white p-5 shadow-sm">
+          <h2 className="text-xl font-bold">Transfer Finished Product</h2>
+          <p className="mt-2 text-sm text-secondary">Scan a specific container label to transfer that container directly from the traceability page.</p>
         </div>
       ) : null}
 
@@ -189,6 +234,21 @@ export default async function BatchDetailPage({
         </div>
       ) : null}
 
+      <ScaledIngredientsCard
+        title={isScanView ? "Recipe Ingredients" : "Production Ingredients"}
+        description={
+          batch.recipeScaleMode === "produced"
+            ? "Quantities below reflect the actual completed production quantity."
+            : "Quantities below reflect the recipe yield linked to this batch."
+        }
+        ingredients={batch.recipeIngredients}
+        baseYieldQuantity={batch.recipeBaseYieldQuantity}
+        baseYieldUnit={batch.recipeBaseYieldUnit}
+        scaledQuantity={batch.recipeScaledQuantity}
+        scaledUnit={batch.recipeScaledUnit}
+        scaleMode={batch.recipeScaleMode}
+      />
+
       {batch.productionSteps?.length ? (
         <div className="rounded-md border bg-white p-5 shadow-sm">
           <h2 className="text-xl font-bold">{isScanView ? "Recipe Instructions, Photos & Notes" : "Recipe Steps, Photos & Notes"}</h2>
@@ -275,13 +335,14 @@ export default async function BatchDetailPage({
             <div
               key={container.id}
               className={cn(
-                "grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_auto_auto_auto_auto] sm:items-start",
+                "grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_auto_auto_auto_auto_auto] sm:items-start",
                 selectedContainerNumber === container.containerNumber ? "border-primary bg-accent/30" : ""
               )}
             >
               <span className="font-semibold">{container.containerNumber}</span>
               <span>{container.quantity} {batch.unit}</span>
               <span>{container.remainingQuantity} remaining</span>
+              <span>{container.warehouseName}</span>
               <Badge>{container.status}</Badge>
               <PrintBatchButton
                 targetType="CONTAINER"

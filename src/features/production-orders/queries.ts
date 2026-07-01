@@ -2,6 +2,8 @@ import { Prisma, type ProductionOrderStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { paginationInput, totalPages } from "@/lib/pagination";
 import { prisma } from "@/lib/prisma";
+import { scaleRecipeIngredients } from "@/lib/recipes/scaling";
+import type { RecipeSnapshot } from "@/lib/recipes/snapshot";
 import { PRODUCTION_EVIDENCE_BUCKET, getSupabaseAdminClient } from "@/lib/supabase-admin";
 import {
   CANCEL_PRODUCTION_ORDERS,
@@ -180,6 +182,7 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
       ...(canViewAll ? {} : { assignedToId: session.user.id })
     },
     include: {
+      recipeVersion: true,
       sourceWarehouse: true,
       steps: {
         include: {
@@ -193,6 +196,8 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     }
   });
   if (!order) return null;
+  const snapshot = order.recipeVersion.snapshot as RecipeSnapshot;
+  const scaledRecipe = scaleRecipeIngredients(snapshot, order.targetQuantity);
 
   const names = await displayNames([
     order.createdById,
@@ -249,6 +254,12 @@ export async function getProductionOrderDetail(id: string): Promise<ProductionOr
     ...toListItem(order, names),
     recipeId: order.recipeId,
     recipeVersionId: order.recipeVersionId,
+    recipeBaseYieldQuantity: scaledRecipe.summary.baseYieldQuantity,
+    recipeBaseYieldUnit: scaledRecipe.summary.baseYieldUnit,
+    recipeScaledQuantity: scaledRecipe.summary.scaledQuantity,
+    recipeScaledUnit: scaledRecipe.summary.scaledUnit,
+    recipeScaleMode: scaledRecipe.summary.scaleMode,
+    recipeIngredients: scaledRecipe.ingredients,
     creationNotes: order.creationNotes,
     sourceWarehouseId: order.sourceWarehouseId,
     sourceWarehouseName: order.sourceWarehouse?.name ?? null,

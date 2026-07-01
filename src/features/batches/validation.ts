@@ -47,6 +47,14 @@ export const disposeBatchSchema = z.object({
   notes: z.string().trim().max(2000).optional()
 });
 
+export const transferBatchSchema = z.object({
+  batchId: z.string().min(1),
+  containerId: z.string().min(1).optional(),
+  quantity: z.coerce.number().positive().optional(),
+  destinationWarehouseId: z.string().min(1),
+  notes: z.string().trim().max(1000).optional().nullable()
+});
+
 export const traceabilitySchema = z.object({
   batchNumber: z.string().trim().min(4).max(100).regex(batchNumberPattern)
 });

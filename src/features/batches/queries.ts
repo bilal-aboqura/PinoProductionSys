@@ -2,6 +2,8 @@ import { Prisma, type BatchStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PRODUCTION_EVIDENCE_BUCKET, getSupabaseAdminClient } from "@/lib/supabase-admin";
+import { scaleProducedRecipeIngredients } from "@/lib/recipes/scaling";
+import type { RecipeSnapshot } from "@/lib/recipes/snapshot";
 import type { BatchListFilters, BatchListItem, BatchTraceability, PagedBatches } from "./types";
 import { traceabilitySchema } from "./validation";
 
@@ -141,7 +143,7 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
             }
           }
         },
-        containers: { orderBy: { containerNumber: "asc" } },
+        containers: { include: { warehouse: true }, orderBy: { containerNumber: "asc" } },
         statusHistory: { include: { changedBy: true }, orderBy: { changedAt: "asc" } },
         printHistory: { include: { printedBy: true, container: true }, orderBy: { printedAt: "desc" } },
         disposals: { include: { disposedBy: true }, orderBy: { disposedAt: "desc" } },
@@ -151,6 +153,11 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
     if (!batch) return { success: false, error: "Batch not found." };
     const base = toListItem(batch);
     const productionOrder = batch.productionOrder;
+    const snapshot = batch.recipeVersion.snapshot as RecipeSnapshot;
+    const scaledRecipe = scaleProducedRecipeIngredients(
+      snapshot,
+      productionOrder.producedQuantity ?? productionOrder.targetQuantity
+    );
     const productionUserNames = await displayNames([
       productionOrder.createdById,
       productionOrder.assignedToId,
@@ -217,6 +224,12 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
               storageInstructions: batch.recipe.storageNotes
             }
           : undefined,
+        recipeBaseYieldQuantity: scaledRecipe.summary.baseYieldQuantity,
+        recipeBaseYieldUnit: scaledRecipe.summary.baseYieldUnit,
+        recipeScaledQuantity: scaledRecipe.summary.scaledQuantity,
+        recipeScaledUnit: scaledRecipe.summary.scaledUnit,
+        recipeScaleMode: scaledRecipe.summary.scaleMode,
+        recipeIngredients: scaledRecipe.ingredients,
         productionOrder: {
           id: productionOrder.id,
           orderNumber: productionOrder.orderNumber,
@@ -236,7 +249,9 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
           containerNumber: container.containerNumber,
           quantity: decimalToString(container.quantity),
           remainingQuantity: decimalToString(container.remainingQuantity),
-          status: container.status
+          status: container.status,
+          warehouseId: container.warehouseId,
+          warehouseName: container.warehouse.name
         })),
         statusHistory: batch.statusHistory.map((item) => ({
           id: item.id,

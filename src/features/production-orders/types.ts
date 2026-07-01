@@ -1,4 +1,5 @@
 import type { ProductionOrderDownstreamActionType, ProductionOrderStatus } from "@prisma/client";
+import type { ScaledRecipeIngredient } from "@/lib/recipes/scaling";
 
 export type ProductionOrderListItemDto = {
   id: string;
@@ -73,6 +74,12 @@ export type ProductionOrderDownstreamActionDto = {
 export type ProductionOrderDetailDto = ProductionOrderListItemDto & {
   recipeId: string;
   recipeVersionId: string;
+  recipeBaseYieldQuantity: string;
+  recipeBaseYieldUnit: string;
+  recipeScaledQuantity: string;
+  recipeScaledUnit: string;
+  recipeScaleMode: "base" | "target" | "produced";
+  recipeIngredients: ScaledRecipeIngredient[];
   creationNotes: string | null;
   sourceWarehouseId: string | null;
   sourceWarehouseName: string | null;

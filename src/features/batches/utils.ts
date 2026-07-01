@@ -36,6 +36,16 @@ export function calculateExpiryDate(productionDate: Date, shelfLifeValue: number
   return expiry;
 }
 
+export function nextContainerNumber(batchNumber: string, existingContainerNumbers: string[]) {
+  const prefix = `${batchNumber}-C`;
+  const highest = existingContainerNumbers.reduce((max, containerNumber) => {
+    const match = containerNumber.match(new RegExp(`^${batchNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-C(\\d+)$`));
+    const sequence = match ? Number(match[1]) : 0;
+    return Math.max(max, sequence);
+  }, 0);
+  return `${prefix}${highest + 1}`;
+}
+
 export function sumQuantities(values: Array<number | string | Prisma.Decimal>) {
   return values.reduce<Prisma.Decimal>((sum, value) => sum.add(value), new Prisma.Decimal(0));
 }
