@@ -528,7 +528,28 @@ catalog.set("Select container", "Ø§Ø®ØªØ± Ø§Ù„Ø­Ø§ÙˆÙŠØ©"
 catalog.set("Optional transfer notes", "Ù…Ù„Ø§Ø­Ø¸Ø§Øª ØªØ­ÙˆÙŠÙ„ Ø§Ø®ØªÙŠØ§Ø±ÙŠØ©");
 catalog.set("Transfer quantity exceeds the remaining quantity in this batch.", "ÙƒÙ…ÙŠØ© Ø§Ù„ØªØ­ÙˆÙŠÙ„ Ø£ÙƒØ¨Ø± Ù…Ù† Ø§Ù„ÙƒÙ…ÙŠØ© Ø§Ù„Ù…ØªØ¨Ù‚ÙŠØ© ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„Ø¯ÙØ¹Ø©.");
 
+// Override earlier mojibake entries with proper UTF-8 Arabic strings.
+catalog.set("Transfer Finished Product", "تحويل المنتج النهائي");
+catalog.set(
+  "Move this scanned production stock directly from the production scan page without exporting an Excel template.",
+  "حوّل رصيد الإنتاج الممسوح مباشرة من صفحة المسح دون تصدير قالب Excel."
+);
+catalog.set(
+  "Select the container you scanned, then transfer any remaining quantity directly from this page.",
+  "اختر الحاوية التي مسحتها، ثم حوّل أي كمية متبقية مباشرة من هذه الصفحة."
+);
+catalog.set(
+  "If you transfer less than the full batch, the system will create source and destination containers automatically.",
+  "إذا حوّلت كمية أقل من الدفعة كاملة، فسينشئ النظام حاويتين تلقائيًا للمصدر والوجهة."
+);
+catalog.set("Select container", "اختر الحاوية");
+catalog.set("Optional transfer notes", "ملاحظات تحويل اختيارية");
+catalog.set("Transfer quantity exceeds the remaining quantity in this batch.", "كمية التحويل أكبر من الكمية المتبقية في هذه الدفعة.");
+catalog.set("Transferring...", "جارٍ التحويل...");
+
 const patterns: Array<[RegExp, (...matches: string[]) => string]> = [
+  [/^Transfer quantity \((.+)\)$/, (_all, unit) => `كمية التحويل (${translateUiText("ar", unit)})`],
+  [/^Transfer recorded to (.+)\. Refreshing\.\.\.$/, (_all, warehouse) => `تم تسجيل التحويل إلى ${warehouse}. جارٍ التحديث...`],
   [/^Page (\d+) of (\d+)$/, (_all, page, total) => `الصفحة ${page} من ${total}`],
   [/^(\d+) rows - page (\d+) of (\d+)$/, (_all, rows, page, total) => `${rows} صفوف - الصفحة ${page} من ${total}`],
   [/^Showing (\d+)-(\d+) of (\d+) (.+)$/, (_all, from, to, total, label) => `عرض ${from}-${to} من ${total} ${translateUiText("ar", label)}`],
