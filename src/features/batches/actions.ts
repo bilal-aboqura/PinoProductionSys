@@ -63,6 +63,7 @@ function unknownError(error: unknown): BatchActionResult<never> {
     if (error.message === "TRANSFER_SAME_WAREHOUSE") return fail("VALIDATION", "Source and destination warehouses must be different.");
     if (error.message === "TRANSFER_NO_AVAILABLE_QUANTITY") return fail("VALIDATION", "No remaining quantity is available to transfer.");
     if (error.message === "TRANSFER_EXCEEDS_CONTAINER_QUANTITY") return fail("VALIDATION", "Transfer quantity exceeds the remaining quantity in this container.");
+    if (error.message === "TRANSFER_EXCEEDS_BATCH_QUANTITY") return fail("VALIDATION", "Transfer quantity exceeds the remaining quantity in this batch.");
     return fail("INTERNAL", error.message);
   }
   return fail("INTERNAL", "Unexpected batch error.");
@@ -597,6 +598,9 @@ export async function transferBatchBetweenWarehousesAction(
 
       if (existingBatch.containers.length > 0) throw new Error("TRANSFER_BATCH_CONTAINER_REQUIRED");
       if (existingBatch.remainingQuantity.lte(0)) throw new Error("TRANSFER_NO_AVAILABLE_QUANTITY");
+      const requestedQuantity =
+        parsed.data.quantity == null ? existingBatch.remainingQuantity : new Prisma.Decimal(parsed.data.quantity);
+      if (requestedQuantity.gt(existingBatch.remainingQuantity)) throw new Error("TRANSFER_EXCEEDS_BATCH_QUANTITY");
 
       const transfer = await transferFinishedProductInventory(tx, {
         batchId: existingBatch.id,
@@ -604,14 +608,38 @@ export async function transferBatchBetweenWarehousesAction(
         inventoryItemId: item.id,
         sourceWarehouseId: existingBatch.warehouseId,
         destinationWarehouseId: parsed.data.destinationWarehouseId,
-        quantity: existingBatch.remainingQuantity,
+        quantity: requestedQuantity,
         notes: parsed.data.notes
       });
 
-      await tx.productionBatch.update({
-        where: { id: existingBatch.id },
-        data: { warehouseId: parsed.data.destinationWarehouseId }
-      });
+      const isFullTransfer = requestedQuantity.equals(existingBatch.remainingQuantity);
+
+      if (isFullTransfer) {
+        await tx.productionBatch.update({
+          where: { id: existingBatch.id },
+          data: { warehouseId: parsed.data.destinationWarehouseId }
+        });
+      } else {
+        const sourceRemainingQuantity = existingBatch.remainingQuantity.sub(requestedQuantity);
+        await tx.batchContainer.createMany({
+          data: [
+            {
+              batchId: existingBatch.id,
+              containerNumber: `${existingBatch.batchNumber}-C1`,
+              quantity: sourceRemainingQuantity,
+              remainingQuantity: sourceRemainingQuantity,
+              warehouseId: existingBatch.warehouseId
+            },
+            {
+              batchId: existingBatch.id,
+              containerNumber: `${existingBatch.batchNumber}-C2`,
+              quantity: requestedQuantity,
+              remainingQuantity: requestedQuantity,
+              warehouseId: parsed.data.destinationWarehouseId
+            }
+          ]
+        });
+      }
 
       await writeBatchAudit(tx, {
         batchId: existingBatch.id,
@@ -626,7 +654,8 @@ export async function transferBatchBetweenWarehousesAction(
           transferId: transfer.id,
           destinationWarehouseId: parsed.data.destinationWarehouseId,
           destinationWarehouseName: destinationWarehouse.name,
-          quantity: existingBatch.remainingQuantity.toString(),
+          quantity: requestedQuantity.toString(),
+          splitCreated: !isFullTransfer,
           notes: parsed.data.notes || null
         }
       });

@@ -54,8 +54,8 @@ export default async function BatchDetailPage({
   if (!result.success) notFound();
   const batch = result.data;
   const session = await getServerSession();
-  const showTransferDownload = isScanView && canDownloadTransfers(session.user.permissions);
   const showTransferForm = isScanView && canTransferInventory(session.user.permissions);
+  const showTransferDownload = isScanView && canDownloadTransfers(session.user.permissions) && !showTransferForm;
   const [templates, printers] = isScanView
     ? [[], []]
     : await Promise.all([
@@ -66,20 +66,6 @@ export default async function BatchDetailPage({
   const selectedContainer = selectedContainerNumber
     ? batch.containers.find((container) => container.containerNumber === selectedContainerNumber)
     : null;
-  const transferTarget = selectedContainer
-    ? {
-        batchId: batch.id,
-        containerId: selectedContainer.id,
-        sourceWarehouseName: selectedContainer.warehouseName,
-        quantity: selectedContainer.remainingQuantity
-      }
-    : batch.containers.length === 0
-      ? {
-          batchId: batch.id,
-          sourceWarehouseName: batch.warehouseName,
-          quantity: batch.remainingQuantity
-        }
-      : null;
 
   return (
     <section className="logical-container space-y-6 py-8">
@@ -105,23 +91,22 @@ export default async function BatchDetailPage({
         </div>
       ) : null}
 
-      {showTransferForm && transferTarget ? (
+      {showTransferForm ? (
         <BatchTransferForm
-          batchId={transferTarget.batchId}
-          containerId={transferTarget.containerId}
+          batchId={batch.id}
           productName={batch.productName}
-          sourceWarehouseName={transferTarget.sourceWarehouseName}
-          quantity={transferTarget.quantity}
+          batchWarehouseName={batch.warehouseName}
+          quantity={batch.remainingQuantity}
           unit={batch.unit}
           destinationWarehouses={destinationWarehouses}
+          containers={batch.containers.map((container) => ({
+            id: container.id,
+            containerNumber: container.containerNumber,
+            warehouseName: container.warehouseName,
+            remainingQuantity: container.remainingQuantity
+          }))}
+          defaultContainerId={selectedContainer?.id}
         />
-      ) : null}
-
-      {showTransferForm && !transferTarget && batch.containers.length > 0 ? (
-        <div className="rounded-md border bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold">Transfer Finished Product</h2>
-          <p className="mt-2 text-sm text-secondary">Scan a specific container label to transfer that container directly from the traceability page.</p>
-        </div>
       ) : null}
 
       <div className="rounded-md border bg-white p-5 shadow-sm">

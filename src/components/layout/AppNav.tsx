@@ -24,6 +24,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/features/auth/actions";
+import { buildBatchScanPath, parseBatchScanTarget } from "@/features/batches/scan";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useKeyboardScanner } from "@/hooks/useKeyboardScanner";
@@ -45,7 +46,8 @@ export function AppNav({ locale, user }: { locale: string; user: FastNavUser }) 
   const handleScan = useCallback((value: string) => {
     const scanned = value.trim();
     if (/^https?:\/\//i.test(scanned)) return void (window.location.href = scanned);
-    if (/^B[-_]/i.test(scanned)) return void router.push(`/${locale}/inventory/batches/${encodeURIComponent(scanned)}`);
+    const batchTarget = parseBatchScanTarget(scanned);
+    if (batchTarget) return void router.push(buildBatchScanPath(locale, batchTarget));
     router.push(`/${locale}/inventory?search=${encodeURIComponent(scanned)}`);
   }, [locale, router]);
 

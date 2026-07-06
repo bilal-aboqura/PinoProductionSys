@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transferBatchBetweenWarehousesAction } from "@/features/batches/actions";
@@ -8,27 +8,48 @@ import type { WarehouseDto } from "@/features/inventory/types";
 
 export function BatchTransferForm({
   batchId,
-  containerId,
   productName,
-  sourceWarehouseName,
+  batchWarehouseName,
   quantity,
   unit,
-  destinationWarehouses
+  destinationWarehouses,
+  containers,
+  defaultContainerId
 }: {
   batchId: string;
-  containerId?: string;
   productName: string;
-  sourceWarehouseName: string;
+  batchWarehouseName: string;
   quantity: string;
   unit: string;
   destinationWarehouses: WarehouseDto[];
+  containers: {
+    id: string;
+    containerNumber: string;
+    warehouseName: string;
+    remainingQuantity: string;
+  }[];
+  defaultContainerId?: string;
 }) {
-  const allowPartialTransfer = Boolean(containerId);
+  const hasContainers = containers.length > 0;
+  const [containerId, setContainerId] = useState(defaultContainerId ?? "");
   const [destinationWarehouseId, setDestinationWarehouseId] = useState("");
-  const [transferQuantity, setTransferQuantity] = useState(quantity);
+  const selectedContainer = useMemo(
+    () => containers.find((container) => container.id === containerId) ?? null,
+    [containerId, containers]
+  );
+  const availableQuantity = selectedContainer?.remainingQuantity ?? quantity;
+  const sourceWarehouseName = selectedContainer?.warehouseName ?? batchWarehouseName;
+  const [transferQuantity, setTransferQuantity] = useState(availableQuantity);
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const canSubmit = Boolean(destinationWarehouseId) && Boolean(transferQuantity) && (!hasContainers || Boolean(containerId));
+
+  useEffect(() => {
+    setTransferQuantity(availableQuantity);
+    setDestinationWarehouseId("");
+    setMessage("");
+  }, [availableQuantity, containerId]);
 
   return (
     <form
@@ -39,8 +60,8 @@ export function BatchTransferForm({
         startTransition(async () => {
           const result = await transferBatchBetweenWarehousesAction({
             batchId,
-            containerId,
-            quantity: allowPartialTransfer ? Number(transferQuantity) : undefined,
+            containerId: containerId || undefined,
+            quantity: Number(transferQuantity),
             destinationWarehouseId,
             notes
           });
@@ -56,11 +77,29 @@ export function BatchTransferForm({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold">Transfer Finished Product</h2>
-          <p className="mt-1 text-sm text-secondary">Move this scanned production stock directly from the barcode page.</p>
+          <p className="mt-1 text-sm text-secondary">Move this scanned production stock directly from the production scan page without exporting an Excel template.</p>
         </div>
-        <BadgeLike label={`${quantity} ${unit}`} />
+        <BadgeLike label={`${availableQuantity} ${unit}`} />
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {hasContainers ? (
+          <label className="grid gap-1 text-sm font-semibold text-secondary">
+            Container
+            <select
+              className="h-10 rounded-md border bg-white px-3 text-sm text-foreground"
+              value={containerId}
+              onChange={(event) => setContainerId(event.target.value)}
+              required
+            >
+              <option value="">Select container</option>
+              {containers.map((container) => (
+                <option key={container.id} value={container.id}>
+                  {container.containerNumber} - {container.remainingQuantity} {unit}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <Field label="Product" value={productName} />
         <Field label="Source" value={sourceWarehouseName} />
         <label className="grid gap-1 text-sm font-semibold text-secondary">
@@ -79,28 +118,25 @@ export function BatchTransferForm({
             ))}
           </select>
         </label>
-        {allowPartialTransfer ? (
-          <label className="grid gap-1 text-sm font-semibold text-secondary">
-            Transfer quantity ({unit})
-            <input
-              className="h-10 rounded-md border px-3 text-sm text-foreground"
-              min="0.001"
-              max={quantity}
-              step="0.001"
-              type="number"
-              value={transferQuantity}
-              onChange={(event) => setTransferQuantity(event.target.value)}
-              required
-            />
-          </label>
-        ) : (
-          <Field label="Transfer quantity" value={`${quantity} ${unit}`} />
-        )}
+        <label className="grid gap-1 text-sm font-semibold text-secondary">
+          Transfer quantity ({unit})
+          <input
+            className="h-10 rounded-md border px-3 text-sm text-foreground"
+            min="0.001"
+            max={availableQuantity}
+            step="0.001"
+            type="number"
+            value={transferQuantity}
+            onChange={(event) => setTransferQuantity(event.target.value)}
+            disabled={hasContainers && !containerId}
+            required
+          />
+        </label>
       </div>
       <label className="mt-3 grid gap-1 text-sm font-semibold text-secondary">
         Notes
-        <input
-          className="h-10 rounded-md border px-3 text-sm text-foreground"
+        <textarea
+          className="min-h-24 rounded-md border px-3 py-2 text-sm text-foreground"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           maxLength={1000}
@@ -108,14 +144,14 @@ export function BatchTransferForm({
         />
       </label>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={isPending || !destinationWarehouseId || (allowPartialTransfer && !transferQuantity)}>
+        <Button type="submit" disabled={isPending || !canSubmit}>
           <ArrowRightLeft className="h-4 w-4" />
           {isPending ? "Transferring..." : "Transfer"}
         </Button>
         <p className="text-sm text-secondary">
-          {allowPartialTransfer
-            ? "If you transfer less than the remaining amount, the system will split the container automatically."
-            : "This batch will be moved in full because it is not split into containers yet."}
+          {hasContainers
+            ? "Select the container you scanned, then transfer any remaining quantity directly from this page."
+            : "If you transfer less than the full batch, the system will create source and destination containers automatically."}
         </p>
       </div>
       {message ? <p className="mt-3 text-sm font-semibold text-secondary">{message}</p> : null}

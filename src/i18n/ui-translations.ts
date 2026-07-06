@@ -511,6 +511,22 @@ const enumArabic: Record<string, string> = {
 };
 
 for (const [english, arabic] of Object.entries(enumArabic)) catalog.set(english, arabic);
+catalog.set("Transfer Finished Product", "ØªØ­ÙˆÙŠÙ„ Ø§Ù„Ù…Ù†ØªØ¬ Ø§Ù„Ù†Ù‡Ø§Ø¦ÙŠ");
+catalog.set(
+  "Move this scanned production stock directly from the production scan page without exporting an Excel template.",
+  "Ø­ÙˆÙ‘Ù„ Ø±ØµÙŠØ¯ Ø§Ù„Ø¥Ù†ØªØ§Ø¬ Ø§Ù„Ù…Ù…Ø³ÙˆØ­ Ù…Ø¨Ø§Ø´Ø±Ø© Ù…Ù† ØµÙØ­Ø© Ø§Ù„Ù…Ø³Ø­ Ø¯ÙˆÙ† ØªØµØ¯ÙŠØ± Ù‚Ø§Ù„Ø¨ Excel."
+);
+catalog.set(
+  "Select the container you scanned, then transfer any remaining quantity directly from this page.",
+  "Ø§Ø®ØªØ± Ø§Ù„Ø­Ø§ÙˆÙŠØ© Ø§Ù„ØªÙŠ Ù…Ø³Ø­ØªÙ‡Ø§ØŒ Ø«Ù… Ø­ÙˆÙ‘Ù„ Ø£ÙŠ ÙƒÙ…ÙŠØ© Ù…ØªØ¨Ù‚ÙŠØ© Ù…Ø¨Ø§Ø´Ø±Ø© Ù…Ù† Ù‡Ø°Ù‡ Ø§Ù„ØµÙØ­Ø©."
+);
+catalog.set(
+  "If you transfer less than the full batch, the system will create source and destination containers automatically.",
+  "Ø¥Ø°Ø§ Ø­ÙˆÙ‘Ù„Øª ÙƒÙ…ÙŠØ© Ø£Ù‚Ù„ Ù…Ù† Ø§Ù„Ø¯ÙØ¹Ø© ÙƒØ§Ù…Ù„Ø©ØŒ Ø³ÙŠÙÙ†Ø´Ø¦ Ø§Ù„Ù†Ø¸Ø§Ù… Ø­Ø§ÙˆÙŠØªÙŠÙ† Ù„Ù„Ù…ØµØ¯Ø± ÙˆØ§Ù„ÙˆØ¬Ù‡Ø© ØªÙ„Ù‚Ø§Ø¦ÙŠÙ‹Ø§."
+);
+catalog.set("Select container", "Ø§Ø®ØªØ± Ø§Ù„Ø­Ø§ÙˆÙŠØ©");
+catalog.set("Optional transfer notes", "Ù…Ù„Ø§Ø­Ø¸Ø§Øª ØªØ­ÙˆÙŠÙ„ Ø§Ø®ØªÙŠØ§Ø±ÙŠØ©");
+catalog.set("Transfer quantity exceeds the remaining quantity in this batch.", "ÙƒÙ…ÙŠØ© Ø§Ù„ØªØ­ÙˆÙŠÙ„ Ø£ÙƒØ¨Ø± Ù…Ù† Ø§Ù„ÙƒÙ…ÙŠØ© Ø§Ù„Ù…ØªØ¨Ù‚ÙŠØ© ÙÙŠ Ù‡Ø°Ù‡ Ø§Ù„Ø¯ÙØ¹Ø©.");
 
 const patterns: Array<[RegExp, (...matches: string[]) => string]> = [
   [/^Page (\d+) of (\d+)$/, (_all, page, total) => `الصفحة ${page} من ${total}`],
