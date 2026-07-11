@@ -13,6 +13,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
     depends_on:
       migrate:
         condition: service_completed_successfully
