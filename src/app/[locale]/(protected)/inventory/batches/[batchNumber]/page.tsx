@@ -4,6 +4,7 @@ import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Badge } from "@/components/ui/badge";
 import { ScaledIngredientsCard } from "@/components/recipes/ScaledIngredientsCard";
 import { getBatchTraceabilityAction } from "@/features/batches/queries";
+import type { BatchTraceability } from "@/features/batches/types";
 import { PrintBatchButton } from "@/features/printing/components/PrintBatchButton";
 import { getPrinters, getPrintTemplates } from "@/features/printing/queries";
 import { getWarehouses } from "@/features/inventory/queries";
@@ -70,6 +71,199 @@ function timelineDetails(
   }
 
   return item.reason ? `${item.actorName} - ${item.reason}` : item.actorName;
+}
+
+void timelineTitle;
+void timelineDetails;
+
+type TimelineItem = BatchTraceability["timeline"][number];
+
+function isArabicLocale(locale: string) {
+  return locale.startsWith("ar");
+}
+
+function text(locale: string, en: string, ar: string) {
+  return isArabicLocale(locale) ? ar : en;
+}
+
+function statusLabel(locale: string, status?: string | null) {
+  switch (status) {
+    case "ACTIVE":
+      return text(locale, "ACTIVE", "\u0646\u0634\u0637");
+    case "CONSUMED":
+      return text(locale, "CONSUMED", "\u0645\u0633\u062a\u0647\u0644\u0643");
+    case "EXPIRED":
+      return text(locale, "EXPIRED", "\u0645\u0646\u062a\u0647\u064a");
+    case "DISPOSED":
+      return text(locale, "DISPOSED", "\u062a\u0627\u0644\u0641");
+    case "NEW":
+    default:
+      return text(locale, "NEW", "\u062c\u062f\u064a\u062f");
+  }
+}
+
+function timelineBadgeLabelV2(locale: string, eventType: TimelineItem["eventType"]) {
+  switch (eventType) {
+    case "CREATED":
+      return text(locale, "Created", "\u0625\u0646\u0634\u0627\u0621");
+    case "TRANSFER":
+      return text(locale, "Transfer", "\u062a\u062d\u0648\u064a\u0644");
+    case "PRINT":
+    case "REPRINT":
+      return text(locale, "Print", "\u0637\u0628\u0627\u0639\u0629");
+    case "SPLIT":
+      return text(locale, "Split", "\u062a\u0642\u0633\u064a\u0645");
+    case "DISPOSAL":
+      return text(locale, "Disposal", "\u0625\u062a\u0644\u0627\u0641");
+    case "EVIDENCE":
+      return text(locale, "Evidence", "\u0645\u0631\u0641\u0642");
+    case "INVENTORY_SYNC":
+      return text(locale, "Inventory", "\u0627\u0644\u0645\u062e\u0632\u0648\u0646");
+    case "STATUS":
+    default:
+      return text(locale, "Status", "\u062d\u0627\u0644\u0629");
+  }
+}
+
+function timelineBadgeClassNameV2(eventType: TimelineItem["eventType"]) {
+  switch (eventType) {
+    case "TRANSFER":
+      return "bg-primary/10 text-primary";
+    case "DISPOSAL":
+      return "bg-warning/10 text-warning";
+    case "EVIDENCE":
+      return "bg-accent text-secondary";
+    default:
+      return undefined;
+  }
+}
+
+function timelineTitleV2(locale: string, item: TimelineItem) {
+  const unknownWarehouse = text(locale, "Unknown warehouse", "\u0645\u062e\u0632\u0646 \u063a\u064a\u0631 \u0645\u0639\u0631\u0648\u0641");
+
+  switch (item.eventType) {
+    case "CREATED":
+      return text(locale, "Batch created", "\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u062f\u0641\u0639\u0629");
+    case "TRANSFER": {
+      const source = item.sourceWarehouseName ?? unknownWarehouse;
+      const destination = item.destinationWarehouseName ?? unknownWarehouse;
+      if (item.containerNumber) {
+        return text(
+          locale,
+          `Transfer container ${item.containerNumber} from ${source} to ${destination}`,
+          `\u062a\u062d\u0648\u064a\u0644 \u0627\u0644\u062d\u0627\u0648\u064a\u0629 ${item.containerNumber} \u0645\u0646 ${source} \u0625\u0644\u0649 ${destination}`
+        );
+      }
+      return text(
+        locale,
+        `Transfer from ${source} to ${destination}`,
+        `\u062a\u062d\u0648\u064a\u0644 \u0645\u0646 ${source} \u0625\u0644\u0649 ${destination}`
+      );
+    }
+    case "PRINT":
+      return item.containerNumber
+        ? text(
+            locale,
+            `Printed label for ${item.containerNumber}`,
+            `\u062a\u0645\u062a \u0637\u0628\u0627\u0639\u0629 \u0645\u0644\u0635\u0642 ${item.containerNumber}`
+          )
+        : text(locale, "Printed batch label", "\u062a\u0645\u062a \u0637\u0628\u0627\u0639\u0629 \u0645\u0644\u0635\u0642 \u0627\u0644\u062f\u0641\u0639\u0629");
+    case "REPRINT":
+      return item.containerNumber
+        ? text(
+            locale,
+            `Reprinted label for ${item.containerNumber}`,
+            `\u0625\u0639\u0627\u062f\u0629 \u0637\u0628\u0627\u0639\u0629 \u0645\u0644\u0635\u0642 ${item.containerNumber}`
+          )
+        : text(
+            locale,
+            "Reprinted batch label",
+            "\u0625\u0639\u0627\u062f\u0629 \u0637\u0628\u0627\u0639\u0629 \u0645\u0644\u0635\u0642 \u0627\u0644\u062f\u0641\u0639\u0629"
+          );
+    case "SPLIT":
+      return text(
+        locale,
+        `Split into ${item.containerCount ?? 0} containers`,
+        `\u062a\u0645 \u062a\u0642\u0633\u064a\u0645\u0647\u0627 \u0625\u0644\u0649 ${item.containerCount ?? 0} \u062d\u0627\u0648\u064a\u0629`
+      );
+    case "DISPOSAL":
+      return item.containerNumber
+        ? text(
+            locale,
+            `Disposed from ${item.containerNumber}`,
+            `\u0625\u062a\u0644\u0627\u0641 \u0645\u0646 ${item.containerNumber}`
+          )
+        : text(locale, "Disposed from batch", "\u0625\u062a\u0644\u0627\u0641 \u0645\u0646 \u0627\u0644\u062f\u0641\u0639\u0629");
+    case "EVIDENCE":
+      return text(locale, "Evidence uploaded", "\u062a\u0645 \u0631\u0641\u0639 \u0645\u0631\u0641\u0642");
+    case "INVENTORY_SYNC":
+      return text(locale, "Finished-product inventory synchronized", "\u062a\u0645\u062a \u0645\u0632\u0627\u0645\u0646\u0629 \u0645\u062e\u0632\u0648\u0646 \u0627\u0644\u0645\u0646\u062a\u062c \u0627\u0644\u0646\u0647\u0627\u0626\u064a");
+    case "STATUS":
+    default: {
+      const fromStatus = statusLabel(locale, item.fromStatus ?? "NEW");
+      const toStatus = statusLabel(locale, item.toStatus ?? "ACTIVE");
+      return text(locale, `${fromStatus} to ${toStatus}`, `${fromStatus} \u0625\u0644\u0649 ${toStatus}`);
+    }
+  }
+}
+
+function timelineDetailsV2(locale: string, item: TimelineItem) {
+  switch (item.eventType) {
+    case "CREATED":
+      return item.notes ? `${item.actorName} - ${item.notes}` : item.actorName;
+    case "TRANSFER": {
+      const extras = [`${item.quantity ?? "0"} ${item.unit ?? ""}`.trim()];
+      if (item.notes) extras.push(item.notes);
+      if (item.splitCreated) {
+        extras.push(
+          text(
+            locale,
+            "Destination container created automatically",
+            "\u062a\u0645 \u0625\u0646\u0634\u0627\u0621 \u062d\u0627\u0648\u064a\u0629 \u0648\u062c\u0647\u0629 \u062a\u0644\u0642\u0627\u0626\u064a\u0627"
+          )
+        );
+      }
+      return `${item.actorName} - ${extras.join(" - ")}`;
+    }
+    case "PRINT":
+    case "REPRINT": {
+      const extras = [item.actorName, item.labelTemplate ?? ""].filter(Boolean);
+      if (item.reason) extras.push(item.reason);
+      return extras.join(" - ");
+    }
+    case "SPLIT": {
+      const quantities = item.quantities?.length
+        ? item.quantities.map((quantity) => `${quantity} ${item.unit ?? ""}`.trim()).join(", ")
+        : null;
+      const extras = [item.actorName];
+      if (item.containerCount) {
+        extras.push(text(locale, `${item.containerCount} containers`, `${item.containerCount} \u062d\u0627\u0648\u064a\u0627\u062a`));
+      }
+      if (quantities) extras.push(quantities);
+      return extras.join(" - ");
+    }
+    case "DISPOSAL": {
+      const extras = [item.actorName, `${item.quantity ?? "0"} ${item.unit ?? ""}`.trim()];
+      if (item.reason) extras.push(item.reason);
+      if (item.notes) extras.push(item.notes);
+      return extras.join(" - ");
+    }
+    case "EVIDENCE":
+      return item.fileName ? `${item.actorName} - ${item.fileName}` : item.actorName;
+    case "INVENTORY_SYNC": {
+      const extras = [item.actorName];
+      if (item.inventoryItemCode) extras.push(item.inventoryItemCode);
+      if (item.notes) extras.push(item.notes);
+      return extras.join(" - ");
+    }
+    case "STATUS":
+    default:
+      return item.reason ? `${item.actorName} - ${item.reason}` : item.actorName;
+  }
+}
+
+function formatTimelineDate(locale: string, value: string) {
+  return new Date(value).toLocaleString(isArabicLocale(locale) ? "ar-EG" : "en-US");
 }
 export default async function BatchDetailPage({
   params,
@@ -385,22 +579,30 @@ export default async function BatchDetailPage({
       </div> : null}
 
       <div className="rounded-md border bg-white p-5 shadow-sm">
-        <h2 className="text-xl font-bold">{isScanView ? "Batch Status Timeline" : "Traceability Timeline"}</h2>
+        <h2 className="text-xl font-bold">
+          {isScanView
+            ? text(locale, "Batch Activity Timeline", "\u0627\u0644\u062e\u0637 \u0627\u0644\u0632\u0645\u0646\u064a \u0644\u0646\u0634\u0627\u0637 \u0627\u0644\u062f\u0641\u0639\u0629")
+            : text(locale, "Traceability Timeline", "\u0627\u0644\u062e\u0637 \u0627\u0644\u0632\u0645\u0646\u064a \u0644\u0644\u062a\u062a\u0628\u0639")}
+        </h2>
         <div className="mt-3 grid gap-2">
-          {batch.timeline.map((item) => (
+          {batch.timeline.length ? batch.timeline.map((item) => (
             <div key={item.id} className="rounded-md border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold">{timelineTitle(locale, item)}</span>
-                  <Badge className={item.eventType === "TRANSFER" ? "bg-primary/10 text-primary" : undefined}>
+                  <span className="font-semibold">{timelineTitleV2(locale, item)}</span>
+                  {false ? <Badge className={timelineBadgeClassNameV2(item.eventType)}>
                     {item.eventType === "TRANSFER" ? (locale === "ar" ? "تحويل" : "Transfer") : locale === "ar" ? "حالة" : "Status"}
-                  </Badge>
+                  </Badge> : <Badge className={timelineBadgeClassNameV2(item.eventType)}>{timelineBadgeLabelV2(locale, item.eventType)}</Badge>}
                 </div>
-                <span className="text-sm text-secondary">{new Date(item.occurredAt).toLocaleString()}</span>
+                <span className="text-sm text-secondary">{formatTimelineDate(locale, item.occurredAt)}</span>
               </div>
-              <p className="mt-1 text-sm text-secondary">{timelineDetails(item)}</p>
+              <p className="mt-1 text-sm text-secondary">{timelineDetailsV2(locale, item)}</p>
             </div>
-          ))}
+          )) : (
+            <p className="rounded-md border border-dashed p-3 text-sm text-secondary">
+              {text(locale, "No activity recorded yet.", "\u0644\u0627 \u064a\u0648\u062c\u062f \u0646\u0634\u0627\u0637 \u0645\u0633\u062c\u0644 \u0628\u0639\u062f.")}
+            </p>
+          )}
         </div>
       </div>
 

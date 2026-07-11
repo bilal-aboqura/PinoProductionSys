@@ -151,8 +151,8 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         statusHistory: { include: { changedBy: true }, orderBy: { changedAt: "asc" } },
         auditLogs: { orderBy: { createdAt: "asc" } },
         printHistory: { include: { printedBy: true, container: true }, orderBy: { printedAt: "desc" } },
-        disposals: { include: { disposedBy: true }, orderBy: { disposedAt: "desc" } },
-        evidence: { orderBy: { uploadedAt: "desc" } }
+        disposals: { include: { disposedBy: true, container: true }, orderBy: { disposedAt: "desc" } },
+        evidence: { include: { uploadedBy: true }, orderBy: { uploadedAt: "desc" } }
       }
     });
     if (!batch) return { success: false, error: "Batch not found." };
@@ -206,6 +206,13 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         }))
       }))
     );
+    const containerNumberById = new Map(batch.containers.map((item) => [item.id, item.containerNumber]));
+    const warehouseNameById = new Map(
+      [
+        [batch.warehouseId, batch.warehouse.name] as const,
+        ...batch.containers.map((item) => [item.warehouseId, item.warehouse.name] as const)
+      ].filter((entry, index, all) => all.findIndex(([warehouseId]) => warehouseId === entry[0]) === index)
+    );
     const transferAuditLogs = batch.auditLogs.filter(
       (item) => item.action === "BATCH_TRANSFERRED" || item.action === "CONTAINER_TRANSFERRED"
     );
@@ -224,6 +231,28 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
       : [];
     const transferMap = new Map(inventoryTransfers.map((item) => [item.id, item]));
     const timeline = [
+      ...batch.auditLogs
+        .filter((item) => item.action === "BATCH_CREATED")
+        .map((item) => ({
+          id: item.id,
+          eventType: "CREATED" as const,
+          occurredAt: item.createdAt.toISOString(),
+          actorName: full ? item.actorName : "Restricted",
+          notes: "Batch created from completed production order."
+        })),
+      ...batch.auditLogs
+        .filter((item) => item.action === "BATCH_INVENTORY_BACKFILLED")
+        .map((item) => {
+          const newValue = readJsonObject(item.newValue);
+          return {
+            id: item.id,
+            eventType: "INVENTORY_SYNC" as const,
+            occurredAt: item.createdAt.toISOString(),
+            actorName: full ? item.actorName : "Restricted",
+            inventoryItemCode: typeof newValue?.inventoryItemCode === "string" ? newValue.inventoryItemCode : undefined,
+            notes: "Finished-product inventory was created and the remaining batch balance was registered."
+          };
+        }),
       ...batch.statusHistory.map((item) => ({
         id: item.id,
         eventType: "STATUS" as const,
@@ -234,6 +263,7 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         reason: item.reason
       })),
       ...transferAuditLogs.map((item) => {
+        const previousValue = readJsonObject(item.previousValue);
         const newValue = readJsonObject(item.newValue);
         const transferId = typeof newValue?.transferId === "string" ? newValue.transferId : null;
         const transfer = transferId ? transferMap.get(transferId) : null;
@@ -249,14 +279,72 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
           eventType: "TRANSFER" as const,
           occurredAt: transfer?.timestamp.toISOString() ?? item.createdAt.toISOString(),
           actorName: full ? item.actorName : "Restricted",
-          sourceWarehouseName: transfer?.sourceWh.name,
+          sourceWarehouseName:
+            transfer?.sourceWh.name ??
+            (typeof previousValue?.warehouseId === "string" ? warehouseNameById.get(previousValue.warehouseId) : undefined),
           destinationWarehouseName:
-            transfer?.destWh.name ?? (typeof newValue?.destinationWarehouseName === "string" ? newValue.destinationWarehouseName : undefined),
+            transfer?.destWh.name ??
+            (typeof newValue?.destinationWarehouseName === "string"
+              ? newValue.destinationWarehouseName
+              : typeof newValue?.destinationWarehouseId === "string"
+                ? warehouseNameById.get(newValue.destinationWarehouseId)
+                : undefined),
           quantity,
           unit: batch.unit,
-          notes: transfer?.notes ?? (typeof newValue?.notes === "string" ? newValue.notes : null)
+          notes: transfer?.notes ?? (typeof newValue?.notes === "string" ? newValue.notes : null),
+          containerNumber:
+            typeof previousValue?.containerId === "string" ? containerNumberById.get(previousValue.containerId) ?? null : null,
+          splitCreated: typeof newValue?.splitCreated === "boolean" ? newValue.splitCreated : undefined
         };
-      })
+      }),
+      ...batch.printHistory.map((item) => ({
+        id: item.id,
+        eventType: item.isReprint ? ("REPRINT" as const) : ("PRINT" as const),
+        occurredAt: item.printedAt.toISOString(),
+        actorName: full ? item.printedBy.displayName : "Restricted",
+        reason: item.reprintReason,
+        containerNumber: item.container?.containerNumber ?? null,
+        labelTemplate: item.labelTemplate
+      })),
+      ...batch.auditLogs
+        .filter((item) => item.action === "CONTAINER_SPLIT")
+        .map((item) => {
+          const newValue = readJsonObject(item.newValue);
+          const quantities = Array.isArray(newValue?.quantities)
+            ? newValue.quantities
+                .filter((value): value is string | number => typeof value === "string" || typeof value === "number")
+                .map((value) => String(value))
+            : [];
+          const containerCount = Array.isArray(newValue?.containerIds) ? newValue.containerIds.length : quantities.length;
+
+          return {
+            id: item.id,
+            eventType: "SPLIT" as const,
+            occurredAt: item.createdAt.toISOString(),
+            actorName: full ? item.actorName : "Restricted",
+            unit: batch.unit,
+            containerCount,
+            quantities
+          };
+        }),
+      ...batch.disposals.map((item) => ({
+        id: item.id,
+        eventType: "DISPOSAL" as const,
+        occurredAt: item.disposedAt.toISOString(),
+        actorName: full ? item.disposedBy.displayName : "Restricted",
+        reason: item.reason,
+        quantity: decimalToString(item.quantityDisposed),
+        unit: batch.unit,
+        notes: item.notes,
+        containerNumber: item.container?.containerNumber ?? null
+      })),
+      ...batch.evidence.map((item) => ({
+        id: item.id,
+        eventType: "EVIDENCE" as const,
+        occurredAt: item.uploadedAt.toISOString(),
+        actorName: full ? item.uploadedBy.displayName : "Restricted",
+        fileName: item.fileName
+      }))
     ].sort((left, right) => new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime());
     const evidence = full
       ? await Promise.all(

@@ -60,6 +60,8 @@ function unknownError(error: unknown): BatchActionResult<never> {
     if (error.message === "ORDER_NOT_COMPLETED") return fail("VALIDATION", "The production order must be completed before creating a batch.");
     if (error.message === "TRANSFER_BATCH_CONTAINER_REQUIRED") return fail("VALIDATION", "Scan or select a container before transferring a split batch.");
     if (error.message === "TRANSFER_REQUIRES_FINISHED_PRODUCT_ITEM") return fail("VALIDATION", "This recipe needs an active finished-product inventory item before it can be transferred.");
+    if (error.message === "FINISHED_PRODUCT_CODE_CONFLICT") return fail("VALIDATION", "This recipe code is already used by an inventory item that is not a finished product.");
+    if (error.message === "FINISHED_PRODUCT_ITEM_INACTIVE") return fail("VALIDATION", "The finished-product inventory item for this recipe is inactive.");
     if (error.message === "TRANSFER_SAME_WAREHOUSE") return fail("VALIDATION", "Source and destination warehouses must be different.");
     if (error.message === "TRANSFER_NO_AVAILABLE_QUANTITY") return fail("VALIDATION", "No remaining quantity is available to transfer.");
     if (error.message === "TRANSFER_EXCEEDS_CONTAINER_QUANTITY") return fail("VALIDATION", "Transfer quantity exceeds the remaining quantity in this container.");
@@ -98,7 +100,40 @@ async function writeBatchAudit(
   });
 }
 
-async function resolveFinishedProductItem(tx: Prisma.TransactionClient, recipeCode: string) {
+async function ensureFinishedProductItem(
+  tx: Prisma.TransactionClient,
+  recipe: { code: string; nameAr: string; nameEn: string; yieldUnit: "KG" | "GRAM" | "LITER" | "MILLILITER" | "PIECE" }
+) {
+  const existing = await tx.inventoryItem.findUnique({ where: { code: recipe.code } });
+
+  if (existing) {
+    if (existing.itemType !== "FINISHED_PRODUCT") throw new Error("FINISHED_PRODUCT_CODE_CONFLICT");
+    if (!existing.isActive) throw new Error("FINISHED_PRODUCT_ITEM_INACTIVE");
+    return { item: existing, created: false };
+  }
+
+  const category = await tx.inventoryCategory.upsert({
+    where: { name: "Finished Products" },
+    update: {},
+    create: { name: "Finished Products", description: "Automatically created for production output items." }
+  });
+  const item = await tx.inventoryItem.create({
+    data: {
+      code: recipe.code,
+      nameAr: recipe.nameAr,
+      nameEn: recipe.nameEn || recipe.nameAr,
+      itemType: "FINISHED_PRODUCT",
+      categoryId: category.id,
+      unit: recipe.yieldUnit,
+      minStockLevel: new Prisma.Decimal(0),
+      isActive: true
+    }
+  });
+
+  return { item, created: true };
+}
+
+async function findActiveFinishedProductItem(tx: Prisma.TransactionClient, recipeCode: string) {
   return tx.inventoryItem.findFirst({
     where: { code: recipeCode, itemType: "FINISHED_PRODUCT", isActive: true }
   });
@@ -144,6 +179,51 @@ async function adjustInventory(
       sourceRefId: input.sourceRefId
     }
   });
+}
+
+async function registerLegacyBatchOutput(
+  tx: Prisma.TransactionClient,
+  input: {
+    batchId: string;
+    productionOrderId: string;
+    warehouseId: string;
+    remainingQuantity: Prisma.Decimal;
+    containers: { warehouseId: string; remainingQuantity: Prisma.Decimal }[];
+    inventoryItemId: string;
+    userId: string;
+  }
+) {
+  const quantitiesByWarehouse = new Map<string, Prisma.Decimal>();
+  const locations = input.containers.length > 0
+    ? input.containers
+    : [{ warehouseId: input.warehouseId, remainingQuantity: input.remainingQuantity }];
+
+  for (const location of locations) {
+    quantitiesByWarehouse.set(
+      location.warehouseId,
+      (quantitiesByWarehouse.get(location.warehouseId) ?? new Prisma.Decimal(0)).add(location.remainingQuantity)
+    );
+  }
+
+  for (const [warehouseId, quantity] of quantitiesByWarehouse) {
+    if (quantity.lte(0)) continue;
+    await adjustInventory(tx, {
+      warehouseId,
+      inventoryItemId: input.inventoryItemId,
+      quantityDelta: quantity,
+      userId: input.userId,
+      sourceRefId: input.batchId,
+      movementType: "PRODUCTION_OUTPUT"
+    });
+    await tx.inventoryOutputLog.create({
+      data: {
+        productionOrderId: input.productionOrderId,
+        warehouseId,
+        inventoryItemId: input.inventoryItemId,
+        quantityProduced: quantity
+      }
+    });
+  }
 }
 
 async function transferFinishedProductInventory(
@@ -243,6 +323,7 @@ export async function createBatchForCompletedOrder(
   const targetUrl = buildTraceabilityUrl(batchNumber, input.locale ?? "ar");
   const qrCodeData = await generateBatchQrDataUrl(targetUrl);
   const unit = order.recipe.yieldUnit;
+  const finishedProduct = await ensureFinishedProductItem(tx, order.recipe);
 
   const batch = await tx.productionBatch.create({
     data: {
@@ -274,26 +355,23 @@ export async function createBatchForCompletedOrder(
     });
   }
 
-  const item = await resolveFinishedProductItem(tx, order.recipe.code);
-  if (item) {
-    await adjustInventory(tx, {
+  await adjustInventory(tx, {
+    warehouseId: input.warehouseId,
+    inventoryItemId: finishedProduct.item.id,
+    quantityDelta: order.producedQuantity,
+    userId: input.actorId,
+    sourceRefId: batch.id,
+    movementType: "PRODUCTION_OUTPUT",
+    allowNegative: true
+  });
+  await tx.inventoryOutputLog.create({
+    data: {
+      productionOrderId: order.id,
       warehouseId: input.warehouseId,
-      inventoryItemId: item.id,
-      quantityDelta: order.producedQuantity,
-      userId: input.actorId,
-      sourceRefId: batch.id,
-      movementType: "PRODUCTION_OUTPUT",
-      allowNegative: true
-    });
-    await tx.inventoryOutputLog.create({
-      data: {
-        productionOrderId: order.id,
-        warehouseId: input.warehouseId,
-        inventoryItemId: item.id,
-        quantityProduced: order.producedQuantity
-      }
-    });
-  }
+      inventoryItemId: finishedProduct.item.id,
+      quantityProduced: order.producedQuantity
+    }
+  });
 
   await tx.productionOrderDownstreamAction.upsert({
     where: { orderId_actionType: { orderId: order.id, actionType: "BATCH_RECORD" } },
@@ -493,8 +571,26 @@ export async function transferBatchBetweenWarehousesAction(
       });
       if (!destinationWarehouse) throw new Error("NOT_FOUND");
 
-      const item = await resolveFinishedProductItem(tx, existingBatch.recipe.code);
-      if (!item) throw new Error("TRANSFER_REQUIRES_FINISHED_PRODUCT_ITEM");
+      const finishedProduct = await ensureFinishedProductItem(tx, existingBatch.recipe);
+      const item = finishedProduct.item;
+      if (finishedProduct.created) {
+        await registerLegacyBatchOutput(tx, {
+          batchId: existingBatch.id,
+          productionOrderId: existingBatch.productionOrderId,
+          warehouseId: existingBatch.warehouseId,
+          remainingQuantity: existingBatch.remainingQuantity,
+          containers: existingBatch.containers,
+          inventoryItemId: item.id,
+          userId: session.user.id
+        });
+        await writeBatchAudit(tx, {
+          batchId: existingBatch.id,
+          actorId: session.user.id,
+          actorName: actorName(session),
+          action: "BATCH_INVENTORY_BACKFILLED",
+          newValue: { inventoryItemId: item.id, inventoryItemCode: item.code }
+        });
+      }
 
       if (parsed.data.containerId) {
         const container = await tx.batchContainer.findUnique({
@@ -746,7 +842,7 @@ export async function disposeBatchAction(input: unknown): Promise<BatchActionRes
           data: { batchId: batch.id, fromStatus: batch.status, toStatus: newBatchStatus, changedById: session.user.id, reason: "Batch fully disposed." }
         });
       }
-      const item = await resolveFinishedProductItem(tx, batch.recipe.code);
+      const item = await findActiveFinishedProductItem(tx, batch.recipe.code);
       if (item) {
         await recordBatchWasteLedger(tx, {
           warehouseId: batch.warehouseId,

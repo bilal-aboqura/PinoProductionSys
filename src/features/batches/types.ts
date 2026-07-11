@@ -131,7 +131,7 @@ export type BatchTraceability = BatchListItem & {
   }[];
   timeline: {
     id: string;
-    eventType: "STATUS" | "TRANSFER";
+    eventType: "CREATED" | "STATUS" | "TRANSFER" | "PRINT" | "REPRINT" | "SPLIT" | "DISPOSAL" | "EVIDENCE" | "INVENTORY_SYNC";
     occurredAt: string;
     actorName: string;
     fromStatus?: BatchStatus | null;
@@ -142,6 +142,13 @@ export type BatchTraceability = BatchListItem & {
     quantity?: string;
     unit?: string;
     notes?: string | null;
+    containerNumber?: string | null;
+    labelTemplate?: LabelTemplate;
+    fileName?: string;
+    inventoryItemCode?: string;
+    containerCount?: number;
+    quantities?: string[];
+    splitCreated?: boolean;
   }[];
   printHistory?: {
     id: string;
