@@ -4,7 +4,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 FROM base AS dependencies
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --ignore-scripts
 
 FROM base AS builder
 COPY --from=dependencies /app/node_modules ./node_modules
