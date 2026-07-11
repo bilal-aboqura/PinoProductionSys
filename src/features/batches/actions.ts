@@ -61,7 +61,6 @@ function unknownError(error: unknown): BatchActionResult<never> {
     if (error.message === "TRANSFER_BATCH_CONTAINER_REQUIRED") return fail("VALIDATION", "Scan or select a container before transferring a split batch.");
     if (error.message === "TRANSFER_REQUIRES_FINISHED_PRODUCT_ITEM") return fail("VALIDATION", "This recipe needs an active finished-product inventory item before it can be transferred.");
     if (error.message === "FINISHED_PRODUCT_CODE_CONFLICT") return fail("VALIDATION", "This recipe code is already used by an inventory item that is not a finished product.");
-    if (error.message === "FINISHED_PRODUCT_ITEM_INACTIVE") return fail("VALIDATION", "The finished-product inventory item for this recipe is inactive.");
     if (error.message === "TRANSFER_SAME_WAREHOUSE") return fail("VALIDATION", "Source and destination warehouses must be different.");
     if (error.message === "TRANSFER_NO_AVAILABLE_QUANTITY") return fail("VALIDATION", "No remaining quantity is available to transfer.");
     if (error.message === "TRANSFER_EXCEEDS_CONTAINER_QUANTITY") return fail("VALIDATION", "Transfer quantity exceeds the remaining quantity in this container.");
@@ -108,8 +107,10 @@ async function ensureFinishedProductItem(
 
   if (existing) {
     if (existing.itemType !== "FINISHED_PRODUCT") throw new Error("FINISHED_PRODUCT_CODE_CONFLICT");
-    if (!existing.isActive) throw new Error("FINISHED_PRODUCT_ITEM_INACTIVE");
-    return { item: existing, created: false };
+    const item = existing.isActive
+      ? existing
+      : await tx.inventoryItem.update({ where: { id: existing.id }, data: { isActive: true } });
+    return { item, created: false, activated: !existing.isActive };
   }
 
   const category = await tx.inventoryCategory.upsert({
@@ -130,7 +131,7 @@ async function ensureFinishedProductItem(
     }
   });
 
-  return { item, created: true };
+  return { item, created: true, activated: false };
 }
 
 async function findActiveFinishedProductItem(tx: Prisma.TransactionClient, recipeCode: string) {
@@ -573,7 +574,15 @@ export async function transferBatchBetweenWarehousesAction(
 
       const finishedProduct = await ensureFinishedProductItem(tx, existingBatch.recipe);
       const item = finishedProduct.item;
-      if (finishedProduct.created) {
+      const outputAlreadyRecorded = await tx.stockMovement.findFirst({
+        where: {
+          inventoryItemId: item.id,
+          sourceRefId: existingBatch.id,
+          movementType: "PRODUCTION_OUTPUT"
+        },
+        select: { id: true }
+      });
+      if ((finishedProduct.created || finishedProduct.activated) && !outputAlreadyRecorded) {
         await registerLegacyBatchOutput(tx, {
           batchId: existingBatch.id,
           productionOrderId: existingBatch.productionOrderId,
@@ -588,7 +597,11 @@ export async function transferBatchBetweenWarehousesAction(
           actorId: session.user.id,
           actorName: actorName(session),
           action: "BATCH_INVENTORY_BACKFILLED",
-          newValue: { inventoryItemId: item.id, inventoryItemCode: item.code }
+          newValue: {
+            inventoryItemId: item.id,
+            inventoryItemCode: item.code,
+            inventoryItemActivated: finishedProduct.activated
+          }
         });
       }
 
