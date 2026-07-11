@@ -8,6 +8,7 @@ import type { BatchTraceability } from "@/features/batches/types";
 import { PrintBatchButton } from "@/features/printing/components/PrintBatchButton";
 import { getPrinters, getPrintTemplates } from "@/features/printing/queries";
 import { getWarehouses } from "@/features/inventory/queries";
+import { getApplicationTimeZone } from "@/features/settings/queries";
 import { getServerSession } from "@/lib/auth";
 import { BatchTransferForm } from "../_components/BatchTransferForm";
 import { DisposalModal } from "../_components/DisposalModal";
@@ -262,8 +263,12 @@ function timelineDetailsV2(locale: string, item: TimelineItem) {
   }
 }
 
-function formatTimelineDate(locale: string, value: string) {
-  return new Date(value).toLocaleString(isArabicLocale(locale) ? "ar-EG" : "en-US");
+function formatDateTime(locale: string, value: string, timeZone: string) {
+  return new Date(value).toLocaleString(isArabicLocale(locale) ? "ar-EG" : "en-US", { timeZone });
+}
+
+function formatDate(locale: string, value: string, timeZone: string) {
+  return new Date(value).toLocaleDateString(isArabicLocale(locale) ? "ar-EG" : "en-US", { timeZone });
 }
 export default async function BatchDetailPage({
   params,
@@ -288,6 +293,7 @@ export default async function BatchDetailPage({
   if (!result.success) notFound();
   const batch = result.data;
   const session = await getServerSession();
+  const timeZone = await getApplicationTimeZone();
   const showTransferForm = isScanView && canTransferInventory(session.user.permissions);
   const showTransferDownload = isScanView && canDownloadTransfers(session.user.permissions) && !showTransferForm;
   const [templates, printers] = isScanView
@@ -371,7 +377,7 @@ export default async function BatchDetailPage({
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase text-secondary">Expiry</dt>
-            <dd className="mt-1 font-semibold">{new Date(batch.expiryDate).toLocaleDateString()}</dd>
+            <dd className="mt-1 font-semibold">{formatDate(locale, batch.expiryDate, timeZone)}</dd>
           </div>
         </dl>
       </div>
@@ -518,7 +524,7 @@ export default async function BatchDetailPage({
                             <div className="flex h-44 items-center justify-center text-sm text-secondary">Photo unavailable</div>
                           )}
                           <figcaption className="p-2 text-xs text-secondary">
-                            {photo.uploadedByName} · {new Date(photo.uploadedAt).toLocaleString()}
+                            {photo.uploadedByName} · {formatDateTime(locale, photo.uploadedAt, timeZone)}
                           </figcaption>
                         </figure>
                       ))}
@@ -534,7 +540,7 @@ export default async function BatchDetailPage({
                         <div key={note.id} className="rounded-md border bg-surface-subtle p-3 text-sm">
                           <p className="whitespace-pre-wrap">{note.content}</p>
                           <div className="mt-2 text-xs text-secondary">
-                            {note.addedByName} · {new Date(note.addedAt).toLocaleString()}
+                            {note.addedByName} · {formatDateTime(locale, note.addedAt, timeZone)}
                           </div>
                         </div>
                       ))}
@@ -594,7 +600,7 @@ export default async function BatchDetailPage({
                     {item.eventType === "TRANSFER" ? (locale === "ar" ? "تحويل" : "Transfer") : locale === "ar" ? "حالة" : "Status"}
                   </Badge> : <Badge className={timelineBadgeClassNameV2(item.eventType)}>{timelineBadgeLabelV2(locale, item.eventType)}</Badge>}
                 </div>
-                <span className="text-sm text-secondary">{formatTimelineDate(locale, item.occurredAt)}</span>
+                <span className="text-sm text-secondary">{formatDateTime(locale, item.occurredAt, timeZone)}</span>
               </div>
               <p className="mt-1 text-sm text-secondary">{timelineDetailsV2(locale, item)}</p>
             </div>
@@ -612,7 +618,7 @@ export default async function BatchDetailPage({
           <div className="mt-3 grid gap-2">
             {batch.printHistory.map((item) => (
               <div key={item.id} className="rounded-md border p-3 text-sm">
-                <span className="font-semibold">{item.labelTemplate}</span> printed by {item.printedByName} on {new Date(item.printedAt).toLocaleString()}
+                <span className="font-semibold">{item.labelTemplate}</span> printed by {item.printedByName} on {formatDateTime(locale, item.printedAt, timeZone)}
                 {item.containerNumber ? <span className="ml-2 font-semibold text-primary">Container: {item.containerNumber}</span> : null}
                 {item.isReprint ? <span className="ml-2 text-warning">Reprint: {item.reprintReason}</span> : null}
               </div>

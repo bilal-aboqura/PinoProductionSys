@@ -88,6 +88,23 @@ export async function getSystemSettings(): Promise<SystemSettingDto[]> {
   }));
 }
 
+export async function getApplicationTimeZone() {
+  const setting = await prisma.systemSetting.findUnique({
+    where: { key: "general_preferences" },
+    select: { value: true }
+  });
+  const value = setting?.value;
+  if (value && typeof value === "object" && !Array.isArray(value) && typeof value.timeZone === "string") {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: value.timeZone }).format();
+      return value.timeZone;
+    } catch {
+      // Fall through to the installation default if an old setting is invalid.
+    }
+  }
+  return "Africa/Cairo";
+}
+
 export async function getWasteReasonOptions(activeOnly = true) {
   await getServerSession();
   return prisma.wasteReasonOption.findMany({
