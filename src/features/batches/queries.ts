@@ -13,6 +13,10 @@ function decimalToString(value: Prisma.Decimal | null | undefined) {
   return value == null ? "0" : value.toString();
 }
 
+function readJsonObject(value: Prisma.JsonValue | null | undefined): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
 function canViewBatches(permissions: string[]) {
   return permissions.includes("inventory:view") || permissions.includes("production-orders:view") || permissions.includes("production-orders:view_all");
 }
@@ -145,6 +149,7 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         },
         containers: { include: { warehouse: true }, orderBy: { containerNumber: "asc" } },
         statusHistory: { include: { changedBy: true }, orderBy: { changedAt: "asc" } },
+        auditLogs: { orderBy: { createdAt: "asc" } },
         printHistory: { include: { printedBy: true, container: true }, orderBy: { printedAt: "desc" } },
         disposals: { include: { disposedBy: true }, orderBy: { disposedAt: "desc" } },
         evidence: { orderBy: { uploadedAt: "desc" } }
@@ -201,6 +206,58 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
         }))
       }))
     );
+    const transferAuditLogs = batch.auditLogs.filter(
+      (item) => item.action === "BATCH_TRANSFERRED" || item.action === "CONTAINER_TRANSFERRED"
+    );
+    const transferIds = Array.from(
+      new Set(
+        transferAuditLogs
+          .map((item) => readJsonObject(item.newValue)?.transferId)
+          .filter((value): value is string => typeof value === "string" && value.length > 0)
+      )
+    );
+    const inventoryTransfers = transferIds.length
+      ? await prisma.inventoryTransfer.findMany({
+          where: { id: { in: transferIds } },
+          include: { sourceWh: true, destWh: true }
+        })
+      : [];
+    const transferMap = new Map(inventoryTransfers.map((item) => [item.id, item]));
+    const timeline = [
+      ...batch.statusHistory.map((item) => ({
+        id: item.id,
+        eventType: "STATUS" as const,
+        occurredAt: item.changedAt.toISOString(),
+        actorName: full ? item.changedBy.displayName : "Restricted",
+        fromStatus: item.fromStatus,
+        toStatus: item.toStatus,
+        reason: item.reason
+      })),
+      ...transferAuditLogs.map((item) => {
+        const newValue = readJsonObject(item.newValue);
+        const transferId = typeof newValue?.transferId === "string" ? newValue.transferId : null;
+        const transfer = transferId ? transferMap.get(transferId) : null;
+        const quantity =
+          transfer?.quantity != null
+            ? transfer.quantity.toString()
+            : typeof newValue?.quantity === "string"
+              ? newValue.quantity
+              : undefined;
+
+        return {
+          id: item.id,
+          eventType: "TRANSFER" as const,
+          occurredAt: transfer?.timestamp.toISOString() ?? item.createdAt.toISOString(),
+          actorName: full ? item.actorName : "Restricted",
+          sourceWarehouseName: transfer?.sourceWh.name,
+          destinationWarehouseName:
+            transfer?.destWh.name ?? (typeof newValue?.destinationWarehouseName === "string" ? newValue.destinationWarehouseName : undefined),
+          quantity,
+          unit: batch.unit,
+          notes: transfer?.notes ?? (typeof newValue?.notes === "string" ? newValue.notes : null)
+        };
+      })
+    ].sort((left, right) => new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime());
     const evidence = full
       ? await Promise.all(
           batch.evidence.map(async (item) => ({
@@ -261,6 +318,7 @@ export async function getBatchTraceabilityAction(input: { batchNumber: string })
           reason: item.reason,
           changedAt: item.changedAt.toISOString()
         })),
+        timeline,
         printHistory: full
           ? batch.printHistory.map((item) => ({
               id: item.id,

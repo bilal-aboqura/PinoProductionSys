@@ -129,6 +129,20 @@ export type BatchTraceability = BatchListItem & {
     reason: string | null;
     changedAt: string;
   }[];
+  timeline: {
+    id: string;
+    eventType: "STATUS" | "TRANSFER";
+    occurredAt: string;
+    actorName: string;
+    fromStatus?: BatchStatus | null;
+    toStatus?: BatchStatus;
+    reason?: string | null;
+    sourceWarehouseName?: string;
+    destinationWarehouseName?: string;
+    quantity?: string;
+    unit?: string;
+    notes?: string | null;
+  }[];
   printHistory?: {
     id: string;
     labelTemplate: LabelTemplate;

@@ -31,6 +31,46 @@ function canDownloadTransfers(permissions: string[]) {
 function canTransferInventory(permissions: string[]) {
   return permissions.includes("inventory:transfer");
 }
+
+function timelineTitle(
+  locale: string,
+  item: {
+    eventType: "STATUS" | "TRANSFER";
+    fromStatus?: string | null;
+    toStatus?: string;
+    sourceWarehouseName?: string;
+    destinationWarehouseName?: string;
+  }
+) {
+  if (item.eventType === "TRANSFER") {
+    const source = item.sourceWarehouseName ?? (locale === "ar" ? "مخزن غير معروف" : "Unknown warehouse");
+    const destination = item.destinationWarehouseName ?? (locale === "ar" ? "مخزن غير معروف" : "Unknown warehouse");
+    return locale === "ar" ? `تحويل من ${source} إلى ${destination}` : `Transfer from ${source} to ${destination}`;
+  }
+
+  const fromStatus = item.fromStatus ?? "NEW";
+  const toStatus = item.toStatus ?? "ACTIVE";
+  return locale === "ar" ? `${fromStatus} إلى ${toStatus}` : `${fromStatus} to ${toStatus}`;
+}
+
+function timelineDetails(
+  item: {
+    eventType: "STATUS" | "TRANSFER";
+    actorName: string;
+    reason?: string | null;
+    quantity?: string;
+    unit?: string;
+    notes?: string | null;
+  }
+) {
+  if (item.eventType === "TRANSFER") {
+    const extras = [`${item.quantity ?? "0"} ${item.unit ?? ""}`.trim()];
+    if (item.notes) extras.push(item.notes);
+    return `${item.actorName} - ${extras.join(" - ")}`;
+  }
+
+  return item.reason ? `${item.actorName} - ${item.reason}` : item.actorName;
+}
 export default async function BatchDetailPage({
   params,
   searchParams
@@ -347,17 +387,18 @@ export default async function BatchDetailPage({
       <div className="rounded-md border bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold">{isScanView ? "Batch Status Timeline" : "Traceability Timeline"}</h2>
         <div className="mt-3 grid gap-2">
-          {batch.statusHistory.map((item) => (
+          {batch.timeline.map((item) => (
             <div key={item.id} className="rounded-md border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold">
-                  {item.fromStatus ?? "NEW"} to {item.toStatus}
-                </span>
-                <span className="text-sm text-secondary">{new Date(item.changedAt).toLocaleString()}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">{timelineTitle(locale, item)}</span>
+                  <Badge className={item.eventType === "TRANSFER" ? "bg-primary/10 text-primary" : undefined}>
+                    {item.eventType === "TRANSFER" ? (locale === "ar" ? "تحويل" : "Transfer") : locale === "ar" ? "حالة" : "Status"}
+                  </Badge>
+                </div>
+                <span className="text-sm text-secondary">{new Date(item.occurredAt).toLocaleString()}</span>
               </div>
-              <p className="mt-1 text-sm text-secondary">
-                {item.changedByName} {item.reason ? `- ${item.reason}` : ""}
-              </p>
+              <p className="mt-1 text-sm text-secondary">{timelineDetails(item)}</p>
             </div>
           ))}
         </div>
